@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<resources>
+  <string name="appName">SR2 Demo</string>
+  <string name="fileNoneSelected">No file selected.</string>
+  <string name="fileSelectTitle">Please select an EPUB file.</string>
+  <string name="fileChoose">Choose file</string>
+  <string name="fileRead">Read file</string>
+</resources>

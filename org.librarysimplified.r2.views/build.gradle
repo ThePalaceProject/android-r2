@@ -1,0 +1,11 @@
+dependencies {
+  api libraries.androidXAppCompat
+  api libraries.androidXConstraintLayout
+  api libraries.androidXCore
+  api libraries.androidXLifecycle
+  api libraries.kotlinStdlib
+
+  implementation libraries.slf4j
+
+  api project(":org.librarysimplified.r2.api")
+}

@@ -1,0 +1,335 @@
+buildscript {
+  if ("$gradle.gradleVersion" != "6.0.1") {
+    throw new GradleException("Gradle version 6.0.1 is required (received $gradle.gradleVersion)")
+  }
+
+  ext.kotlin_version = "1.3.61"
+
+  repositories {
+    mavenCentral()
+    google()
+    jcenter()
+  }
+
+  dependencies {
+    classpath "biz.aQute.bnd:biz.aQute.bnd.gradle:4.3.1"
+    classpath "com.nabilhachicha:android-native-dependencies:0.1.2"
+    classpath "com.vanniktech:gradle-android-junit-jacoco-plugin:0.15.0"
+    classpath "digital.wup:android-maven-publish:3.6.3"
+    classpath "io.codearte.gradle.nexus:gradle-nexus-staging-plugin:0.21.2"
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    classpath 'com.android.tools.build:gradle:3.5.3'
+  }
+}
+
+plugins {
+  id "com.github.ben-manes.versions" version "0.27.0"
+  id "com.vanniktech.android.junit.jacoco" version "0.15.0"
+  id "digital.wup.android-maven-publish" version "3.6.3"
+  id "io.codearte.nexus-staging" version "0.21.2"
+  id "ru.vyarus.animalsniffer" version "1.5.0"
+}
+
+ext {
+  androidBuildToolsVersion = "28.0.3"
+  androidCompileSDKVersion = 28
+  androidMinimumSDKVersion = 21
+  androidTargetSDKVersion = 28
+
+  if (!project.hasProperty("nexusUsername")) {
+    logger.warn("No nexusUsername property specified: Using an empty value")
+    nexusUsername = ""
+  }
+  if (!project.hasProperty("nexusPassword")) {
+    logger.warn("No nexusPassword property specified: Using an empty value")
+    nexusPassword = ""
+  }
+
+  if (!project.hasProperty("org.librarysimplified.nexus.publish")) {
+    logger.warn("org.librarysimplified.nexus.publish is not set: We will publish artifacts to Maven Central")
+    useNYPLNexusPublish = false
+  } else {
+    logger.warn("org.librarysimplified.nexus.publish is set: We will publish artifacts to the NYPL Nexus")
+    useNYPLNexusPublish = true
+  }
+
+  if (!project.hasProperty("org.librarysimplified.nexus.depend")) {
+    logger.warn("org.librarysimplified.nexus.depend is not set: We will not depend on artifacts on the NYPL Nexus")
+    useNYPLNexusDepend = false
+  } else {
+    logger.warn("org.librarysimplified.nexus.depend is set: We will depend on artifacts on the NYPL Nexus")
+    useNYPLNexusDepend = true
+  }
+}
+
+ext.libraries = [
+  androidXAppCompat       : "androidx.appcompat:appcompat:1.1.0",
+  androidXConstraintLayout: "androidx.constraintlayout:constraintlayout:1.1.3",
+  androidXCore            : "androidx.core:core:1.1.0",
+  androidXFragmentTesting : "androidx.fragment:fragment-testing:1.1.0",
+  androidXLifecycle       : "androidx.lifecycle:lifecycle-extensions:2.1.0",
+  androidXMultidex        : "androidx.multidex:multidex:2.0.0",
+  androidXRecyclerView    : "androidx.recyclerview:recyclerview:1.1.0-beta05",
+  androidXTestEspressoCore: "androidx.test.espresso:espresso-core:3.1.0",
+  androidXTestExtensions  : "androidx.test.ext:junit:1.1.1",
+  androidXTestOrchestrator: "androidx.test:orchestrator:1.1.0",
+  androidXTestRules       : "androidx.test:rules:1.1.0",
+  androidXTestRunner      : "androidx.test:runner:1.1.0",
+  fileChooser             : "com.github.iammohdzaki:KnotFileChooser-Android:1.0.1",
+  googleGuava             : "com.google.guava:guava:23.6.1-android",
+  kotlinStdlib            : "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version",
+  logbackAndroidClassic   : "com.github.tony19:logback-android-classic:1.1.1-6",
+  logbackAndroidCore      : "com.github.tony19:logback-android-core:1.1.1-6",
+  logbackClassic          : "ch.qos.logback:logback-classic:1.2.3",
+  mockitoAndroid          : "org.mockito:mockito-android:2.22.0",
+  nanoHTTPD               : "com.github.edrlab.nanohttpd:nanohttpd:2.3.2",
+  nanoHTTPDNanolets       : "com.github.edrlab.nanohttpd:nanohttpd-nanolets:2.3.2",
+  r2Shared                : "com.github.readium:r2-shared-kotlin:1.1.3",
+  r2Streamer              : "com.github.readium:r2-streamer-kotlin:1.1.3",
+  rxjava2                 : "io.reactivex.rxjava2:rxjava:2.1.13",
+  slf4j                   : "org.slf4j:slf4j-api:1.7.25",
+]
+
+apply plugin: "io.codearte.nexus-staging"
+apply plugin: "com.vanniktech.android.junit.jacoco"
+
+nexusStaging {
+  packageGroup = "org.librarysimplified"
+  numberOfRetries = 32
+  delayBetweenRetriesInMillis = 2000
+}
+
+allprojects {
+  group   = project.ext["GROUP"]
+  version = project.ext["VERSION_NAME"]
+}
+
+// Add ktlint tasks to all subprojects
+
+subprojects { project ->
+  apply from: file("$rootDir/ktlint.gradle")
+}
+
+subprojects { project ->
+
+  switch (POM_PACKAGING) {
+    case "jar":
+      logger.info("Configuring ${project} (${POM_PACKAGING}) as jar project")
+
+      apply plugin: "java"
+      apply plugin: "java-library"
+      apply plugin: "kotlin"
+
+      /*
+       * Apply the Animal Sniffer plugin to check that code is Android compatible.
+       */
+
+      apply plugin: "ru.vyarus.animalsniffer"
+
+      dependencies {
+        signature "org.codehaus.mojo.signature:java16:1.1@signature"
+        signature "net.sf.androidscents.signature:android-api-level-14:4.0_r4@signature"
+      }
+
+      /*
+       * Build an OSGi bundle.
+       */
+
+      apply plugin: "biz.aQute.bnd.builder"
+
+      jar {
+        bnd """
+Automatic-Module-Name: ${POM_AUTOMATIC_MODULE_NAME}
+
+-removeheaders: Bnd-LastModified, Tool, Private-Package
+"""
+      }
+      break
+
+    case "apk":
+      logger.info("Configuring ${project} (${POM_PACKAGING}) as Android application project")
+
+      apply plugin: "com.android.application"
+      apply plugin: "kotlin-android"
+
+      android {
+        compileSdkVersion androidCompileSDKVersion
+        buildToolsVersion androidBuildToolsVersion
+
+        defaultConfig {
+          minSdkVersion androidMinimumSDKVersion
+          targetSdkVersion androidTargetSDKVersion
+        }
+        compileOptions {
+          encoding 'UTF-8'
+          sourceCompatibility JavaVersion.VERSION_1_8
+          targetCompatibility JavaVersion.VERSION_1_8
+        }
+      }
+      break
+
+    case "aar":
+      logger.info("Configuring ${project} (${POM_PACKAGING}) as Android library project")
+
+      apply plugin: "com.android.library"
+      apply plugin: "kotlin-android"
+
+      android {
+        compileSdkVersion androidCompileSDKVersion
+        buildToolsVersion androidBuildToolsVersion
+
+        defaultConfig {
+          multiDexEnabled true
+          minSdkVersion androidMinimumSDKVersion
+          targetSdkVersion androidTargetSDKVersion
+          testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+          useLibrary 'org.apache.http.legacy'
+        }
+        compileOptions {
+          encoding 'UTF-8'
+          sourceCompatibility JavaVersion.VERSION_1_8
+          targetCompatibility JavaVersion.VERSION_1_8
+        }
+        testOptions {
+          execution 'ANDROIDX_TEST_ORCHESTRATOR'
+          animationsDisabled = true
+        }
+      }
+      break
+
+    default:
+      throw new IllegalStateException(
+        "Unrecognized packaging type ${POM_PACKAGING} for ${project}")
+  }
+
+  task javadocsJar(type: Jar) {
+    classifier = "javadoc"
+  }
+
+  task sourcesJar(type: Jar) {
+    classifier = "sources"
+    from "src/main/java", "src/main/resources"
+  }
+
+  apply plugin: "digital.wup.android-maven-publish"
+  apply plugin: "signing"
+
+  publishing {
+    publications {
+      basicJar(MavenPublication) {
+
+        switch (POM_PACKAGING) {
+          case "jar":
+            from components.java
+            break
+
+          case "apk":
+            break
+
+          case "aar":
+            from components.android
+            break
+        }
+
+        artifact sourcesJar
+        artifact javadocsJar
+
+        pom {
+          artifactId = POM_ARTIFACT_ID
+          name = POM_NAME
+          packaging = POM_PACKAGING
+          description = POM_DESCRIPTION
+          url = POM_URL
+
+          scm {
+            connection = POM_SCM_CONNECTION
+            developerConnection = POM_SCM_DEV_CONNECTION
+            url = POM_SCM_URL
+          }
+
+          licenses {
+            license {
+              name = POM_LICENCE_NAME
+              url = POM_LICENCE_URL
+            }
+          }
+
+          developers {
+            developer {
+              id = "io7m"
+              name = "Mark Raynsford"
+              email = "code@io7m.com"
+              url = "https://www.io7m.com"
+            }
+          }
+        }
+      }
+    }
+
+    repositories {
+      if (useNYPLNexusPublish) {
+        logger.info("using NYPL Nexus repository for publication")
+
+        maven {
+          def releasesRepoUrl = "https://nexus.librarysimplified.org:8443/nexus/content/repositories/releases-no-drm/"
+          def snapshotsRepoUrl = "https://nexus.librarysimplified.org:8443/nexus/content/repositories/snapshots-no-drm/"
+          url = version.endsWith("SNAPSHOT") ? snapshotsRepoUrl : releasesRepoUrl
+          credentials(PasswordCredentials) {
+            username findProperty("org.librarysimplified.nexus.username")
+            password findProperty("org.librarysimplified.nexus.password")
+          }
+        }
+      } else {
+        logger.info("using Maven Central repository for publication")
+
+        maven {
+          def releasesRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+          def snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
+          url = version.endsWith("SNAPSHOT") ? snapshotsRepoUrl : releasesRepoUrl
+          credentials(PasswordCredentials) {
+            username nexusUsername
+            password nexusPassword
+          }
+        }
+      }
+    }
+  }
+
+  signing {
+    useGpgCmd()
+    sign publishing.publications.basicJar
+  }
+
+  tasks.withType(Sign) { task ->
+    def isSnapshot = version.endsWith("SNAPSHOT")
+
+    // Sign release versions only; not snapshots
+    onlyIf {
+      if (isSnapshot) {
+        logger.warn("$POM_NAME: '$version' is a snapshot version; artifacts will not be signed")
+      } else {
+        logger.info("$POM_NAME: '$version' is a release version; artifacts will be signed")
+      }
+      return !isSnapshot
+    }
+  }
+
+  repositories {
+    mavenLocal()
+    mavenCentral()
+
+    if (useNYPLNexusDepend) {
+      maven {
+        credentials {
+          username findProperty("org.librarysimplified.nexus.username")
+          password findProperty("org.librarysimplified.nexus.password")
+        }
+        url "https://nexus.librarysimplified.org:8443/nexus/content/groups/external/"
+      }
+    }
+
+    maven { url "https://jitpack.io" }
+    jcenter()
+    google()
+  }
+}

@@ -1,0 +1,5 @@
+dependencies {
+  api libraries.googleGuava
+  api libraries.kotlinStdlib
+  api libraries.rxjava2
+}

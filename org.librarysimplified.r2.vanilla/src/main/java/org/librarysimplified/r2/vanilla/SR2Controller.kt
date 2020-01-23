@@ -190,26 +190,25 @@ class SR2Controller private constructor(
     this.openChapterIndex(this.currentChapterIndex + 1, atEnd = false)
   }
 
-  private fun executeCommandOpenPagePrevious() {
+  private fun executeWithWebView(
+    exec: (SR2WebViewConnection) -> Unit
+  ) {
     val webViewRef =
       synchronized(this.webViewConnectionLock) { this.webViewConnection }
 
     if (webViewRef != null) {
-      this.configuration.uiExecutor.invoke { webViewRef.jsAPI.openPagePrevious() }
+      this.configuration.uiExecutor.invoke { exec.invoke(webViewRef) }
     } else {
       this.eventSubject.onNext(SR2WebViewInaccessible("No web view is connected"))
     }
   }
 
-  private fun executeCommandOpenPageNext() {
-    val webViewRef =
-      synchronized(this.webViewConnectionLock) { this.webViewConnection }
+  private fun executeCommandOpenPagePrevious() {
+    this.executeWithWebView { webViewConnection -> webViewConnection.jsAPI.openPagePrevious() }
+  }
 
-    if (webViewRef != null) {
-      this.configuration.uiExecutor.invoke { webViewRef.jsAPI.openPageNext() }
-    } else {
-      this.eventSubject.onNext(SR2WebViewInaccessible("No web view is connected"))
-    }
+  private fun executeCommandOpenPageNext() {
+    this.executeWithWebView { webViewConnection -> webViewConnection.jsAPI.openPageNext() }
   }
 
   private fun executeCommandOpenChapter(command: SR2Command.OpenChapter) {
@@ -247,17 +246,10 @@ class SR2Controller private constructor(
     location: String,
     onLoad: (SR2WebViewConnection) -> Unit
   ) {
-    val webViewRef =
-      synchronized(this.webViewConnectionLock) { this.webViewConnection }
-
-    if (webViewRef != null) {
-      this.configuration.uiExecutor.invoke {
-        webViewRef.openURL(location) {
-          onLoad.invoke(webViewRef)
-        }
+    this.executeWithWebView { webViewConnection ->
+      webViewConnection.openURL(location) {
+        onLoad.invoke(webViewConnection)
       }
-    } else {
-      this.eventSubject.onNext(SR2WebViewInaccessible("No web view is connected"))
     }
   }
 
@@ -286,10 +278,12 @@ class SR2Controller private constructor(
        * Publish a reading position event.
        */
 
-      this@SR2Controller.eventSubject.onNext(SR2Event.SR2ReadingPositionChanged(
-        chapterIndex = this@SR2Controller.currentChapterIndex,
-        progress = position
-      ))
+      this@SR2Controller.eventSubject.onNext(
+        SR2Event.SR2ReadingPositionChanged(
+          chapterIndex = this@SR2Controller.currentChapterIndex,
+          progress = position
+        )
+      )
     }
 
     @android.webkit.JavascriptInterface

@@ -7,6 +7,8 @@ import org.librarysimplified.r2.api.SR2Command
 import org.librarysimplified.r2.api.SR2ControllerConfiguration
 import org.librarysimplified.r2.api.SR2ControllerType
 import org.librarysimplified.r2.api.SR2Event
+import org.librarysimplified.r2.api.SR2Event.SR2Error.SR2ChapterNonexistent
+import org.librarysimplified.r2.api.SR2Event.SR2Error.SR2WebViewInaccessible
 import org.readium.r2.shared.Publication
 import org.readium.r2.streamer.container.Container
 import org.readium.r2.streamer.parser.EpubParser
@@ -14,6 +16,7 @@ import org.readium.r2.streamer.server.Server
 import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.net.ServerSocket
+import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.annotation.concurrent.GuardedBy
 
@@ -22,6 +25,7 @@ import javax.annotation.concurrent.GuardedBy
  */
 
 class SR2Controller private constructor(
+  private val configuration: SR2ControllerConfiguration,
   private val port: Int,
   private val server: Server,
   private val publication: Publication,
@@ -99,45 +103,241 @@ class SR2Controller private constructor(
 
       this.logger.debug("server ready")
       return SR2Controller(
-        port = port,
-        server = server,
+        configuration = configuration,
+        container = box.container,
         epubFileName = epubName,
+        port = port,
         publication = box.publication,
-        container = box.container
+        server = server
       )
     }
   }
 
-  private val logger = LoggerFactory.getLogger(SR2Controller::class.java)
+  private val logger =
+    LoggerFactory.getLogger(SR2Controller::class.java)
+
+  /*
+   * A single threaded command executor. The purpose of this executor is to accept
+   * commands from multiple threads and ensure that the commands are executed serially.
+   */
+
+  private val queueExecutor =
+    Executors.newSingleThreadExecutor { runnable ->
+      val thread = Thread(runnable)
+      thread.name = "org.librarysimplified.r2.vanilla.commandQueue"
+      thread
+    }
+
   private val closed = AtomicBoolean(false)
 
-  private val webViewLock = Any()
-  @GuardedBy("webViewLock")
-  private var webView: WebViewReference? = null
+  private val webViewConnectionLock = Any()
+  @GuardedBy("webViewConnectionLock")
+  private var webViewConnection: SR2WebViewConnection? = null
 
-  private data class WebViewReference(
-    val webView: WebView
-  )
+  @Volatile
+  private var currentChapterIndex = 0
 
   private val eventSubject: PublishSubject<SR2Event> =
     PublishSubject.create()
 
+  private fun locationOfSpineItem(
+    index: Int
+  ): String {
+    require(index < this.publication.readingOrder.size) {
+      "Only indices in the range [0, ${this.publication.readingOrder.size}) are valid"
+    }
+
+    return buildString {
+      this.append("http://127.0.0.1:")
+      this.append(this@SR2Controller.port)
+      this.append(this@SR2Controller.epubFileName)
+
+      val publication = this@SR2Controller.publication
+      this.append(
+        publication.readingOrder[index].href
+          ?: throw IllegalStateException("Link to chapter $index is not present")
+      )
+    }
+  }
+
+  private fun setCurrentChapter(index: Int) {
+    this.logger.debug("current chapter: {}", index)
+    this.currentChapterIndex = index
+  }
+
+  private fun executeCommand(command: SR2Command) {
+    this.logger.debug("executing {}", command)
+
+    return when (command) {
+      is SR2Command.OpenChapter ->
+        this.executeCommandOpenChapter(command)
+      SR2Command.OpenPageNext ->
+        this.executeCommandOpenPageNext()
+      SR2Command.OpenChapterNext ->
+        this.executeCommandOpenChapterNext()
+      SR2Command.OpenPagePrevious ->
+        this.executeCommandOpenPagePrevious()
+      is SR2Command.OpenChapterPrevious ->
+        this.executeCommandOpenChapterPrevious(command)
+    }
+  }
+
+  private fun executeCommandOpenChapterPrevious(command: SR2Command.OpenChapterPrevious) {
+    this.openChapterIndex(Math.max(0, this.currentChapterIndex - 1), atEnd = true)
+  }
+
+  private fun executeCommandOpenChapterNext() {
+    this.openChapterIndex(this.currentChapterIndex + 1, atEnd = false)
+  }
+
+  private fun executeCommandOpenPagePrevious() {
+    val webViewRef =
+      synchronized(this.webViewConnectionLock) { this.webViewConnection }
+
+    if (webViewRef != null) {
+      this.configuration.uiExecutor.invoke { webViewRef.jsAPI.openPagePrevious() }
+    } else {
+      this.eventSubject.onNext(SR2WebViewInaccessible("No web view is connected"))
+    }
+  }
+
+  private fun executeCommandOpenPageNext() {
+    val webViewRef =
+      synchronized(this.webViewConnectionLock) { this.webViewConnection }
+
+    if (webViewRef != null) {
+      this.configuration.uiExecutor.invoke { webViewRef.jsAPI.openPageNext() }
+    } else {
+      this.eventSubject.onNext(SR2WebViewInaccessible("No web view is connected"))
+    }
+  }
+
+  private fun executeCommandOpenChapter(command: SR2Command.OpenChapter) {
+    this.openChapterIndex(command.chapterIndex, atEnd = false)
+  }
+
+  private fun openChapterIndex(
+    targetIndex: Int,
+    atEnd: Boolean
+  ) {
+    try {
+      val location = this.locationOfSpineItem(targetIndex)
+      this.logger.debug("opening location {}", location)
+      this.openURL(
+        location = location,
+        onLoad = { webViewConnection ->
+          if (atEnd) {
+            webViewConnection.jsAPI.openPageLast()
+          }
+        }
+      )
+      this.setCurrentChapter(targetIndex)
+    } catch (e: Exception) {
+      this.logger.error("unable to open chapter $targetIndex: ", e)
+      this.eventSubject.onNext(
+        SR2ChapterNonexistent(
+          chapterIndex = targetIndex,
+          message = e.message ?: "Unable to open chapter $targetIndex"
+        )
+      )
+    }
+  }
+
+  private fun openURL(
+    location: String,
+    onLoad: (SR2WebViewConnection) -> Unit
+  ) {
+    val webViewRef =
+      synchronized(this.webViewConnectionLock) { this.webViewConnection }
+
+    if (webViewRef != null) {
+      this.configuration.uiExecutor.invoke {
+        webViewRef.openURL(location) {
+          onLoad.invoke(webViewRef)
+        }
+      }
+    } else {
+      this.eventSubject.onNext(SR2WebViewInaccessible("No web view is connected"))
+    }
+  }
+
+  /**
+   * A receiver that accepts calls from the Javascript code running inside the current
+   * WebView.
+   */
+
+  private inner class JavascriptAPIReceiver : SR2JavascriptAPIReceiverType {
+
+    private val logger =
+      LoggerFactory.getLogger(JavascriptAPIReceiver::class.java)
+
+    @android.webkit.JavascriptInterface
+    override fun onChapterProgressionChanged(positionString: String) {
+      this.logger.debug("onChapterProgressionChanged: {}", positionString)
+
+      val position = try {
+        java.lang.Double.parseDouble(positionString)
+      } catch (e: Exception) {
+        this.logger.error("onChapterProgressionChanged: unable to parse progress value: ", e)
+        0.0
+      }
+
+      /*
+       * Publish a reading position event.
+       */
+
+      this@SR2Controller.eventSubject.onNext(SR2Event.SR2ReadingPositionChanged(
+        chapterIndex = this@SR2Controller.currentChapterIndex,
+        progress = position
+      ))
+    }
+
+    @android.webkit.JavascriptInterface
+    override fun onCenterTapped() {
+      this.logger.debug("onCenterTapped")
+    }
+
+    @android.webkit.JavascriptInterface
+    override fun onClicked() {
+      this.logger.debug("onClicked")
+    }
+
+    @android.webkit.JavascriptInterface
+    override fun onLeftTapped() {
+      this.logger.debug("onLeftTapped")
+      this@SR2Controller.submitCommand(SR2Command.OpenPagePrevious)
+    }
+
+    @android.webkit.JavascriptInterface
+    override fun onRightTapped() {
+      this.logger.debug("onRightTapped")
+      this@SR2Controller.submitCommand(SR2Command.OpenPageNext)
+    }
+  }
+
   override val events: Observable<SR2Event> =
     this.eventSubject
 
-  override fun execute(command: SR2Command) {
-    TODO()
+  override fun submitCommand(command: SR2Command) {
+    this.logger.debug("submitCommand {}", command)
+    this.queueExecutor.execute {
+      this.executeCommand(command)
+    }
   }
 
   override fun viewConnect(webView: WebView) {
-    synchronized(this.webViewLock) {
-      this.webView = WebViewReference(webView)
+    synchronized(this.webViewConnectionLock) {
+      this.webViewConnection = SR2WebViewConnection.create(
+        webView = webView,
+        jsReceiver = this.JavascriptAPIReceiver(),
+        commandQueue = this
+      )
     }
   }
 
   override fun viewDisconnect() {
-    synchronized(this.webViewLock) {
-      this.webView = null
+    synchronized(this.webViewConnectionLock) {
+      this.webViewConnection = null
     }
   }
 
@@ -159,6 +359,12 @@ class SR2Controller private constructor(
         this.server.stop()
       } catch (e: Exception) {
         this.logger.error("could not stop server: ", e)
+      }
+
+      try {
+        this.queueExecutor.shutdown()
+      } catch (e: Exception) {
+        this.logger.error("could not stop command queue: ", e)
       }
 
       try {

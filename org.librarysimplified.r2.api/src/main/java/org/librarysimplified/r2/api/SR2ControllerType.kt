@@ -16,19 +16,13 @@ import java.io.Closeable
  * a controller is created when a book is opened, and closed when the book is closed.
  */
 
-interface SR2ControllerType : Closeable {
+interface SR2ControllerType : Closeable, SR2ControllerCommandQueueType {
 
   /**
    * An observable stream of events relating to the currently open controller.
    */
 
   val events: Observable<SR2Event>
-
-  /**
-   * Execute a command asynchronously.
-   */
-
-  fun execute(command: SR2Command)
 
   /**
    * Connect a [WebView] to the controller.

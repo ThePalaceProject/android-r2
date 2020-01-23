@@ -19,7 +19,7 @@ sealed class SR2Event {
     data class SR2ChapterNonexistent(
       val chapterIndex: Int,
       val message: String
-    ): SR2Error()
+    ) : SR2Error()
 
     /**
      * An attempt was made to execute a command that requires access to a [WebView],
@@ -28,6 +28,15 @@ sealed class SR2Event {
 
     data class SR2WebViewInaccessible(
       val message: String
-    ): SR2Error()
+    ) : SR2Error()
   }
+
+  /**
+   * The current reading position changed.
+   */
+
+  data class SR2ReadingPositionChanged(
+    val chapterIndex: Int,
+    val progress: Double
+  ) : SR2Event()
 }

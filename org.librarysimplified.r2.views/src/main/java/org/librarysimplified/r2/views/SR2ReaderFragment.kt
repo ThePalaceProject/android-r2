@@ -14,6 +14,7 @@ import com.google.common.base.Function
 import com.google.common.util.concurrent.FluentFuture
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
+import org.librarysimplified.r2.api.SR2Command
 import org.librarysimplified.r2.api.SR2ControllerConfiguration
 import org.librarysimplified.r2.api.SR2ControllerType
 import org.slf4j.LoggerFactory

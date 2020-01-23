@@ -5,6 +5,7 @@ dependencies {
   api libraries.r2Shared
   api libraries.r2Streamer
 
+  implementation libraries.androidXAnnotation
   implementation libraries.slf4j
 
   api project(":org.librarysimplified.r2.api")

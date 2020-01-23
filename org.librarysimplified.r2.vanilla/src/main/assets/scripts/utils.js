@@ -1,3 +1,6 @@
+/* global Android */
+"use strict";
+
 // Notify native code that the page has loaded.
 window.addEventListener("load", function() { // on page load
     // Notify native code that the page is loaded.
@@ -14,15 +17,15 @@ var ticking = false;
 
 // Position in range [0 - 1].
 var update = function(position) {
-    let positionString = position.toString()
+    let positionString = position.toString();
     Android.onChapterProgressionChanged(positionString);
 };
 
 function isScrollModeEnabled() {
-    return document.documentElement.style.getPropertyValue("--USER__scroll").toString().trim() == 'readium-scroll-on';
+    return document.documentElement.style.getPropertyValue("--USER__scroll").toString().trim() == "readium-scroll-on";
 }
 
-window.addEventListener('scroll', function(e) {
+window.addEventListener("scroll", function() {
     last_known_scrollY_position = window.scrollY / document.scrollingElement.scrollHeight;
     last_known_scrollX_position = Math.abs(window.scrollX / document.scrollingElement.scrollWidth);
     console.log("last_known_scrollX_position " + last_known_scrollX_position);
@@ -36,13 +39,6 @@ window.addEventListener('scroll', function(e) {
     ticking = true;
 });
 
-var uScrollWidth = function() {
-    return document.scrollingElement.scrollWidth
-};
-var uScrollX = function() {
-    return window.scrollX
-};
-
 var scrollToPage = function(page) {
     console.log("scrollToPage " + page);
 
@@ -52,13 +48,13 @@ var scrollToPage = function(page) {
     last_known_scrollX_position = window.scrollX / document.scrollingElement.scrollWidth;
     update(last_known_scrollX_position);
 
-    return document.scrollingElement.scrollLeft
+    return document.scrollingElement.scrollLeft;
 };
 
 // Scroll to the given TagId in document and snap.
 var scrollToId = function(id) {
     var element = document.getElementById(id);
-    var elementOffset = element.scrollLeft // element.getBoundingClientRect().left works for Gutenbergs books
+    var elementOffset = element.scrollLeft; // element.getBoundingClientRect().left works for Gutenbergs books
     var offset = Math.round(window.scrollX + elementOffset);
 
     document.scrollingElement.scrollLeft = snapOffset(offset);
@@ -108,7 +104,7 @@ var scrollToPosition = function(position, dir) {
 
     if (!isScrollModeEnabled()) {
         var offset = 0;
-        if (dir == 'rtl') {
+        if (dir == "rtl") {
             offset = (-document.scrollingElement.scrollWidth + window.innerWidth) * (1.0 - position);
         } else {
             offset = document.scrollingElement.scrollWidth * position;
@@ -152,7 +148,7 @@ var scrollLeftRTL = function() {
     } else {
         // Scrolled and zoomed
         if (offset > edge) {
-            document.scrollingElement.scrollLeft = snapOffset(offset)
+            document.scrollingElement.scrollLeft = snapOffset(offset);
             return 0;
         } else {
             var oldOffset = window.scrollX;
@@ -177,7 +173,7 @@ var scrollRight = function() {
         console.log("offset < scrollWidth");
 
         document.scrollingElement.scrollLeft = snapOffset(offset);
-        var newScrollPos = window.scrollX / document.scrollingElement.scrollWidth
+        var newScrollPos = window.scrollX / document.scrollingElement.scrollWidth;
         if ((newScrollPos - last_known_scrollX_position) > 0.001) {
             last_known_scrollX_position = window.scrollX / document.scrollingElement.scrollWidth;
             update(last_known_scrollX_position);
@@ -210,7 +206,7 @@ var scrollRightRTL = function() {
     } else {
         // Scrolled and zoomed
         if (offset < edge) {
-            document.scrollingElement.scrollLeft = snapOffset(offset)
+            document.scrollingElement.scrollLeft = snapOffset(offset);
             return 0;
         } else {
             var oldOffset = window.scrollX;
@@ -231,20 +227,4 @@ var snapOffset = function(offset) {
     var value = offset + 1;
 
     return value - (value % window.innerWidth);
-};
-
-/// User Settings.
-
-// For setting user setting.
-var setProperty = function(key, value) {
-    var root = document.documentElement;
-
-    root.style.setProperty(key, value);
-};
-
-// For removing user setting.
-var removeProperty = function(key) {
-    var root = document.documentElement;
-
-    root.style.removeProperty(key);
 };

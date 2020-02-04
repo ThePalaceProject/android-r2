@@ -4,6 +4,11 @@ import android.webkit.WebView
 import androidx.annotation.UiThread
 import org.librarysimplified.r2.api.SR2Command
 import org.librarysimplified.r2.api.SR2ControllerCommandQueueType
+import org.librarysimplified.r2.vanilla.ReaderTheme.DARK
+import org.librarysimplified.r2.vanilla.ReaderTheme.DAY
+import org.librarysimplified.r2.vanilla.ReaderTheme.LIGHT
+import org.librarysimplified.r2.vanilla.ReaderTheme.NIGHT
+import org.librarysimplified.r2.vanilla.ReaderTheme.SEPIA
 import org.slf4j.LoggerFactory
 
 /**
@@ -87,6 +92,20 @@ internal class SR2JavascriptAPI(
 
   override fun setWordSpacing(value: Double) {
     setUserProperty("wordSpacing", "${value}rem")
+  }
+
+  override fun setTheme(value: ReaderTheme) {
+    when (value) {
+      LIGHT, DAY -> {
+        setUserProperty("appearance", "readium-default-on")
+      }
+      DARK, NIGHT -> {
+        setUserProperty("appearance", "readium-night-on")
+      }
+      SEPIA -> {
+        setUserProperty("appearance", "readium-sepia-on")
+      }
+    }
   }
 
   @UiThread

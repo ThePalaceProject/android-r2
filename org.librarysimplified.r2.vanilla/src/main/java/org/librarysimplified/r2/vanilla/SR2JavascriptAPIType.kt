@@ -43,4 +43,7 @@ interface SR2JavascriptAPIType {
 
   @UiThread
   fun setWordSpacing(value: Double)
+
+  @UiThread
+  fun setTheme(value: ReaderTheme)
 }

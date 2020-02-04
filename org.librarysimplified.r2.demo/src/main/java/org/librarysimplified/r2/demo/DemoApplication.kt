@@ -1,8 +1,10 @@
 package org.librarysimplified.r2.demo
 
+import android.webkit.WebView
 import androidx.multidex.MultiDexApplication
 import ch.qos.logback.classic.LoggerContext
 import ch.qos.logback.core.rolling.RollingFileAppender
+import org.librarysimplified.r2.vanilla.BuildConfig
 import org.slf4j.LoggerFactory
 import java.io.File
 
@@ -24,6 +26,9 @@ class DemoApplication : MultiDexApplication() {
     this.configureLogging()
     this.logger.debug("starting app: pid {}", android.os.Process.myPid())
     INSTANCE = this
+
+    // Enable remote debugging of the web view.
+    WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG)
   }
 
   /**

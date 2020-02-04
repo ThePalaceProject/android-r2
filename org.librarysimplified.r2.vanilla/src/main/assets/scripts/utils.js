@@ -228,3 +228,19 @@ var snapOffset = function(offset) {
 
     return value - (value % window.innerWidth);
 };
+
+/// User Settings.
+
+// For setting user setting.
+var setProperty = function(key, value) {
+    var root = document.documentElement;
+
+    root.style.setProperty(key, value);
+};
+
+// For removing user setting.
+var removeProperty = function(key) {
+    var root = document.documentElement;
+
+    root.style.removeProperty(key);
+};

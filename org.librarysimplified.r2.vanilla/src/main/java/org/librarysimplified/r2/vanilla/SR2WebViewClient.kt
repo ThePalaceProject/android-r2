@@ -18,11 +18,33 @@ import java.util.concurrent.ConcurrentHashMap
 
 class SR2WebViewClient : WebViewClient() {
 
+  companion object {
+    val emptyResponse = WebResourceResponse(
+      "text/plain",
+      "utf-8",
+      404,
+      "Not Found",
+      null,
+      null
+    )
+  }
+
   private val logger =
     LoggerFactory.getLogger(SR2WebViewClient::class.java)
 
   private val onLoadHandlers =
     ConcurrentHashMap<String, Queue<() -> Unit>>()
+
+  override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
+    if (request != null) {
+      val url = request.url?.toString() ?: ""
+
+      if (url.endsWith("favicon.ico")) {
+        return emptyResponse
+      }
+    }
+    return super.shouldInterceptRequest(view, request)
+  }
 
   override fun onLoadResource(
     view: WebView,

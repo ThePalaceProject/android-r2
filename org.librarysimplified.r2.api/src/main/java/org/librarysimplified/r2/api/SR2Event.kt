@@ -32,6 +32,13 @@ sealed class SR2Event {
   }
 
   /**
+   * The center of the webview was tapped. Implementors may want to show reader
+   * controls as a result of this event.
+   */
+
+  class SR2OnCenterTapped : SR2Event()
+
+  /**
    * The current reading position changed.
    */
 

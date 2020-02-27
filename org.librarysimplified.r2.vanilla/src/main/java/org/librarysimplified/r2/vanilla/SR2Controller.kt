@@ -289,6 +289,9 @@ class SR2Controller private constructor(
     @android.webkit.JavascriptInterface
     override fun onCenterTapped() {
       this.logger.debug("onCenterTapped")
+      this@SR2Controller.eventSubject.onNext(
+        SR2Event.SR2OnCenterTapped()
+      )
     }
 
     @android.webkit.JavascriptInterface

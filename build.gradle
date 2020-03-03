@@ -87,7 +87,6 @@ ext.libraries = [
   androidXTestOrchestrator: "androidx.test:orchestrator:1.1.0",
   androidXTestRules       : "androidx.test:rules:1.1.0",
   androidXTestRunner      : "androidx.test:runner:1.1.0",
-  fileChooser             : "com.github.iammohdzaki:KnotFileChooser-Android:1.0.1",
   googleGuava             : "com.google.guava:guava:23.6.1-android",
   kotlinStdlib            : "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version",
   logbackAndroidClassic   : "com.github.tony19:logback-android-classic:1.1.1-6",

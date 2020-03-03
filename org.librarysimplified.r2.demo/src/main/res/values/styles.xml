@@ -7,33 +7,13 @@
   <color name="demoColorDisabled">#dddddd</color>
   <color name="demoColorBackground">#ffffff</color>
 
-  <style name="DemoTheme" parent="Theme.AppCompat.Light.NoActionBar">
+  <style name="DemoTheme" parent="Theme.AppCompat.Light.DarkActionBar">
     <item name="colorPrimary">@color/demoColorPrimary</item>
     <item name="colorPrimaryDark">@color/demoColorPrimaryDark</item>
     <item name="colorAccent">@color/demoColorPrimaryLight</item>
     <item name="android:colorPrimary">@color/demoColorPrimary</item>
     <item name="android:colorPrimaryDark">@color/demoColorPrimaryDark</item>
     <item name="android:colorAccent">@color/demoColorPrimaryLight</item>
-    <item name="windowActionBar">false</item>
-    <item name="windowNoTitle">true</item>
-
-    <item name="kfc_theme_background">@color/demoColorBackground</item>
-    <item name="kfc_theme_foreground">@color/demoColorPrimary</item>
-    <item name="kfc_theme_title">@color/demoColorPrimaryLight</item>
-    <item name="kfc_theme_breadcrumb">@android:color/black</item>
-    <item name="kfc_theme_toolbox">@color/demoColorPrimary</item>
-    <item name="kfc_theme_search_text">@color/demoColorPrimaryLight</item>
-    <item name="kfc_theme_search_hint">@color/demoColorPrimaryLight</item>
-    <item name="kfc_theme_status">@color/demoColorPrimary</item>
-    <item name="kfc_theme_file_icon">@color/demoColorPrimary</item>
-    <item name="kfc_theme_file_name">@color/demoColorPrimary</item>
-    <item name="kfc_theme_file_information">@color/demoColorPrimary</item>
-    <item name="kfc_theme_file_flag">@color/demoColorPrimary</item>
-    <item name="kfc_theme_file_asterisk">@color/demoColorPrimary</item>
-    <item name="kfc_theme_checkbox">@color/demoColorPrimary</item>
-    <item name="kfc_theme_cancel_button">@color/demoColorPrimary</item>
-    <item name="kfc_theme_ok_button">@color/demoColorPrimary</item>
-    <item name="kfc_theme_create_folder_button">@color/demoColorPrimary</item>
   </style>
 
   <style name="DemoToolbarStyle" parent="Widget.AppCompat.Toolbar">
@@ -50,5 +30,4 @@
     <item name="android:textColor">#ffffff</item>
     <item name="android:textSize">11sp</item>
   </style>
-
 </resources>

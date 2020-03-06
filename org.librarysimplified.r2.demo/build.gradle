@@ -1,9 +1,8 @@
 dependencies {
   api libraries.androidXMultidex
-  api libraries.fileChooser
   api libraries.kotlinStdlib
-  api libraries.slf4j
 
+  api libraries.slf4j
   api libraries.logbackAndroidCore
   api(libraries.logbackAndroidClassic) {
     // https://github.com/tony19/logback-android/issues/73

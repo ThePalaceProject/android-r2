@@ -39,7 +39,6 @@ sealed class SR2Event {
   class SR2OnCenterTapped : SR2Event()
 
   /**
-   * The current reading position changed.
    * The reading position changed.
    *
    * @param chapterIndex

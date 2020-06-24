@@ -19,6 +19,12 @@ import java.io.Closeable
 interface SR2ControllerType : Closeable, SR2ControllerCommandQueueType {
 
   /**
+   * Information on the opened book.
+   */
+
+  val bookInfo: SR2BookInfo
+
+  /**
    * An observable stream of events relating to the currently open controller.
    */
 

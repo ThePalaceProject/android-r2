@@ -8,17 +8,23 @@ import androidx.annotation.UiThread
 
 interface SR2JavascriptAPIType {
 
-  /** Open the next page in the current chapter. */
+  /**
+   * Open the next page in the current chapter.
+   */
 
   @UiThread
   fun openPageNext()
 
-  /** Open the previous page in the current chapter. */
+  /**
+   * Open the previous page in the current chapter.
+   */
 
   @UiThread
   fun openPagePrevious()
 
-  /**  Open the final page in the current chapter. */
+  /**
+   * Open the final page in the current chapter.
+   */
 
   @UiThread
   fun openPageLast()
@@ -46,4 +52,7 @@ interface SR2JavascriptAPIType {
 
   @UiThread
   fun setTheme(value: ReaderTheme)
+
+  @UiThread
+  fun setProgression(progress: Double)
 }

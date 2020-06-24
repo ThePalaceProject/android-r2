@@ -4,6 +4,7 @@ import android.webkit.WebView
 import androidx.annotation.IntRange
 import io.reactivex.Observable
 import io.reactivex.subjects.PublishSubject
+import org.librarysimplified.r2.api.SR2BookInfo
 import org.librarysimplified.r2.api.SR2Command
 import org.librarysimplified.r2.api.SR2ControllerConfiguration
 import org.librarysimplified.r2.api.SR2ControllerType
@@ -188,11 +189,17 @@ class SR2Controller private constructor(
   }
 
   private fun executeCommandOpenChapterPrevious(command: SR2Command.OpenChapterPrevious) {
-    this.openChapterIndex(Math.max(0, this.currentChapterIndex - 1), atEnd = true)
+    this.openChapterIndex(
+      targetIndex = Math.max(0, this.currentChapterIndex - 1),
+      position = RequestedChapterPosition.ChapterEnd
+    )
   }
 
   private fun executeCommandOpenChapterNext() {
-    this.openChapterIndex(this.currentChapterIndex + 1, atEnd = false)
+    this.openChapterIndex(
+      targetIndex = this.currentChapterIndex + 1,
+      position = RequestedChapterPosition.ChapterPosition(0.0)
+    )
   }
 
   private fun executeWithWebView(
@@ -217,12 +224,23 @@ class SR2Controller private constructor(
   }
 
   private fun executeCommandOpenChapter(command: SR2Command.OpenChapter) {
-    this.openChapterIndex(command.chapterIndex, atEnd = false)
+    this.openChapterIndex(
+      targetIndex = command.chapterIndex,
+      position = RequestedChapterPosition.ChapterPosition(command.chapterProgress)
+    )
+  }
+
+  private sealed class RequestedChapterPosition {
+    data class ChapterPosition(
+      val progress: Double
+    ) : RequestedChapterPosition()
+
+    object ChapterEnd : RequestedChapterPosition()
   }
 
   private fun openChapterIndex(
     targetIndex: Int,
-    atEnd: Boolean
+    position: RequestedChapterPosition
   ) {
     val previousIndex = this.currentChapterIndex
 
@@ -240,8 +258,13 @@ class SR2Controller private constructor(
       this.openURL(
         location = location,
         onLoad = { webViewConnection ->
-          if (atEnd) {
-            webViewConnection.jsAPI.openPageLast()
+          when (position) {
+            is RequestedChapterPosition.ChapterPosition -> {
+              webViewConnection.jsAPI.setProgression(position.progress)
+            }
+            RequestedChapterPosition.ChapterEnd -> {
+              webViewConnection.jsAPI.openPageLast()
+            }
           }
         }
       )
@@ -311,7 +334,10 @@ class SR2Controller private constructor(
       LoggerFactory.getLogger(JavascriptAPIReceiver::class.java)
 
     @android.webkit.JavascriptInterface
-    override fun onReadingPositionChanged(currentPage: Int, pageCount: Int) {
+    override fun onReadingPositionChanged(
+      currentPage: Int,
+      pageCount: Int
+    ) {
       val chapterIndex = this@SR2Controller.currentChapterIndex
       val chapterProgress = currentPage.toDouble() / pageCount.toDouble()
 
@@ -326,6 +352,7 @@ class SR2Controller private constructor(
         SR2Event.SR2ReadingPositionChanged(
           chapterIndex = chapterIndex,
           chapterTitle = getChapterTitle(),
+          chapterProgress = chapterProgress,
           currentPage = currentPage,
           pageCount = pageCount,
           percent = getPercentComplete(chapterProgress)
@@ -336,9 +363,7 @@ class SR2Controller private constructor(
     @android.webkit.JavascriptInterface
     override fun onCenterTapped() {
       this.logger.debug("onCenterTapped")
-      this@SR2Controller.eventSubject.onNext(
-        SR2Event.SR2OnCenterTapped()
-      )
+      this@SR2Controller.eventSubject.onNext(SR2Event.SR2OnCenterTapped())
     }
 
     @android.webkit.JavascriptInterface
@@ -358,6 +383,10 @@ class SR2Controller private constructor(
       this@SR2Controller.submitCommand(SR2Command.OpenPageNext)
     }
   }
+
+  override val bookInfo: SR2BookInfo =
+    SR2BookInfo(
+      id = this.publication.metadata.identifier)
 
   override val events: Observable<SR2Event> =
     this.eventSubject

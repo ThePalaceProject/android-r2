@@ -51,27 +51,31 @@ class DemoActivity : AppCompatActivity(), SR2ControllerHostType {
     super.onCreate(savedInstanceState)
 
     if (savedInstanceState == null) {
-      setContentView(R.layout.demo_activity)
+      this.setContentView(R.layout.demo_activity)
 
-      val browseButton = findViewById<Button>(R.id.browse_button)!!
-      browseButton.setOnClickListener { startDocumentPickerForResult() }
+      val browseButton = this.findViewById<Button>(R.id.browse_button)!!
+      browseButton.setOnClickListener { this.startDocumentPickerForResult() }
     }
   }
 
-  override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+  override fun onActivityResult(
+    requestCode: Int,
+    resultCode: Int,
+    data: Intent?
+  ) {
     when (requestCode) {
-      PICK_DOCUMENT -> onPickDocumentResult(resultCode, data)
+      PICK_DOCUMENT -> this.onPickDocumentResult(resultCode, data)
     }
   }
 
   override fun onResume() {
     super.onResume()
-    epubFile?.let { startReader(it) }
+    this.epubFile?.let { this.startReader(it) }
   }
 
   override fun onStop() {
     super.onStop()
-    controllerSubscription?.dispose()
+    this.controllerSubscription?.dispose()
   }
 
   override fun onControllerRequired(): SR2ControllerProviderType {
@@ -82,15 +86,17 @@ class DemoActivity : AppCompatActivity(), SR2ControllerHostType {
     this.controller = controller
 
     // Listen for messages from the controller.
-    controllerSubscription =
-      controller.events.subscribe { event -> onControllerEvent(event) }
+    this.controllerSubscription =
+      controller.events.subscribe { event -> this.onControllerEvent(event) }
 
     // Navigate to the first chapter or saved reading position.
-    controller.submitCommand(SR2Command.OpenChapter(0))
+    val database = DemoApplication.application.database()
+    val lastRead = database.lastReadingPosition(controller.bookInfo.id)
+    controller.submitCommand(SR2Command.OpenChapter(lastRead.chapterIndex, lastRead.progress))
   }
 
   override fun onControllerWantsIOExecutor(): ListeningExecutorService {
-    return ioExecutor
+    return this.ioExecutor
   }
 
   override fun onNavigationClose() {
@@ -113,7 +119,7 @@ class DemoActivity : AppCompatActivity(), SR2ControllerHostType {
         )
       )
 
-    supportFragmentManager.beginTransaction()
+    this.supportFragmentManager.beginTransaction()
       .replace(R.id.readerContainer, fragment)
       .commit()
   }
@@ -126,27 +132,38 @@ class DemoActivity : AppCompatActivity(), SR2ControllerHostType {
     when (event) {
       is SR2Event.SR2Error.SR2ChapterNonexistent -> {
         UIThread.runOnUIThread {
-          Toast.makeText(this, "Chapter nonexistent: ${event.chapterIndex}", Toast.LENGTH_SHORT)
-            .show()
+          Toast.makeText(
+            this,
+            "Chapter nonexistent: ${event.chapterIndex}",
+            Toast.LENGTH_SHORT
+          ).show()
         }
       }
       is SR2Event.SR2Error.SR2WebViewInaccessible -> {
         UIThread.runOnUIThread {
-          Toast.makeText(this, "Web view inaccessible!", Toast.LENGTH_SHORT).show()
+          Toast.makeText(
+            this,
+            "Web view inaccessible!",
+            Toast.LENGTH_SHORT
+          ).show()
         }
       }
       is SR2Event.SR2OnCenterTapped -> {
         UIThread.runOnUIThread {
-          Toast.makeText(this, "Center tap!", Toast.LENGTH_SHORT).show()
+          Toast.makeText(
+            this,
+            "Center tap!",
+            Toast.LENGTH_SHORT
+          ).show()
         }
       }
       is SR2Event.SR2ReadingPositionChanged -> {
-        UIThread.runOnUIThread {
-          val percent = event.progress * 100.0
-          val percentText = String.format("%.2f", percent)
-          Toast.makeText(this, "Chapter ${event.chapterIndex}, $percentText%", Toast.LENGTH_SHORT)
-            .show()
-        }
+        val database = DemoApplication.application.database()
+        database.saveReadingPosition(
+          bookId = this.controller!!.bookInfo.id,
+          chapterIndex = event.chapterIndex,
+          progress = event.chapterProgress
+        )
       }
     }
   }
@@ -161,7 +178,7 @@ class DemoActivity : AppCompatActivity(), SR2ControllerHostType {
     if (resultCode == Activity.RESULT_OK) {
       intent?.data?.let { uri ->
         // This copy operation should be done on a worker thread; omitted for brevity.
-        epubFile = copyToStorage(uri)
+        this.epubFile = this.copyToStorage(uri)
       }
     }
   }
@@ -179,21 +196,21 @@ class DemoActivity : AppCompatActivity(), SR2ControllerHostType {
    */
 
   private fun copyToStorage(uri: Uri): File? {
-    val file = File(filesDir, "book.epub")
+    val file = File(this.filesDir, "book.epub")
     var ips: InputStream? = null
     var ops: OutputStream? = null
 
     try {
-      ips = contentResolver.openInputStream(uri)
+      ips = this.contentResolver.openInputStream(uri)
       ops = file.outputStream()
       ips.copyTo(ops)
       return file
     } catch (e: FileNotFoundException) {
-      logger.warn("File not found", e)
-      showError("File not found")
+      this.logger.warn("File not found", e)
+      this.showError("File not found")
     } catch (e: IOException) {
-      logger.warn("Error copying file", e)
-      showError("Error copying file")
+      this.logger.warn("Error copying file", e)
+      this.showError("Error copying file")
     } finally {
       ips?.close()
       ops?.close()
@@ -207,18 +224,18 @@ class DemoActivity : AppCompatActivity(), SR2ControllerHostType {
 
   private fun startDocumentPickerForResult() {
     val pickIntent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-      type = "*/*"
-      addCategory(Intent.CATEGORY_OPENABLE)
+      this.type = "*/*"
+      this.addCategory(Intent.CATEGORY_OPENABLE)
 
       // Filter by MIME type; Android versions prior to Marshmallow don't seem
       // to understand the 'application/epub+zip' MIME type.
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-        putExtra(
+        this.putExtra(
           Intent.EXTRA_MIME_TYPES,
           arrayOf("application/epub+zip")
         )
       }
     }
-    startActivityForResult(pickIntent, PICK_DOCUMENT)
+    this.startActivityForResult(pickIntent, PICK_DOCUMENT)
   }
 }

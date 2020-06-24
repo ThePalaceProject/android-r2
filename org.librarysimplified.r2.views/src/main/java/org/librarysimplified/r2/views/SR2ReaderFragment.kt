@@ -36,7 +36,7 @@ class SR2ReaderFragment : Fragment() {
       parameters: SR2ReaderFragmentParameters
     ): SR2ReaderFragment {
       val arguments = Bundle()
-      arguments.putSerializable(PARAMETERS_ID, parameters)
+      arguments.putSerializable(this.PARAMETERS_ID, parameters)
       val fragment = SR2ReaderFragment()
       fragment.arguments = arguments
       return fragment
@@ -60,7 +60,7 @@ class SR2ReaderFragment : Fragment() {
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
-    parameters = arguments!![PARAMETERS_ID] as SR2ReaderFragmentParameters
+    this.parameters = this.arguments!![PARAMETERS_ID] as SR2ReaderFragmentParameters
   }
 
   override fun onCreateView(
@@ -71,11 +71,11 @@ class SR2ReaderFragment : Fragment() {
     val view =
       inflater.inflate(R.layout.sr2_reader, container, false)
 
-    webView = view.findViewById(R.id.readerWebView)
-    progressView = view.findViewById(R.id.reader2_progress)
-    positionPageView = view.findViewById(R.id.reader2_position_page)
-    positionTitleView = view.findViewById(R.id.reader2_position_title)
-    positionPercentView = view.findViewById(R.id.reader2_position_percent)
+    this.webView = view.findViewById(R.id.readerWebView)
+    this.progressView = view.findViewById(R.id.reader2_progress)
+    this.positionPageView = view.findViewById(R.id.reader2_position_page)
+    this.positionTitleView = view.findViewById(R.id.reader2_position_title)
+    this.positionPercentView = view.findViewById(R.id.reader2_position_percent)
 
     return view
   }
@@ -83,9 +83,9 @@ class SR2ReaderFragment : Fragment() {
   override fun onStart() {
     super.onStart()
 
-    val activity = requireActivity()
-    controllerHost = activity as SR2ControllerHostType
-    readerModel =
+    val activity = this.requireActivity()
+    this.controllerHost = activity as SR2ControllerHostType
+    this.readerModel =
       ViewModelProviders.of(activity)
         .get(SR2ReaderViewModel::class.java)
 
@@ -94,56 +94,56 @@ class SR2ReaderFragment : Fragment() {
      */
 
     val controllerFuture: ListenableFuture<SR2ControllerType> =
-      readerModel.controllerFor(
+      this.readerModel.controllerFor(
         configuration = SR2ControllerConfiguration(
-          bookFile = parameters.bookFile,
+          bookFile = this.parameters.bookFile,
           context = activity,
-          ioExecutor = controllerHost.onControllerWantsIOExecutor(),
+          ioExecutor = this.controllerHost.onControllerWantsIOExecutor(),
           uiExecutor = this::runOnUIThread
         ),
-        controllers = controllerHost.onControllerRequired()
+        controllers = this.controllerHost.onControllerRequired()
       )
 
     FluentFuture.from(controllerFuture)
       .transform(
         Function<SR2ControllerType, Unit> { controller ->
-          onBookOpenSucceeded(controller!!)
+          this.onBookOpenSucceeded(controller!!)
         },
         MoreExecutors.directExecutor()
       )
       .catching(
         Throwable::class.java,
         Function<Throwable, Unit> { e ->
-          onBookOpenFailed(e!!)
+          this.onBookOpenFailed(e!!)
         }, MoreExecutors.directExecutor()
       )
   }
 
   override fun onStop() {
     super.onStop()
-    controllerSubscription?.dispose()
-    controller?.viewDisconnect()
+    this.controllerSubscription?.dispose()
+    this.controller?.viewDisconnect()
   }
 
   private fun onBookOpenSucceeded(controller: SR2ControllerType) {
-    logger.debug("onBookOpenSucceeded")
-    runOnUIThread { onBookOpenSucceededUI(controller) }
+    this.logger.debug("onBookOpenSucceeded")
+    this.runOnUIThread { this.onBookOpenSucceededUI(controller) }
   }
 
   @UiThread
   private fun onBookOpenSucceededUI(controller: SR2ControllerType) {
     this.controller = controller
-    controller.viewConnect(webView)
+    controller.viewConnect(this.webView)
 
-    controllerSubscription =
-      controller.events.subscribe { onControllerEvent(it) }
+    this.controllerSubscription =
+      controller.events.subscribe { this.onControllerEvent(it) }
 
-    controllerHost.onControllerBecameAvailable(controller)
+    this.controllerHost.onControllerBecameAvailable(controller)
   }
 
   private fun onBookOpenFailed(e: Throwable) {
-    logger.error("onBookOpenFailed: ", e)
-    runOnUIThread { onBookOpenFailedUI(e) }
+    this.logger.error("onBookOpenFailed: ", e)
+    this.runOnUIThread { this.onBookOpenFailedUI(e) }
   }
 
   @UiThread
@@ -153,17 +153,17 @@ class SR2ReaderFragment : Fragment() {
 
   @UiThread
   private fun onReadingPositionChanged(event: SR2Event.SR2ReadingPositionChanged) {
-    logger.debug("chapterTitle=${event.chapterTitle}")
-    progressView.apply { max = 100; progress = event.percent }
-    positionPageView.text = getString(R.string.progress_page, event.currentPage, event.pageCount)
-    positionTitleView.text = event.chapterTitle
-    positionPercentView.text = getString(R.string.progress_percent, event.percent)
+    this.logger.debug("chapterTitle=${event.chapterTitle}")
+    this.progressView.apply { this.max = 100; this.progress = event.percent }
+    this.positionPageView.text = this.getString(R.string.progress_page, event.currentPage, event.pageCount)
+    this.positionTitleView.text = event.chapterTitle
+    this.positionPercentView.text = this.getString(R.string.progress_percent, event.percent)
   }
 
   private fun onControllerEvent(event: SR2Event) {
     when (event) {
       is SR2Event.SR2ReadingPositionChanged -> {
-        runOnUIThread { onReadingPositionChanged(event) }
+        this.runOnUIThread { this.onReadingPositionChanged(event) }
       }
     }
   }

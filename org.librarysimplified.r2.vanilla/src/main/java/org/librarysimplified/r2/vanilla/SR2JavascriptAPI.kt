@@ -109,6 +109,15 @@ internal class SR2JavascriptAPI(
   }
 
   @UiThread
+  override fun setProgression(progress: Double) {
+    UIThread.checkIsUIThread()
+
+    this.webView.evaluateJavascript("scrollToPosition($progress);") {
+      this.logger.debug("scrollToPosition => {}", it)
+    }
+  }
+
+  @UiThread
   fun setUserProperty(name: String, value: String) {
     UIThread.checkIsUIThread()
 

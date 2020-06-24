@@ -15,7 +15,8 @@ sealed class SR2Command {
    */
 
   data class OpenChapter(
-    val chapterIndex: Int
+    val chapterIndex: Int,
+    val chapterProgress: Double
   ) : SR2Command()
 
   /**

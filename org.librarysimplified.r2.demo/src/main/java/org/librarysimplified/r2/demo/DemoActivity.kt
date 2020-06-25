@@ -15,11 +15,17 @@ import org.librarysimplified.r2.api.SR2Command
 import org.librarysimplified.r2.api.SR2ControllerProviderType
 import org.librarysimplified.r2.api.SR2ControllerType
 import org.librarysimplified.r2.api.SR2Event
+import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkCreated
+import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarksLoaded
+import org.librarysimplified.r2.api.SR2Event.SR2Error
+import org.librarysimplified.r2.api.SR2Event.SR2OnCenterTapped
+import org.librarysimplified.r2.api.SR2Event.SR2ReadingPositionChanged
+import org.librarysimplified.r2.ui_thread.SR2UIThread
 import org.librarysimplified.r2.vanilla.SR2Controllers
-import org.librarysimplified.r2.vanilla.UIThread
 import org.librarysimplified.r2.views.SR2ControllerHostType
 import org.librarysimplified.r2.views.SR2ReaderFragment
 import org.librarysimplified.r2.views.SR2ReaderFragmentParameters
+import org.librarysimplified.r2.views.SR2TOCFragment
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.FileNotFoundException
@@ -82,17 +88,25 @@ class DemoActivity : AppCompatActivity(), SR2ControllerHostType {
     return SR2Controllers()
   }
 
-  override fun onControllerBecameAvailable(controller: SR2ControllerType) {
+  override fun onControllerBecameAvailable(
+    controller: SR2ControllerType,
+    isFirstStartup: Boolean
+  ) {
     this.controller = controller
 
     // Listen for messages from the controller.
     this.controllerSubscription =
       controller.events.subscribe { event -> this.onControllerEvent(event) }
 
-    // Navigate to the first chapter or saved reading position.
-    val database = DemoApplication.application.database()
-    val lastRead = database.lastReadingPosition(controller.bookInfo.id)
-    controller.submitCommand(SR2Command.OpenChapter(lastRead.chapterIndex, lastRead.progress))
+    if (isFirstStartup) {
+      // Navigate to the first chapter or saved reading position.
+      val database = DemoApplication.application.database()
+      val lastRead = database.bookmarkFindLastReadLocation(controller.bookMetadata.id)
+      controller.submitCommand(SR2Command.OpenChapter(lastRead.locator))
+    } else {
+      // Refresh whatever the controller was looking at previously.
+      controller.submitCommand(SR2Command.Refresh)
+    }
   }
 
   override fun onControllerWantsIOExecutor(): ListeningExecutorService {
@@ -100,11 +114,14 @@ class DemoActivity : AppCompatActivity(), SR2ControllerHostType {
   }
 
   override fun onNavigationClose() {
-    TODO("not implemented")
+    this.supportFragmentManager.popBackStack()
   }
 
   override fun onNavigationOpenTableOfContents() {
-    TODO("not implemented")
+    this.supportFragmentManager.beginTransaction()
+      .replace(R.id.readerContainer, SR2TOCFragment())
+      .addToBackStack(null)
+      .commit()
   }
 
   /**
@@ -129,9 +146,9 @@ class DemoActivity : AppCompatActivity(), SR2ControllerHostType {
    */
 
   private fun onControllerEvent(event: SR2Event) {
-    when (event) {
-      is SR2Event.SR2Error.SR2ChapterNonexistent -> {
-        UIThread.runOnUIThread {
+    return when (event) {
+      is SR2Error.SR2ChapterNonexistent -> {
+        SR2UIThread.runOnUIThread {
           Toast.makeText(
             this,
             "Chapter nonexistent: ${event.chapterIndex}",
@@ -139,17 +156,11 @@ class DemoActivity : AppCompatActivity(), SR2ControllerHostType {
           ).show()
         }
       }
-      is SR2Event.SR2Error.SR2WebViewInaccessible -> {
-        UIThread.runOnUIThread {
-          Toast.makeText(
-            this,
-            "Web view inaccessible!",
-            Toast.LENGTH_SHORT
-          ).show()
-        }
+      is SR2Error.SR2WebViewInaccessible -> {
+
       }
-      is SR2Event.SR2OnCenterTapped -> {
-        UIThread.runOnUIThread {
+      is SR2OnCenterTapped -> {
+        SR2UIThread.runOnUIThread {
           Toast.makeText(
             this,
             "Center tap!",
@@ -157,13 +168,15 @@ class DemoActivity : AppCompatActivity(), SR2ControllerHostType {
           ).show()
         }
       }
-      is SR2Event.SR2ReadingPositionChanged -> {
+      is SR2ReadingPositionChanged -> {
+
+      }
+      is SR2BookmarkCreated -> {
         val database = DemoApplication.application.database()
-        database.saveReadingPosition(
-          bookId = this.controller!!.bookInfo.id,
-          chapterIndex = event.chapterIndex,
-          progress = event.chapterProgress
-        )
+        database.bookmarkSave(this.controller!!.bookMetadata.id, event.bookmark)
+      }
+      SR2BookmarksLoaded -> {
+
       }
     }
   }

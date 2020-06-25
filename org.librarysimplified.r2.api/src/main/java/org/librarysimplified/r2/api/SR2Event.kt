@@ -48,6 +48,25 @@ sealed class SR2Event {
     val chapterProgress: Double,
     val currentPage: Int,
     val pageCount: Int,
-    val percent: Int
+    val bookProgressPercent: Int
   ) : SR2Event()
+
+  /**
+   * The set of events related to bookmarks.
+   */
+
+  sealed class SR2BookmarkEvent : SR2Event() {
+
+    /**
+     * The set of bookmarks has changed.
+     */
+
+    data class SR2BookmarkCreated(val bookmark: SR2Bookmark) : SR2BookmarkEvent()
+
+    /**
+     * Bookmarks were loaded into the controller.
+     */
+
+    object SR2BookmarksLoaded : SR2BookmarkEvent()
+  }
 }

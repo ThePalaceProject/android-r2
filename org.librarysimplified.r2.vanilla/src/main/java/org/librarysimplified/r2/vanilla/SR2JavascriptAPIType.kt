@@ -53,6 +53,10 @@ interface SR2JavascriptAPIType {
   @UiThread
   fun setTheme(value: ReaderTheme)
 
+  /**
+   * Set the current chapter position. This must be in the range [0, 1].
+   */
+
   @UiThread
   fun setProgression(progress: Double)
 }

@@ -1,29 +1,39 @@
 package org.librarysimplified.r2.vanilla
 
 import android.webkit.WebView
-import androidx.annotation.IntRange
 import io.reactivex.Observable
 import io.reactivex.subjects.PublishSubject
-import org.librarysimplified.r2.api.SR2BookInfo
+import org.joda.time.DateTime
+import org.librarysimplified.r2.api.SR2BookChapter
+import org.librarysimplified.r2.api.SR2BookMetadata
+import org.librarysimplified.r2.api.SR2Bookmark
+import org.librarysimplified.r2.api.SR2Bookmark.Type.LAST_READ
 import org.librarysimplified.r2.api.SR2Command
 import org.librarysimplified.r2.api.SR2ControllerConfiguration
 import org.librarysimplified.r2.api.SR2ControllerType
 import org.librarysimplified.r2.api.SR2Event
+import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkCreated
+import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarksLoaded
 import org.librarysimplified.r2.api.SR2Event.SR2Error.SR2ChapterNonexistent
 import org.librarysimplified.r2.api.SR2Event.SR2Error.SR2WebViewInaccessible
+import org.librarysimplified.r2.api.SR2Event.SR2OnCenterTapped
+import org.librarysimplified.r2.api.SR2Event.SR2ReadingPositionChanged
+import org.librarysimplified.r2.api.SR2Locator
+import org.librarysimplified.r2.api.SR2Locator.SR2LocatorChapterEnd
+import org.librarysimplified.r2.api.SR2Locator.SR2LocatorPercent
+import org.librarysimplified.r2.vanilla.SR2CommandInternal.SR2CommandInternalAPI
+import org.librarysimplified.r2.vanilla.SR2CommandInternal.SR2CommandInternalDelay
 import org.readium.r2.shared.Publication
 import org.readium.r2.streamer.container.Container
 import org.readium.r2.streamer.parser.EpubParser
 import org.readium.r2.streamer.server.Server
 import org.slf4j.LoggerFactory
 import java.io.IOException
-import java.lang.IllegalArgumentException
 import java.net.ServerSocket
+import java.util.UUID
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.annotation.concurrent.GuardedBy
-import kotlin.math.round
-import kotlin.math.roundToInt
 
 /**
  * The default R2 controller implementation.
@@ -134,16 +144,20 @@ class SR2Controller private constructor(
     }
 
   private val closed = AtomicBoolean(false)
-
   private val webViewConnectionLock = Any()
+  private val eventSubject: PublishSubject<SR2Event> = PublishSubject.create()
+
   @GuardedBy("webViewConnectionLock")
   private var webViewConnection: SR2WebViewConnection? = null
 
   @Volatile
   private var currentChapterIndex = 0
 
-  private val eventSubject: PublishSubject<SR2Event> =
-    PublishSubject.create()
+  @Volatile
+  private var currentChapterProgress = 0.0
+
+  @Volatile
+  private var bookmarks = listOf<SR2Bookmark>()
 
   private fun locationOfSpineItem(
     index: Int
@@ -165,144 +179,216 @@ class SR2Controller private constructor(
     }
   }
 
-  private fun setCurrentChapter(index: Int) {
-    val title = this.publication.readingOrder[index].title
-    this.logger.debug("current chapter $index, $title")
-    this.currentChapterIndex = index
-  }
-
-  private fun executeCommand(command: SR2Command) {
-    this.logger.debug("executing {}", command)
-
-    return when (command) {
-      is SR2Command.OpenChapter ->
-        this.executeCommandOpenChapter(command)
-      SR2Command.OpenPageNext ->
-        this.executeCommandOpenPageNext()
-      SR2Command.OpenChapterNext ->
-        this.executeCommandOpenChapterNext()
-      SR2Command.OpenPagePrevious ->
-        this.executeCommandOpenPagePrevious()
-      is SR2Command.OpenChapterPrevious ->
-        this.executeCommandOpenChapterPrevious(command)
+  private fun setCurrentChapter(locator: SR2Locator) {
+    require(locator.chapterIndex < this.publication.readingOrder.size) {
+      "Chapter index ${locator.chapterIndex} must be in the range [0, ${this.publication.readingOrder.size})"
+    }
+    this.currentChapterIndex = locator.chapterIndex
+    this.currentChapterProgress = when (locator) {
+      is SR2LocatorPercent -> locator.chapterProgress
+      is SR2LocatorChapterEnd -> 1.0
     }
   }
 
-  private fun executeCommandOpenChapterPrevious(command: SR2Command.OpenChapterPrevious) {
+  private fun updateBookmarkLastRead(
+    title: String,
+    locator: SR2Locator
+  ) {
+    val newBookmark = SR2Bookmark(
+      date = DateTime.now(),
+      type = LAST_READ,
+      title = title,
+      locator = locator
+    )
+    val newBookmarks = this.bookmarks.toMutableList()
+    newBookmarks.removeAll { bookmark -> bookmark.type == LAST_READ }
+    newBookmarks.add(newBookmark)
+    this.bookmarks = newBookmarks.toList()
+    this.eventSubject.onNext(SR2BookmarkCreated(newBookmark))
+  }
+
+  private fun executeInternalCommand(command: SR2CommandInternal) {
+    this.logger.debug("executing {}", command)
+
+    if (this.closed.get()) {
+      this.logger.debug("executor has been shut down")
+      return
+    }
+
+    return when (command) {
+      is SR2CommandInternalDelay ->
+        this.executeCommandInternalDelay(command)
+      is SR2CommandInternalAPI ->
+        this.executeCommandInternalAPI(command)
+    }
+  }
+
+  private fun executeCommandInternalDelay(command: SR2CommandInternalDelay) {
+    Thread.sleep(command.timeMilliseconds)
+  }
+
+  private fun executeCommandInternalAPI(command: SR2CommandInternalAPI) {
+    return when (val apiCommand = command.command) {
+      is SR2Command.OpenChapter ->
+        this.executeCommandOpenChapter(command, apiCommand)
+      SR2Command.OpenPageNext ->
+        this.executeCommandOpenPageNext(command, apiCommand as SR2Command.OpenPageNext)
+      SR2Command.OpenChapterNext ->
+        this.executeCommandOpenChapterNext(command, apiCommand as SR2Command.OpenChapterNext)
+      SR2Command.OpenPagePrevious ->
+        this.executeCommandOpenPagePrevious(command, apiCommand as SR2Command.OpenPagePrevious)
+      is SR2Command.OpenChapterPrevious ->
+        this.executeCommandOpenChapterPrevious(command, apiCommand)
+      is SR2Command.LoadBookmarks ->
+        this.executeCommandLoadBookmarks(command, apiCommand)
+      SR2Command.Refresh ->
+        this.executeCommandRefresh(command, apiCommand as SR2Command.Refresh)
+    }
+  }
+
+  private fun executeCommandRefresh(
+    command: SR2CommandInternalAPI,
+    refresh: SR2Command.Refresh
+  ) {
     this.openChapterIndex(
-      targetIndex = Math.max(0, this.currentChapterIndex - 1),
-      position = RequestedChapterPosition.ChapterEnd
+      command,
+      SR2LocatorPercent(this.currentChapterIndex, this.currentChapterProgress)
     )
   }
 
-  private fun executeCommandOpenChapterNext() {
+  private fun executeCommandLoadBookmarks(
+    command: SR2CommandInternalAPI,
+    apiCommand: SR2Command.LoadBookmarks
+  ) {
+    val newBookmarks = this.bookmarks.toMutableList()
+    newBookmarks.addAll(apiCommand.bookmarks)
+    this.bookmarks = newBookmarks.toList()
+    this.eventSubject.onNext(SR2BookmarksLoaded)
+  }
+
+  private fun executeCommandOpenChapterPrevious(
+    command: SR2CommandInternalAPI,
+    apiCommand: SR2Command.OpenChapterPrevious
+  ) {
     this.openChapterIndex(
-      targetIndex = this.currentChapterIndex + 1,
-      position = RequestedChapterPosition.ChapterPosition(0.0)
+      command,
+      SR2LocatorChapterEnd(chapterIndex = Math.max(0, this.currentChapterIndex - 1))
     )
+  }
+
+  private fun executeCommandOpenChapterNext(
+    command: SR2CommandInternalAPI,
+    apiCommand: SR2Command.OpenChapterNext
+  ) {
+    this.openChapterIndex(
+      command,
+      SR2LocatorPercent(
+        chapterIndex = Math.max(0, this.currentChapterIndex + 1),
+        chapterProgress = 0.0
+      )
+    )
+  }
+
+  private fun executeCommandOpenPagePrevious(
+    command: SR2CommandInternalAPI,
+    apiCommand: SR2Command.OpenPagePrevious
+  ) {
+    this.executeWithWebView(command) { connection -> connection.jsAPI.openPagePrevious() }
+  }
+
+  private fun executeCommandOpenPageNext(
+    command: SR2CommandInternalAPI,
+    apiCommand: SR2Command.OpenPageNext
+  ) {
+    this.executeWithWebView(command) { connection -> connection.jsAPI.openPageNext() }
+  }
+
+  private fun executeCommandOpenChapter(
+    command: SR2CommandInternalAPI,
+    apiCommand: SR2Command.OpenChapter
+  ) {
+    this.openChapterIndex(command, apiCommand.locator)
   }
 
   private fun executeWithWebView(
+    command: SR2CommandInternalAPI,
     exec: (SR2WebViewConnection) -> Unit
   ) {
-    val webViewRef =
-      synchronized(this.webViewConnectionLock) { this.webViewConnection }
-
+    val webViewRef = synchronized(this.webViewConnectionLock) { this.webViewConnection }
     if (webViewRef != null) {
       this.configuration.uiExecutor.invoke { exec.invoke(webViewRef) }
     } else {
+
+      /*
+       * If the web view isn't connected, submit a delay and then submit a retry of the
+       * existing command. Either the web view will be reconnected shortly, or the controller
+       * will be shut down entirely.
+       */
+
       this.eventSubject.onNext(SR2WebViewInaccessible("No web view is connected"))
+      this.submitCommandActual(SR2CommandInternalDelay(timeMilliseconds = 1_000L))
+      this.submitCommandActual(command.copy(
+        id = UUID.randomUUID(),
+        submitted = DateTime.now(),
+        isRetryOf = command.id
+      ))
     }
   }
 
-  private fun executeCommandOpenPagePrevious() {
-    this.executeWithWebView { webViewConnection -> webViewConnection.jsAPI.openPagePrevious() }
-  }
-
-  private fun executeCommandOpenPageNext() {
-    this.executeWithWebView { webViewConnection -> webViewConnection.jsAPI.openPageNext() }
-  }
-
-  private fun executeCommandOpenChapter(command: SR2Command.OpenChapter) {
-    this.openChapterIndex(
-      targetIndex = command.chapterIndex,
-      position = RequestedChapterPosition.ChapterPosition(command.chapterProgress)
-    )
-  }
-
-  private sealed class RequestedChapterPosition {
-    data class ChapterPosition(
-      val progress: Double
-    ) : RequestedChapterPosition()
-
-    object ChapterEnd : RequestedChapterPosition()
-  }
-
   private fun openChapterIndex(
-    targetIndex: Int,
-    position: RequestedChapterPosition
+    command: SR2CommandInternalAPI,
+    locator: SR2Locator
   ) {
-    val previousIndex = this.currentChapterIndex
+    val previousLocator =
+      SR2LocatorPercent(this.currentChapterIndex, this.currentChapterProgress)
 
     try {
-      val location = this.locationOfSpineItem(targetIndex)
-      this.logger.debug("opening location {}", location)
+      val location = this.locationOfSpineItem(locator.chapterIndex)
+      this.logger.debug("openChapterIndex: {}", location)
 
       // Warning: The current chapter must be set before loading the spine location. The
       // page will send a reading position changed event immediately on load, but before our
       // callback returns. If we don't update the chapter index first we'll report the wrong
       // chapter location in our SR2ReadingPositionChanged event. This is fragile and should
       // be fixed later.
-      this.setCurrentChapter(targetIndex)
+      this.setCurrentChapter(locator)
 
       this.openURL(
+        command = command,
         location = location,
         onLoad = { webViewConnection ->
-          when (position) {
-            is RequestedChapterPosition.ChapterPosition -> {
-              webViewConnection.jsAPI.setProgression(position.progress)
+          when (locator) {
+            is SR2LocatorPercent -> {
+              webViewConnection.jsAPI.setProgression(locator.chapterProgress)
             }
-            RequestedChapterPosition.ChapterEnd -> {
+            is SR2LocatorChapterEnd -> {
               webViewConnection.jsAPI.openPageLast()
             }
           }
         }
       )
     } catch (e: Exception) {
-      this.logger.error("unable to open chapter $targetIndex: ", e)
-      this.setCurrentChapter(previousIndex)
+      this.logger.error("unable to open chapter ${locator.chapterIndex}: ", e)
+      this.setCurrentChapter(previousLocator)
       this.eventSubject.onNext(
         SR2ChapterNonexistent(
-          chapterIndex = targetIndex,
-          message = e.message ?: "Unable to open chapter $targetIndex"
+          chapterIndex = locator.chapterIndex,
+          message = e.message ?: "Unable to open chapter ${locator.chapterIndex}"
         )
       )
     }
   }
 
   private fun openURL(
+    command: SR2CommandInternalAPI,
     location: String,
     onLoad: (SR2WebViewConnection) -> Unit
   ) {
-    this.executeWithWebView { webViewConnection ->
+    this.executeWithWebView(command) { webViewConnection ->
       webViewConnection.openURL(location) {
         onLoad.invoke(webViewConnection)
       }
     }
-  }
-
-  /** Return the title of the current chapter. */
-
-  private fun getChapterTitle(): String? {
-    val chapter = this.publication.readingOrder[this.currentChapterIndex]
-
-    // The title is actually part of the table of contents; however, there may not be a
-    // one-to-one mapping between chapters and table of contents entries. We do a lookup
-    // based on the chapter href.
-
-    return this.publication.tableOfContents.firstOrNull {
-      it.href == chapter.href
-    }?.title
   }
 
   /**
@@ -311,7 +397,7 @@ class SR2Controller private constructor(
    * @param chapterProgress [0 - 1]
    */
 
-  private fun getPercentComplete(chapterProgress: Double): Int {
+  private fun getBookPercentComplete(chapterProgress: Double): Int {
     require(chapterProgress < 1 || chapterProgress > 0) {
       "progress must be in [0, 1]; was $chapterProgress"
     }
@@ -319,7 +405,7 @@ class SR2Controller private constructor(
     val chapterCount = this.publication.readingOrder.size
     val currentIndex = this.currentChapterIndex
     val result = ((currentIndex + 1 * chapterProgress) / chapterCount)
-    logger.debug("$result = ($currentIndex + 1 * $chapterProgress) / $chapterCount")
+    this.logger.debug("$result = ($currentIndex + 1 * $chapterProgress) / $chapterCount")
     return (result * 100).toInt()
   }
 
@@ -338,24 +424,52 @@ class SR2Controller private constructor(
       currentPage: Int,
       pageCount: Int
     ) {
-      val chapterIndex = this@SR2Controller.currentChapterIndex
-      val chapterProgress = currentPage.toDouble() / pageCount.toDouble()
+      val chapterIndex =
+        this@SR2Controller.currentChapterIndex
+      val chapterProgress =
+        currentPage.toDouble() / pageCount.toDouble()
+      val chapterTitle =
+        this@SR2Controller.makeChapterTitleOf(chapterIndex)
+
+      this@SR2Controller.currentChapterProgress =
+        chapterProgress
 
       this.logger.debug(
         "onReadingPositionChanged:"
-            + " chapterIndex=$chapterIndex,"
-            + " currentPage=$currentPage,"
-            + " pageCount=$pageCount,"
+          + " chapterIndex=$chapterIndex,"
+          + " currentPage=$currentPage,"
+          + " pageCount=$pageCount,"
+          + " chapterProgress=$chapterProgress"
       )
 
+      /*
+       * This is pure paranoia; we only update the last-read location if the new position
+       * doesn't appear to point to the very start of the book. This is to defend against
+       * any future bugs that might cause a "reading position change" event to be published
+       * before the user's _real_ last-read position has been restored using a command or
+       * bookmark. If this happened, we'd accidentally overwrite the user's reading position with
+       * a pointer to the start of the book, so this check prevents that.
+       */
+
+      if (chapterIndex != 0 || chapterProgress > 0.000_001) {
+        this@SR2Controller.queueExecutor.execute {
+          this@SR2Controller.updateBookmarkLastRead(
+            title = chapterTitle,
+            locator = SR2LocatorPercent(
+              chapterIndex = chapterIndex,
+              chapterProgress = chapterProgress
+            ))
+        }
+      }
+
       this@SR2Controller.eventSubject.onNext(
-        SR2Event.SR2ReadingPositionChanged(
+        SR2ReadingPositionChanged(
           chapterIndex = chapterIndex,
-          chapterTitle = getChapterTitle(),
+          chapterTitle = chapterTitle,
           chapterProgress = chapterProgress,
           currentPage = currentPage,
           pageCount = pageCount,
-          percent = getPercentComplete(chapterProgress)
+          bookProgressPercent = this@SR2Controller.getBookPercentComplete(chapterProgress)
         )
       )
     }
@@ -363,7 +477,7 @@ class SR2Controller private constructor(
     @android.webkit.JavascriptInterface
     override fun onCenterTapped() {
       this.logger.debug("onCenterTapped")
-      this@SR2Controller.eventSubject.onNext(SR2Event.SR2OnCenterTapped())
+      this@SR2Controller.eventSubject.onNext(SR2OnCenterTapped())
     }
 
     @android.webkit.JavascriptInterface
@@ -384,19 +498,50 @@ class SR2Controller private constructor(
     }
   }
 
-  override val bookInfo: SR2BookInfo =
-    SR2BookInfo(
-      id = this.publication.metadata.identifier)
+  private fun submitCommandActual(command: SR2CommandInternal) {
+    this.logger.debug("submitCommand (isRetryOf: {}) {}", command.isRetryOf, command)
+    this.queueExecutor.execute { this.executeInternalCommand(command) }
+  }
+
+  override val bookMetadata: SR2BookMetadata =
+    SR2BookMetadata(
+      id = this.publication.metadata.identifier,
+      readingOrder = this.makeReadingOrder()
+    )
+
+  private fun makeReadingOrder() =
+    this.publication.readingOrder.mapIndexed { index, _ -> this.makeChapter(index) }
+
+  private fun makeChapter(
+    index: Int
+  ): SR2BookChapter {
+    return SR2BookChapter(
+      chapterIndex = index,
+      title = makeChapterTitleOf(index)
+    )
+  }
+
+  /**
+   * Return the title of the given chapter.
+   */
+
+  private fun makeChapterTitleOf(index: Int): String {
+    val chapter = this.publication.readingOrder[index]
+
+    // The title is actually part of the table of contents; however, there may not be a
+    // one-to-one mapping between chapters and table of contents entries. We do a lookup
+    // based on the chapter href.
+    return this.publication.tableOfContents.firstOrNull { it.href == chapter.href }?.title ?: ""
+  }
 
   override val events: Observable<SR2Event> =
     this.eventSubject
 
-  override fun submitCommand(command: SR2Command) {
-    this.logger.debug("submitCommand {}", command)
-    this.queueExecutor.execute {
-      this.executeCommand(command)
-    }
-  }
+  override fun submitCommand(command: SR2Command) =
+    this.submitCommandActual(SR2CommandInternalAPI(command = command))
+
+  override fun bookmarksNow(): List<SR2Bookmark> =
+    this.bookmarks
 
   override fun viewConnect(webView: WebView) {
     synchronized(this.webViewConnectionLock) {

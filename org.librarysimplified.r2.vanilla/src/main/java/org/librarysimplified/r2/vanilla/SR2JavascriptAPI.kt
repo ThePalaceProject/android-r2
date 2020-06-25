@@ -4,6 +4,7 @@ import android.webkit.WebView
 import androidx.annotation.UiThread
 import org.librarysimplified.r2.api.SR2Command
 import org.librarysimplified.r2.api.SR2ControllerCommandQueueType
+import org.librarysimplified.r2.ui_thread.SR2UIThread
 import org.librarysimplified.r2.vanilla.ReaderTheme.DARK
 import org.librarysimplified.r2.vanilla.ReaderTheme.DAY
 import org.librarysimplified.r2.vanilla.ReaderTheme.LIGHT
@@ -25,7 +26,7 @@ internal class SR2JavascriptAPI(
 
   @UiThread
   override fun openPageNext() {
-    UIThread.checkIsUIThread()
+    SR2UIThread.checkIsUIThread()
 
     this.webView.evaluateJavascript("scrollRight();") {
       this.logger.debug("scrollRight => {}", it)
@@ -33,14 +34,15 @@ internal class SR2JavascriptAPI(
         "\"edge\"" -> {
           this.commandQueue.submitCommand(SR2Command.OpenChapterNext)
         }
-        else -> {}
+        else -> {
+        }
       }
     }
   }
 
   @UiThread
   override fun openPagePrevious() {
-    UIThread.checkIsUIThread()
+    SR2UIThread.checkIsUIThread()
 
     this.webView.evaluateJavascript("scrollLeft();") {
       this.logger.debug("scrollLeft => {}", it)
@@ -49,14 +51,15 @@ internal class SR2JavascriptAPI(
         "\"edge\"" -> {
           this.commandQueue.submitCommand(SR2Command.OpenChapterPrevious(atEnd = true))
         }
-        else -> {}
+        else -> {
+        }
       }
     }
   }
 
   @UiThread
   override fun openPageLast() {
-    UIThread.checkIsUIThread()
+    SR2UIThread.checkIsUIThread()
 
     this.webView.evaluateJavascript("scrollToEnd();") {
       this.logger.debug("scrollToEnd => {}", it)
@@ -110,7 +113,7 @@ internal class SR2JavascriptAPI(
 
   @UiThread
   override fun setProgression(progress: Double) {
-    UIThread.checkIsUIThread()
+    SR2UIThread.checkIsUIThread()
 
     this.webView.evaluateJavascript("scrollToPosition($progress);") {
       this.logger.debug("scrollToPosition => {}", it)
@@ -119,7 +122,7 @@ internal class SR2JavascriptAPI(
 
   @UiThread
   fun setUserProperty(name: String, value: String) {
-    UIThread.checkIsUIThread()
+    SR2UIThread.checkIsUIThread()
 
     val script = "setProperty(\"--USER__${name}\", \"${value}\");"
     this.webView.evaluateJavascript(script) {

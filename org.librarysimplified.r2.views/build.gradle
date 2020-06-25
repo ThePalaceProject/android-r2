@@ -3,9 +3,12 @@ dependencies {
   api libraries.androidXConstraintLayout
   api libraries.androidXCore
   api libraries.androidXLifecycle
+  api libraries.androidXViewPager2
+  api libraries.googleMaterial
   api libraries.kotlinStdlib
 
   implementation libraries.slf4j
 
   api project(":org.librarysimplified.r2.api")
+  api project(":org.librarysimplified.r2.ui_thread")
 }

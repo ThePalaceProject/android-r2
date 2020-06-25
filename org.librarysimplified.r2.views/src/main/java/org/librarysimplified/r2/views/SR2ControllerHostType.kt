@@ -8,7 +8,9 @@ interface SR2ControllerHostType : SR2NavigationControllerType {
 
   fun onControllerRequired(): SR2ControllerProviderType
 
-  fun onControllerBecameAvailable(controller: SR2ControllerType)
+  fun onControllerBecameAvailable(
+    controller: SR2ControllerType,
+    isFirstStartup: Boolean)
 
   fun onControllerWantsIOExecutor(): ListeningExecutorService
 

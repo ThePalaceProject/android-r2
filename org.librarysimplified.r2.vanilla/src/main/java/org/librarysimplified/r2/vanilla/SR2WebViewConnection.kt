@@ -4,6 +4,7 @@ import android.view.MotionEvent
 import android.webkit.WebView
 import androidx.annotation.UiThread
 import org.librarysimplified.r2.api.SR2ControllerCommandQueueType
+import org.librarysimplified.r2.ui_thread.SR2UIThread
 
 /**
  * A connection to a web view.
@@ -57,7 +58,7 @@ internal class SR2WebViewConnection(
     location: String,
     onLoad: () -> Unit
   ) {
-    UIThread.checkIsUIThread()
+    SR2UIThread.checkIsUIThread()
     this.webViewClient.addOnLoadHandler(location, onLoad)
     this.webView.loadUrl(location)
   }

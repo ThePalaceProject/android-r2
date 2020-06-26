@@ -1,4 +1,4 @@
-package org.librarysimplified.r2.views
+package org.librarysimplified.r2.views.internal
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -14,8 +14,10 @@ import org.librarysimplified.r2.api.SR2Command
 import org.librarysimplified.r2.api.SR2ControllerType
 import org.librarysimplified.r2.api.SR2Locator.SR2LocatorPercent
 import org.librarysimplified.r2.ui_thread.SR2UIThread
+import org.librarysimplified.r2.views.R
+import org.librarysimplified.r2.views.SR2ControllerHostType
 
-class SR2TOCChaptersFragment : Fragment() {
+internal class SR2TOCChaptersFragment : Fragment() {
 
   private lateinit var controller: SR2ControllerType
   private lateinit var readerModel: SR2ReaderViewModel

@@ -1,4 +1,4 @@
-package org.librarysimplified.r2.vanilla
+package org.librarysimplified.r2.vanilla.internal
 
 import androidx.annotation.UiThread
 
@@ -6,7 +6,7 @@ import androidx.annotation.UiThread
  * The Javascript API exported by web views.
  */
 
-interface SR2JavascriptAPIType {
+internal interface SR2JavascriptAPIType {
 
   /**
    * Open the next page in the current chapter.

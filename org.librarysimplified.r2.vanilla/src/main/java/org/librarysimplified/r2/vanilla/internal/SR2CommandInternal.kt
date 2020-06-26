@@ -1,4 +1,4 @@
-package org.librarysimplified.r2.vanilla
+package org.librarysimplified.r2.vanilla.internal
 
 import org.joda.time.DateTime
 import org.librarysimplified.r2.api.SR2Command

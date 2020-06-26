@@ -1,4 +1,4 @@
-package org.librarysimplified.r2.views
+package org.librarysimplified.r2.views.internal
 
 import android.content.res.Resources
 import android.view.View
@@ -11,8 +11,9 @@ import org.librarysimplified.r2.api.SR2Bookmark
 import org.librarysimplified.r2.api.SR2Bookmark.Type.EXPLICIT
 import org.librarysimplified.r2.api.SR2Bookmark.Type.LAST_READ
 import org.librarysimplified.r2.api.SR2Locator
+import org.librarysimplified.r2.views.R
 
-class SR2TOCBookmarkViewHolder(
+internal class SR2TOCBookmarkViewHolder(
   val rootView: View
 ) : RecyclerView.ViewHolder(rootView) {
 

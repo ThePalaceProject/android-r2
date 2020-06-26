@@ -1,9 +1,9 @@
-package org.librarysimplified.r2.views
+package org.librarysimplified.r2.views.internal
 
 import androidx.fragment.app.Fragment
 import androidx.viewpager2.adapter.FragmentStateAdapter
 
-class SR2TOCAdapter(
+internal class SR2TOCAdapter(
   fragment: Fragment,
   private val pages: List<SR2TOCPage>
 ) : FragmentStateAdapter(fragment) {

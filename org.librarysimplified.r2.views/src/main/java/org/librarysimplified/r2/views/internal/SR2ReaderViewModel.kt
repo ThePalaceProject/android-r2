@@ -1,4 +1,4 @@
-package org.librarysimplified.r2.views
+package org.librarysimplified.r2.views.internal
 
 import androidx.lifecycle.ViewModel
 import com.google.common.util.concurrent.Futures

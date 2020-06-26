@@ -1,4 +1,4 @@
-package org.librarysimplified.r2.views
+package org.librarysimplified.r2.views.internal
 
 import androidx.recyclerview.widget.DiffUtil
 import org.librarysimplified.r2.api.SR2BookChapter

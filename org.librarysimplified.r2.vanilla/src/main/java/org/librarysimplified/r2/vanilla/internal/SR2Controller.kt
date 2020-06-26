@@ -1,4 +1,4 @@
-package org.librarysimplified.r2.vanilla
+package org.librarysimplified.r2.vanilla.internal
 
 import android.webkit.WebView
 import io.reactivex.Observable
@@ -22,8 +22,8 @@ import org.librarysimplified.r2.api.SR2Event.SR2ReadingPositionChanged
 import org.librarysimplified.r2.api.SR2Locator
 import org.librarysimplified.r2.api.SR2Locator.SR2LocatorChapterEnd
 import org.librarysimplified.r2.api.SR2Locator.SR2LocatorPercent
-import org.librarysimplified.r2.vanilla.SR2CommandInternal.SR2CommandInternalAPI
-import org.librarysimplified.r2.vanilla.SR2CommandInternal.SR2CommandInternalDelay
+import org.librarysimplified.r2.vanilla.internal.SR2CommandInternal.SR2CommandInternalAPI
+import org.librarysimplified.r2.vanilla.internal.SR2CommandInternal.SR2CommandInternalDelay
 import org.readium.r2.shared.Publication
 import org.readium.r2.streamer.container.Container
 import org.readium.r2.streamer.parser.EpubParser
@@ -40,7 +40,7 @@ import javax.annotation.concurrent.GuardedBy
  * The default R2 controller implementation.
  */
 
-class SR2Controller private constructor(
+internal class SR2Controller private constructor(
   private val configuration: SR2ControllerConfiguration,
   private val port: Int,
   private val server: Server,
@@ -552,7 +552,7 @@ class SR2Controller private constructor(
   ): SR2BookChapter {
     return SR2BookChapter(
       chapterIndex = index,
-      title = makeChapterTitleOf(index)
+      title = this.makeChapterTitleOf(index)
     )
   }
 

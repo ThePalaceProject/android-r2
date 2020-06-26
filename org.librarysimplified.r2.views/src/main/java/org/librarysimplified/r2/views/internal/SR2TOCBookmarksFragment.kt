@@ -1,4 +1,4 @@
-package org.librarysimplified.r2.views
+package org.librarysimplified.r2.views.internal
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -17,9 +17,11 @@ import org.librarysimplified.r2.api.SR2Command
 import org.librarysimplified.r2.api.SR2ControllerType
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent
 import org.librarysimplified.r2.ui_thread.SR2UIThread
+import org.librarysimplified.r2.views.R
+import org.librarysimplified.r2.views.SR2ControllerHostType
 import org.slf4j.LoggerFactory
 
-class SR2TOCBookmarksFragment : Fragment() {
+internal class SR2TOCBookmarksFragment : Fragment() {
 
   private val logger = LoggerFactory.getLogger(SR2TOCBookmarksFragment::class.java)
 

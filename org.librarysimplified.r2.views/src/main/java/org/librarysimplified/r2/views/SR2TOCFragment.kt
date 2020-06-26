@@ -8,6 +8,10 @@ import androidx.fragment.app.Fragment
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
+import org.librarysimplified.r2.views.internal.SR2TOCAdapter
+import org.librarysimplified.r2.views.internal.SR2TOCBookmarksFragment
+import org.librarysimplified.r2.views.internal.SR2TOCChaptersFragment
+import org.librarysimplified.r2.views.internal.SR2TOCPage
 
 class SR2TOCFragment : Fragment() {
 

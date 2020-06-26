@@ -1,4 +1,4 @@
-package org.librarysimplified.r2.views
+package org.librarysimplified.r2.views.internal
 
 import android.content.res.Resources
 import android.view.LayoutInflater
@@ -9,10 +9,11 @@ import android.widget.TextView
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import org.librarysimplified.r2.api.SR2BookChapter
-import org.librarysimplified.r2.views.SR2Adapters.chapterDiffCallback
-import org.librarysimplified.r2.views.SR2TOCChapterAdapter.SR2TOCChapterViewHolder
+import org.librarysimplified.r2.views.R
+import org.librarysimplified.r2.views.internal.SR2Adapters.chapterDiffCallback
+import org.librarysimplified.r2.views.internal.SR2TOCChapterAdapter.SR2TOCChapterViewHolder
 
-class SR2TOCChapterAdapter(
+internal class SR2TOCChapterAdapter(
   private val resources: Resources,
   private val onChapterSelected: (SR2BookChapter) -> Unit
 ) : ListAdapter<SR2BookChapter, SR2TOCChapterViewHolder>(chapterDiffCallback) {

@@ -33,6 +33,8 @@ import org.librarysimplified.r2.api.SR2Event.SR2OnCenterTapped
 import org.librarysimplified.r2.api.SR2Event.SR2ReadingPositionChanged
 import org.librarysimplified.r2.api.SR2Locator
 import org.librarysimplified.r2.ui_thread.SR2UIThread
+import org.librarysimplified.r2.views.internal.SR2ControllerReference
+import org.librarysimplified.r2.views.internal.SR2ReaderViewModel
 import org.slf4j.LoggerFactory
 
 class SR2ReaderFragment : Fragment() {

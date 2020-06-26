@@ -13,7 +13,7 @@ import java.io.File
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 import java.io.Serializable
-import java.util.HashMap
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 
 /**
@@ -32,7 +32,7 @@ class DemoDatabase(private val context: Context) {
       thread
     }
 
-  private val bookmarks: HashMap<String, List<SerializableBookmark>> =
+  private val bookmarks: ConcurrentHashMap<String, List<SerializableBookmark>> =
     this.loadMap()
 
   data class SerializableBookmark(
@@ -76,12 +76,14 @@ class DemoDatabase(private val context: Context) {
     bookId: String,
     bookmark: SR2Bookmark
   ) {
+    this.logger.debug("deleting bookmark {}: {}", bookId, bookmark)
+
     if (bookmark.type == LAST_READ) {
       return
     }
 
     val existing = this.bookmarks[bookId]?.toMutableList() ?: mutableListOf()
-    existing.remove(toSerializable(bookmark))
+    existing.removeAll { it == toSerializable(bookmark) }
     this.bookmarks[bookId] = existing.toList()
     this.ioExecutor.execute { this.saveMap() }
   }
@@ -90,8 +92,9 @@ class DemoDatabase(private val context: Context) {
     bookId: String,
     bookmark: SR2Bookmark
   ) {
-    val existing = this.bookmarks[bookId]?.toMutableList() ?: mutableListOf()
+    this.logger.debug("saving bookmark {}: {}", bookId, bookmark)
 
+    val existing = this.bookmarks[bookId]?.toMutableList() ?: mutableListOf()
     when (bookmark.type) {
       EXPLICIT -> {
 
@@ -101,7 +104,9 @@ class DemoDatabase(private val context: Context) {
       }
     }
 
-    existing.add(toSerializable(bookmark))
+    val serializable = toSerializable(bookmark)
+    existing.removeAll { it == serializable }
+    existing.add(serializable)
     this.bookmarks[bookId] = existing.toList()
     this.ioExecutor.execute { this.saveMap() }
   }
@@ -131,14 +136,14 @@ class DemoDatabase(private val context: Context) {
     }
   }
 
-  private fun loadMap(): HashMap<String, List<SerializableBookmark>> {
+  private fun loadMap(): ConcurrentHashMap<String, List<SerializableBookmark>> {
     return try {
       this.logger.debug("loading bookmarks")
 
       val file = File(this.context.filesDir, "bookmarks.dat")
       file.inputStream().use { stream ->
         ObjectInputStream(stream).use { objectStream ->
-          val map = objectStream.readObject() as HashMap<String, List<SerializableBookmark>>
+          val map = objectStream.readObject() as ConcurrentHashMap<String, List<SerializableBookmark>>
           this.logger.debug("loaded {} bookmarks", this.countBookmarks(map))
           logBookmarks(map)
           map
@@ -146,11 +151,11 @@ class DemoDatabase(private val context: Context) {
       }
     } catch (e: Exception) {
       this.logger.error("could not open bookmarks database: ", e)
-      HashMap()
+      ConcurrentHashMap()
     }
   }
 
-  private fun logBookmarks(map: HashMap<String, List<SerializableBookmark>>) {
+  private fun logBookmarks(map: ConcurrentHashMap<String, List<SerializableBookmark>>) {
     for (entry in map.entries) {
       for (bookmark in entry.value) {
         this.logger.debug("[{}][{}]: bookmark", entry.key, bookmark)

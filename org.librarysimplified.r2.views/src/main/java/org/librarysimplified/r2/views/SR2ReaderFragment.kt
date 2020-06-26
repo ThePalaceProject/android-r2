@@ -147,7 +147,7 @@ class SR2ReaderFragment : Fragment() {
         configuration = SR2ControllerConfiguration(
           bookFile = this.parameters.bookFile,
           context = activity,
-          ioExecutor = this.controllerHost.onControllerWantsIOExecutor(),
+          ioExecutor = this.readerModel.ioExecutor,
           uiExecutor = SR2UIThread::runOnUIThread
         ),
         controllers = this.controllerHost.onControllerRequired()

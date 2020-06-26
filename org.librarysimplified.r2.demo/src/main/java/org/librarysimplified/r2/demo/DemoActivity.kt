@@ -8,16 +8,16 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.google.common.util.concurrent.ListeningExecutorService
-import com.google.common.util.concurrent.MoreExecutors
 import io.reactivex.disposables.Disposable
 import org.librarysimplified.r2.api.SR2Command
 import org.librarysimplified.r2.api.SR2ControllerProviderType
 import org.librarysimplified.r2.api.SR2ControllerType
 import org.librarysimplified.r2.api.SR2Event
-import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent
-import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.*
-import org.librarysimplified.r2.api.SR2Event.SR2Error
+import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkCreated
+import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkDeleted
+import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarksLoaded
+import org.librarysimplified.r2.api.SR2Event.SR2Error.SR2ChapterNonexistent
+import org.librarysimplified.r2.api.SR2Event.SR2Error.SR2WebViewInaccessible
 import org.librarysimplified.r2.api.SR2Event.SR2OnCenterTapped
 import org.librarysimplified.r2.api.SR2Event.SR2ReadingPositionChanged
 import org.librarysimplified.r2.ui_thread.SR2UIThread
@@ -32,7 +32,6 @@ import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
-import java.util.concurrent.Executors
 
 class DemoActivity : AppCompatActivity(), SR2ControllerHostType {
 
@@ -41,14 +40,6 @@ class DemoActivity : AppCompatActivity(), SR2ControllerHostType {
   }
 
   private val logger = LoggerFactory.getLogger(DemoActivity::class.java)
-
-  private val ioExecutor =
-    MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(1) { runnable ->
-      val thread = Thread(runnable)
-      thread.name = "org.librarysimplified.r2.demo.io"
-      thread
-    })
-
   private var epubFile: File? = null
   private var controller: SR2ControllerType? = null
   private var controllerSubscription: Disposable? = null
@@ -111,10 +102,6 @@ class DemoActivity : AppCompatActivity(), SR2ControllerHostType {
     }
   }
 
-  override fun onControllerWantsIOExecutor(): ListeningExecutorService {
-    return this.ioExecutor
-  }
-
   override fun onNavigationClose() {
     this.supportFragmentManager.popBackStack()
   }
@@ -149,7 +136,7 @@ class DemoActivity : AppCompatActivity(), SR2ControllerHostType {
 
   private fun onControllerEvent(event: SR2Event) {
     return when (event) {
-      is SR2Error.SR2ChapterNonexistent -> {
+      is SR2ChapterNonexistent -> {
         SR2UIThread.runOnUIThread {
           Toast.makeText(
             this,
@@ -158,9 +145,11 @@ class DemoActivity : AppCompatActivity(), SR2ControllerHostType {
           ).show()
         }
       }
-      is SR2Error.SR2WebViewInaccessible -> {
+
+      is SR2WebViewInaccessible -> {
 
       }
+
       is SR2OnCenterTapped -> {
         SR2UIThread.runOnUIThread {
           Toast.makeText(
@@ -170,16 +159,20 @@ class DemoActivity : AppCompatActivity(), SR2ControllerHostType {
           ).show()
         }
       }
+
       is SR2ReadingPositionChanged -> {
 
       }
+
       is SR2BookmarkCreated -> {
         val database = DemoApplication.application.database()
         database.bookmarkSave(this.controller!!.bookMetadata.id, event.bookmark)
       }
+
       SR2BookmarksLoaded -> {
 
       }
+
       is SR2BookmarkDeleted -> {
         val database = DemoApplication.application.database()
         database.bookmarkDelete(this.controller!!.bookMetadata.id, event.bookmark)

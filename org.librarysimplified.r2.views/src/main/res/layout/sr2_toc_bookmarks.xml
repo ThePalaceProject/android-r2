@@ -18,11 +18,11 @@
   <View
     android:id="@+id/tocBookmarksDivider"
     android:layout_width="0dp"
-    android:layout_height="2dp"
+    android:layout_height="1dp"
+    android:background="?android:attr/listDivider"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toBottomOf="@id/tocBookmarksLastRead"
-    android:background="?android:attr/listDivider" />
+    app:layout_constraintTop_toBottomOf="@id/tocBookmarksLastRead" />
 
   <androidx.recyclerview.widget.RecyclerView
     android:id="@+id/tocBookmarksList"

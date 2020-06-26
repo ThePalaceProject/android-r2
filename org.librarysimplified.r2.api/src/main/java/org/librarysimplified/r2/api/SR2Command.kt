@@ -69,7 +69,21 @@ sealed class SR2Command {
    * in navigation.
    */
 
-  data class LoadBookmarks(
+  data class BookmarksLoad(
     val bookmarks: List<SR2Bookmark>
+  ) : SR2Command()
+
+  /**
+   * Create a new (explicit) bookmark at the current reading position.
+   */
+
+  object BookmarkCreate : SR2Command()
+
+  /**
+   * Delete a specific bookmark.
+   */
+
+  data class BookmarkDelete(
+    val bookmark: SR2Bookmark
   ) : SR2Command()
 }

@@ -55,4 +55,10 @@ interface SR2ControllerType : Closeable, SR2ControllerCommandQueueType {
    */
 
   fun bookmarksNow(): List<SR2Bookmark>
+
+  /**
+   * The current position of the reader.
+   */
+
+  fun positionNow(): SR2Locator
 }

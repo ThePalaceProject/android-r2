@@ -13,6 +13,7 @@ import org.librarysimplified.r2.api.SR2ControllerConfiguration
 import org.librarysimplified.r2.api.SR2ControllerType
 import org.librarysimplified.r2.api.SR2Event
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkCreated
+import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkDeleted
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarksLoaded
 import org.librarysimplified.r2.api.SR2Event.SR2Error.SR2ChapterNonexistent
 import org.librarysimplified.r2.api.SR2Event.SR2Error.SR2WebViewInaccessible
@@ -239,11 +240,45 @@ class SR2Controller private constructor(
         this.executeCommandOpenPagePrevious(command, apiCommand as SR2Command.OpenPagePrevious)
       is SR2Command.OpenChapterPrevious ->
         this.executeCommandOpenChapterPrevious(command, apiCommand)
-      is SR2Command.LoadBookmarks ->
-        this.executeCommandLoadBookmarks(command, apiCommand)
+      is SR2Command.BookmarksLoad ->
+        this.executeCommandBookmarksLoad(command, apiCommand)
       SR2Command.Refresh ->
         this.executeCommandRefresh(command, apiCommand as SR2Command.Refresh)
+      SR2Command.BookmarkCreate ->
+        this.executeCommandBookmarkCreate(command, apiCommand as SR2Command.BookmarkCreate)
+      is SR2Command.BookmarkDelete ->
+        this.executeCommandBookmarkDelete(command, apiCommand)
     }
+  }
+
+  private fun executeCommandBookmarkDelete(
+    command: SR2CommandInternalAPI,
+    apiCommand: SR2Command.BookmarkDelete
+  ) {
+    val newBookmarks = this.bookmarks.toMutableList()
+    val removed = newBookmarks.remove(apiCommand.bookmark)
+    if (removed) {
+      this.bookmarks = newBookmarks.toList()
+      this.eventSubject.onNext(SR2BookmarkDeleted(apiCommand.bookmark))
+    }
+  }
+
+  private fun executeCommandBookmarkCreate(
+    command: SR2CommandInternalAPI,
+    createBookmark: SR2Command.BookmarkCreate
+  ) {
+    val bookmark =
+      SR2Bookmark(
+        date = DateTime.now(),
+        type = SR2Bookmark.Type.EXPLICIT,
+        title = this.makeChapterTitleOf(this.currentChapterIndex),
+        locator = SR2LocatorPercent(this.currentChapterIndex, this.currentChapterProgress)
+      )
+
+    val newBookmarks = this.bookmarks.toMutableList()
+    newBookmarks.add(bookmark)
+    this.bookmarks = newBookmarks.toList()
+    this.eventSubject.onNext(SR2BookmarkCreated(bookmark))
   }
 
   private fun executeCommandRefresh(
@@ -256,9 +291,9 @@ class SR2Controller private constructor(
     )
   }
 
-  private fun executeCommandLoadBookmarks(
+  private fun executeCommandBookmarksLoad(
     command: SR2CommandInternalAPI,
-    apiCommand: SR2Command.LoadBookmarks
+    apiCommand: SR2Command.BookmarksLoad
   ) {
     val newBookmarks = this.bookmarks.toMutableList()
     newBookmarks.addAll(apiCommand.bookmarks)
@@ -542,6 +577,13 @@ class SR2Controller private constructor(
 
   override fun bookmarksNow(): List<SR2Bookmark> =
     this.bookmarks
+
+  override fun positionNow(): SR2Locator {
+    return SR2LocatorPercent(
+      this.currentChapterIndex,
+      this.currentChapterProgress
+    )
+  }
 
   override fun viewConnect(webView: WebView) {
     synchronized(this.webViewConnectionLock) {

@@ -15,8 +15,8 @@ import org.librarysimplified.r2.api.SR2Command
 import org.librarysimplified.r2.api.SR2ControllerProviderType
 import org.librarysimplified.r2.api.SR2ControllerType
 import org.librarysimplified.r2.api.SR2Event
-import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkCreated
-import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarksLoaded
+import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent
+import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.*
 import org.librarysimplified.r2.api.SR2Event.SR2Error
 import org.librarysimplified.r2.api.SR2Event.SR2OnCenterTapped
 import org.librarysimplified.r2.api.SR2Event.SR2ReadingPositionChanged
@@ -101,7 +101,9 @@ class DemoActivity : AppCompatActivity(), SR2ControllerHostType {
     if (isFirstStartup) {
       // Navigate to the first chapter or saved reading position.
       val database = DemoApplication.application.database()
-      val lastRead = database.bookmarkFindLastReadLocation(controller.bookMetadata.id)
+      val bookId = controller.bookMetadata.id
+      val lastRead = database.bookmarkFindLastReadLocation(bookId)
+      controller.submitCommand(SR2Command.BookmarksLoad(database.bookmarksFor(bookId)))
       controller.submitCommand(SR2Command.OpenChapter(lastRead.locator))
     } else {
       // Refresh whatever the controller was looking at previously.
@@ -177,6 +179,10 @@ class DemoActivity : AppCompatActivity(), SR2ControllerHostType {
       }
       SR2BookmarksLoaded -> {
 
+      }
+      is SR2BookmarkDeleted -> {
+        val database = DemoApplication.application.database()
+        database.bookmarkDelete(this.controller!!.bookMetadata.id, event.bookmark)
       }
     }
   }

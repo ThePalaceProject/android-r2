@@ -19,9 +19,19 @@ import com.google.common.util.concurrent.FluentFuture
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import io.reactivex.disposables.Disposable
+import org.librarysimplified.r2.api.SR2Bookmark
+import org.librarysimplified.r2.api.SR2Bookmark.Type.EXPLICIT
+import org.librarysimplified.r2.api.SR2Command
 import org.librarysimplified.r2.api.SR2ControllerConfiguration
 import org.librarysimplified.r2.api.SR2ControllerType
 import org.librarysimplified.r2.api.SR2Event
+import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkCreated
+import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarksLoaded
+import org.librarysimplified.r2.api.SR2Event.SR2Error.SR2ChapterNonexistent
+import org.librarysimplified.r2.api.SR2Event.SR2Error.SR2WebViewInaccessible
+import org.librarysimplified.r2.api.SR2Event.SR2OnCenterTapped
+import org.librarysimplified.r2.api.SR2Event.SR2ReadingPositionChanged
+import org.librarysimplified.r2.api.SR2Locator
 import org.librarysimplified.r2.ui_thread.SR2UIThread
 import org.slf4j.LoggerFactory
 
@@ -50,6 +60,7 @@ class SR2ReaderFragment : Fragment() {
 
   private lateinit var controllerHost: SR2ControllerHostType
   private lateinit var menu: Menu
+  private lateinit var menuBookmarkItem: MenuItem
   private lateinit var parameters: SR2ReaderFragmentParameters
   private lateinit var positionPageView: TextView
   private lateinit var positionPercentView: TextView
@@ -89,17 +100,27 @@ class SR2ReaderFragment : Fragment() {
   ) {
     inflater.inflate(R.menu.sr2_reader_menu, menu)
     this.menu = menu
+    this.menuBookmarkItem = menu.findItem(R.id.readerMenuAddBookmark)
   }
 
   override fun onOptionsItemSelected(item: MenuItem): Boolean {
+    val controllerNow = this.controller
     return when (item.itemId) {
       R.id.readerMenuSettings -> {
         Toast.makeText(this.requireContext(), "Settings!", Toast.LENGTH_SHORT).show()
         true
       }
       R.id.readerMenuTOC -> {
-        if (this.controller != null) {
+        if (controllerNow != null) {
           this.controllerHost.onNavigationOpenTableOfContents()
+        }
+        true
+      }
+      R.id.readerMenuAddBookmark -> {
+        if (controllerNow != null) {
+          if (this.findBookmarkForCurrentPage(controllerNow, controllerNow.positionNow()) == null) {
+            controllerNow.submitCommand(SR2Command.BookmarkCreate)
+          }
         }
         true
       }
@@ -168,7 +189,7 @@ class SR2ReaderFragment : Fragment() {
   ) {
     this.controller = controller
     controller.viewConnect(this.webView)
-    this.controllerSubscription = controller.events.subscribe { this.onControllerEvent(it) }
+    this.controllerSubscription = controller.events.subscribe(this::onControllerEvent)
     this.controllerHost.onControllerBecameAvailable(controller, isFirstStartup)
   }
 
@@ -183,18 +204,72 @@ class SR2ReaderFragment : Fragment() {
   }
 
   @UiThread
-  private fun onReadingPositionChanged(event: SR2Event.SR2ReadingPositionChanged) {
+  private fun onReadingPositionChanged(event: SR2ReadingPositionChanged) {
     this.logger.debug("chapterTitle=${event.chapterTitle}")
     this.progressView.apply { this.max = 100; this.progress = event.bookProgressPercent }
     this.positionPageView.text = this.getString(R.string.progress_page, event.currentPage, event.pageCount)
     this.positionTitleView.text = event.chapterTitle
     this.positionPercentView.text = this.getString(R.string.progress_percent, event.bookProgressPercent)
+    this.reconfigureBookmarkMenuItem(event.locator)
+  }
+
+  @UiThread
+  private fun reconfigureBookmarkMenuItem(currentPosition: SR2Locator) {
+    SR2UIThread.checkIsUIThread()
+
+    val controllerNow = this.controller
+    if (controllerNow != null) {
+      val bookmark = this.findBookmarkForCurrentPage(controllerNow, currentPosition)
+      if (bookmark != null) {
+        this.menuBookmarkItem.setIcon(R.drawable.sr2_bookmark_active)
+      } else {
+        this.menuBookmarkItem.setIcon(R.drawable.sr2_bookmark_inactive)
+      }
+    }
+  }
+
+  private fun findBookmarkForCurrentPage(
+    controllerNow: SR2ControllerType,
+    currentPosition: SR2Locator
+  ): SR2Bookmark? {
+    return controllerNow.bookmarksNow()
+      .find { bookmark -> this.locationMatchesBookmark(bookmark, currentPosition) }
+  }
+
+  private fun locationMatchesBookmark(
+    bookmark: SR2Bookmark,
+    location: SR2Locator
+  ): Boolean {
+    return bookmark.type == EXPLICIT && location.compareTo(bookmark.locator) == 0
   }
 
   private fun onControllerEvent(event: SR2Event) {
-    when (event) {
-      is SR2Event.SR2ReadingPositionChanged -> {
-        SR2UIThread.runOnUIThread { this.onReadingPositionChanged(event) }
+    return when (event) {
+      is SR2ReadingPositionChanged -> {
+        SR2UIThread.runOnUIThread {
+          this.onReadingPositionChanged(event)
+        }
+      }
+
+      SR2BookmarksLoaded,
+      is SR2Event.SR2BookmarkEvent.SR2BookmarkDeleted,
+      is SR2BookmarkCreated -> {
+        this.onBookmarksChanged()
+      }
+
+      is SR2ChapterNonexistent,
+      is SR2WebViewInaccessible,
+      is SR2OnCenterTapped -> {
+
+      }
+    }
+  }
+
+  private fun onBookmarksChanged() {
+    SR2UIThread.runOnUIThread {
+      val controllerNow = this.controller
+      if (controllerNow != null) {
+        this.reconfigureBookmarkMenuItem(controllerNow.positionNow())
       }
     }
   }

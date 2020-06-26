@@ -43,6 +43,10 @@ class DemoDatabase(private val context: Context) {
     val progress: Double
   ) : Serializable
 
+  private fun countBookmarks(map: Map<String, List<SerializableBookmark>>): Int {
+    return map.entries.fold(0, { acc : Int, entry -> acc + entry.value.size })
+  }
+
   fun bookmarkFindLastReadLocation(
     bookId: String
   ): SR2Bookmark {
@@ -68,6 +72,20 @@ class DemoDatabase(private val context: Context) {
       }
   }
 
+  fun bookmarkDelete(
+    bookId: String,
+    bookmark: SR2Bookmark
+  ) {
+    if (bookmark.type == LAST_READ) {
+      return
+    }
+
+    val existing = this.bookmarks[bookId]?.toMutableList() ?: mutableListOf()
+    existing.remove(toSerializable(bookmark))
+    this.bookmarks[bookId] = existing.toList()
+    this.ioExecutor.execute { this.saveMap() }
+  }
+
   fun bookmarkSave(
     bookId: String,
     bookmark: SR2Bookmark
@@ -83,29 +101,34 @@ class DemoDatabase(private val context: Context) {
       }
     }
 
-    when (val locator = bookmark.locator) {
+    existing.add(toSerializable(bookmark))
+    this.bookmarks[bookId] = existing.toList()
+    this.ioExecutor.execute { this.saveMap() }
+  }
+
+  private fun toSerializable(
+    bookmark: SR2Bookmark
+  ): SerializableBookmark {
+    return when (val locator = bookmark.locator) {
       is SR2LocatorPercent -> {
-        existing.add(SerializableBookmark(
+        SerializableBookmark(
           time = bookmark.date,
           type = bookmark.type,
           title = bookmark.title,
           chapterIndex = bookmark.locator.chapterIndex,
           progress = locator.chapterProgress
-        ))
+        )
       }
       is SR2LocatorChapterEnd -> {
-        existing.add(SerializableBookmark(
+        SerializableBookmark(
           time = bookmark.date,
           type = bookmark.type,
           title = bookmark.title,
           chapterIndex = bookmark.locator.chapterIndex,
           progress = 1.0
-        ))
+        )
       }
     }
-
-    this.bookmarks[bookId] = existing.toList()
-    this.ioExecutor.execute { this.saveMap() }
   }
 
   private fun loadMap(): HashMap<String, List<SerializableBookmark>> {
@@ -115,7 +138,10 @@ class DemoDatabase(private val context: Context) {
       val file = File(this.context.filesDir, "bookmarks.dat")
       file.inputStream().use { stream ->
         ObjectInputStream(stream).use { objectStream ->
-          objectStream.readObject() as HashMap<String, List<SerializableBookmark>>
+          val map = objectStream.readObject() as HashMap<String, List<SerializableBookmark>>
+          this.logger.debug("loaded {} bookmarks", this.countBookmarks(map))
+          logBookmarks(map)
+          map
         }
       }
     } catch (e: Exception) {
@@ -124,9 +150,17 @@ class DemoDatabase(private val context: Context) {
     }
   }
 
+  private fun logBookmarks(map: HashMap<String, List<SerializableBookmark>>) {
+    for (entry in map.entries) {
+      for (bookmark in entry.value) {
+        this.logger.debug("[{}][{}]: bookmark", entry.key, bookmark)
+      }
+    }
+  }
+
   private fun saveMap() {
     try {
-      this.logger.debug("saving bookmarks")
+      this.logger.debug("saving {} bookmarks", this.countBookmarks(this.bookmarks))
 
       val fileTmp =
         File(this.context.filesDir, "bookmarks.dat.tmp")

@@ -3,6 +3,7 @@ dependencies {
   api libraries.androidXConstraintLayout
   api libraries.androidXCore
   api libraries.androidXLifecycle
+  api libraries.androidXLifecycleViewmodel
   api libraries.androidXViewPager2
   api libraries.googleMaterial
   api libraries.kotlinStdlib

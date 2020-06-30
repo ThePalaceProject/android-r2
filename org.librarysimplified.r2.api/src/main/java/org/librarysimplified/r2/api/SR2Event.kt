@@ -48,8 +48,21 @@ sealed class SR2Event {
     val chapterProgress: Double,
     val currentPage: Int,
     val pageCount: Int,
-    val bookProgressPercent: Int
+    val bookProgress: Double
   ) : SR2Event() {
+
+    init {
+      require(this.chapterProgress in 0.0.. 1.0) {
+        "Chapter progress ${this.chapterProgress} must be in the range [0, 1]"
+      }
+      require(this.bookProgress in 0.0.. 1.0) {
+        "Book progress ${this.bookProgress} must be in the range [0, 1]"
+      }
+    }
+
+    val bookProgressPercent: Int
+      get() = (this.bookProgress * 100.0).toInt()
+
     val locator =
       SR2Locator.SR2LocatorPercent(this.chapterIndex, this.chapterProgress)
   }

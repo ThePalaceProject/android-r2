@@ -158,6 +158,9 @@ internal class SR2Controller private constructor(
   private var currentChapterProgress = 0.0
 
   @Volatile
+  private var currentBookProgress = 0.0
+
+  @Volatile
   private var bookmarks = listOf<SR2Bookmark>()
 
   private fun locationOfSpineItem(
@@ -199,7 +202,8 @@ internal class SR2Controller private constructor(
       date = DateTime.now(),
       type = LAST_READ,
       title = title,
-      locator = locator
+      locator = locator,
+      bookProgress = this.currentBookProgress
     )
     val newBookmarks = this.bookmarks.toMutableList()
     newBookmarks.removeAll { bookmark -> bookmark.type == LAST_READ }
@@ -272,7 +276,8 @@ internal class SR2Controller private constructor(
         date = DateTime.now(),
         type = SR2Bookmark.Type.EXPLICIT,
         title = this.makeChapterTitleOf(this.currentChapterIndex),
-        locator = SR2LocatorPercent(this.currentChapterIndex, this.currentChapterProgress)
+        locator = SR2LocatorPercent(this.currentChapterIndex, this.currentChapterProgress),
+        bookProgress = this.currentBookProgress
       )
 
     val newBookmarks = this.bookmarks.toMutableList()
@@ -426,13 +431,7 @@ internal class SR2Controller private constructor(
     }
   }
 
-  /**
-   * Return approximate book progress as percent completed.
-   *
-   * @param chapterProgress [0 - 1]
-   */
-
-  private fun getBookPercentComplete(chapterProgress: Double): Int {
+  private fun getBookProgress(chapterProgress: Double): Double {
     require(chapterProgress < 1 || chapterProgress > 0) {
       "progress must be in [0, 1]; was $chapterProgress"
     }
@@ -441,7 +440,7 @@ internal class SR2Controller private constructor(
     val currentIndex = this.currentChapterIndex
     val result = ((currentIndex + 1 * chapterProgress) / chapterCount)
     this.logger.debug("$result = ($currentIndex + 1 * $chapterProgress) / $chapterCount")
-    return (result * 100).toInt()
+    return result
   }
 
   /**
@@ -466,6 +465,8 @@ internal class SR2Controller private constructor(
       val chapterTitle =
         this@SR2Controller.makeChapterTitleOf(chapterIndex)
 
+      this@SR2Controller.currentBookProgress =
+        this@SR2Controller.getBookProgress(chapterProgress)
       this@SR2Controller.currentChapterProgress =
         chapterProgress
 
@@ -504,7 +505,7 @@ internal class SR2Controller private constructor(
           chapterProgress = chapterProgress,
           currentPage = currentPage,
           pageCount = pageCount,
-          bookProgressPercent = this@SR2Controller.getBookPercentComplete(chapterProgress)
+          bookProgress = this@SR2Controller.currentBookProgress
         )
       )
     }

@@ -30,7 +30,19 @@ data class SR2Bookmark(
    * The locator for the bookmark.
    */
 
-  val locator: SR2Locator) {
+  val locator: SR2Locator,
+
+  /**
+   * An estimate of the current progress through the entire book.
+   */
+
+  val bookProgress: Double) {
+
+  init {
+    require(this.bookProgress in 0.0..1.0) {
+      "Book progress must be in the range [0, 1]"
+    }
+  }
 
   /**
    * The type of the bookmark.

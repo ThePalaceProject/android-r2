@@ -40,7 +40,8 @@ class DemoDatabase(private val context: Context) {
     val type: Type,
     val title: String,
     val chapterIndex: Int,
-    val progress: Double
+    val chapterProgress: Double,
+    val bookProgress: Double = 0.0
   ) : Serializable
 
   private fun countBookmarks(map: Map<String, List<SerializableBookmark>>): Int {
@@ -56,7 +57,8 @@ class DemoDatabase(private val context: Context) {
         date = DateTime.now(),
         type = LAST_READ,
         title = "",
-        locator = SR2LocatorPercent(0, 0.0)
+        locator = SR2LocatorPercent(0, 0.0),
+        bookProgress = 0.0
       )
   }
 
@@ -67,7 +69,8 @@ class DemoDatabase(private val context: Context) {
           date = bookmark.time,
           type = bookmark.type,
           title = bookmark.title,
-          locator = SR2LocatorPercent(bookmark.chapterIndex, bookmark.progress)
+          locator = SR2LocatorPercent(bookmark.chapterIndex, bookmark.chapterProgress),
+          bookProgress = bookmark.bookProgress
         )
       }
   }
@@ -121,7 +124,7 @@ class DemoDatabase(private val context: Context) {
           type = bookmark.type,
           title = bookmark.title,
           chapterIndex = bookmark.locator.chapterIndex,
-          progress = locator.chapterProgress
+          chapterProgress = locator.chapterProgress
         )
       }
       is SR2LocatorChapterEnd -> {
@@ -130,7 +133,7 @@ class DemoDatabase(private val context: Context) {
           type = bookmark.type,
           title = bookmark.title,
           chapterIndex = bookmark.locator.chapterIndex,
-          progress = 1.0
+          chapterProgress = 1.0
         )
       }
     }

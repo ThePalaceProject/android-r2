@@ -249,7 +249,9 @@ class SR2ReaderFragment : Fragment() {
     return when (event) {
       is SR2ReadingPositionChanged -> {
         SR2UIThread.runOnUIThread {
-          this.onReadingPositionChanged(event)
+          if (!this.isDetached) {
+            this.onReadingPositionChanged(event)
+          }
         }
       }
 
@@ -271,7 +273,9 @@ class SR2ReaderFragment : Fragment() {
     SR2UIThread.runOnUIThread {
       val controllerNow = this.controller
       if (controllerNow != null) {
-        this.reconfigureBookmarkMenuItem(controllerNow.positionNow())
+        if (!this.isDetached) {
+          this.reconfigureBookmarkMenuItem(controllerNow.positionNow())
+        }
       }
     }
   }

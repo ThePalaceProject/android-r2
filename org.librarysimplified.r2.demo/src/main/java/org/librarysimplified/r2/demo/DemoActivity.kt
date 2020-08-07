@@ -147,7 +147,7 @@ class DemoActivity : AppCompatActivity(), SR2ControllerHostType {
       }
 
       is SR2WebViewInaccessible -> {
-
+        // Nothing
       }
 
       is SR2OnCenterTapped -> {
@@ -161,7 +161,7 @@ class DemoActivity : AppCompatActivity(), SR2ControllerHostType {
       }
 
       is SR2ReadingPositionChanged -> {
-
+        // Nothing
       }
 
       is SR2BookmarkCreated -> {
@@ -170,7 +170,7 @@ class DemoActivity : AppCompatActivity(), SR2ControllerHostType {
       }
 
       SR2BookmarksLoaded -> {
-
+        // Nothing
       }
 
       is SR2BookmarkDeleted -> {

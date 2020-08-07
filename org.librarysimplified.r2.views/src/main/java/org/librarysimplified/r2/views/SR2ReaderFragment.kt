@@ -264,7 +264,7 @@ class SR2ReaderFragment : Fragment() {
       is SR2ChapterNonexistent,
       is SR2WebViewInaccessible,
       is SR2OnCenterTapped -> {
-
+        // Nothing
       }
     }
   }

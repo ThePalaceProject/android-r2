@@ -3,6 +3,7 @@ package org.librarysimplified.r2.vanilla.internal
 import android.webkit.WebView
 import io.reactivex.Observable
 import io.reactivex.subjects.PublishSubject
+import kotlinx.coroutines.runBlocking
 import org.joda.time.DateTime
 import org.librarysimplified.r2.api.SR2BookChapter
 import org.librarysimplified.r2.api.SR2BookMetadata
@@ -24,9 +25,11 @@ import org.librarysimplified.r2.api.SR2Locator.SR2LocatorChapterEnd
 import org.librarysimplified.r2.api.SR2Locator.SR2LocatorPercent
 import org.librarysimplified.r2.vanilla.internal.SR2CommandInternal.SR2CommandInternalAPI
 import org.librarysimplified.r2.vanilla.internal.SR2CommandInternal.SR2CommandInternalDelay
-import org.readium.r2.shared.Publication
-import org.readium.r2.streamer.container.Container
-import org.readium.r2.streamer.parser.EpubParser
+import org.readium.r2.shared.publication.Publication
+import org.readium.r2.shared.publication.services.isRestricted
+import org.readium.r2.shared.publication.services.protectionError
+import org.readium.r2.shared.util.File
+import org.readium.r2.shared.util.getOrElse
 import org.readium.r2.streamer.server.Server
 import org.slf4j.LoggerFactory
 import java.io.IOException
@@ -45,7 +48,6 @@ internal class SR2Controller private constructor(
   private val port: Int,
   private val server: Server,
   private val publication: Publication,
-  private val container: Container,
   private val epubFileName: String
 ) : SR2ControllerType {
 
@@ -88,31 +90,33 @@ internal class SR2Controller private constructor(
       configuration: SR2ControllerConfiguration
     ): SR2ControllerType {
       val bookFile = configuration.bookFile
+      val adobeRightsFile = configuration.adobeRightsFile
       this.logger.debug("creating controller for {}", bookFile)
 
-      val box =
-        EpubParser().parse(bookFile.absolutePath)
-          ?: throw IOException("Failed to parse EPUB")
+      val file = File(bookFile.path)
+      val publication = runBlocking {
+        configuration.streamer.open(file, allowUserInteraction = false)
+      }.getOrElse {
+        throw IOException("Failed to open EPUB", it)
+      }
 
-      this.logger.debug("publication uri: {}", box.publication.baseUrl())
-      this.logger.debug("publication title: {}", box.publication.metadata.title)
+      if (publication.isRestricted)
+        throw IOException("Failed to unlock EPUB", publication.protectionError)
+
+      this.logger.debug("publication title: {}", publication.metadata.title)
       val port = this.fetchUnusedHTTPPort()
       this.logger.debug("server port: {}", port)
 
-      val server = Server(port)
+      val server = Server(port, configuration.context)
       this.logger.debug("starting server")
       server.start(5_000)
 
-      this.logger.debug("loading readium resources")
-      server.loadReadiumCSSResources(configuration.context.assets)
-      server.loadR2ScriptResources(configuration.context.assets)
-      server.loadR2FontResources(configuration.context.assets, configuration.context)
-
       this.logger.debug("loading epub into server")
       val epubName = "/${bookFile.name}"
+      this.logger.debug("publication uri: {}", Publication.localBaseUrlOf(epubName, port))
       server.addEpub(
-        publication = box.publication,
-        container = box.container,
+        publication = publication,
+        container = null,
         fileName = epubName,
         userPropertiesPath = null
       )
@@ -120,10 +124,9 @@ internal class SR2Controller private constructor(
       this.logger.debug("server ready")
       return SR2Controller(
         configuration = configuration,
-        container = box.container,
         epubFileName = epubName,
         port = port,
-        publication = box.publication,
+        publication = publication,
         server = server
       )
     }
@@ -171,15 +174,8 @@ internal class SR2Controller private constructor(
     }
 
     return buildString {
-      this.append("http://127.0.0.1:")
-      this.append(this@SR2Controller.port)
-      this.append(this@SR2Controller.epubFileName)
-
-      val publication = this@SR2Controller.publication
-      this.append(
-        publication.readingOrder[index].href
-          ?: throw IllegalStateException("Link to chapter $index is not present")
-      )
+      this.append(Publication.localBaseUrlOf(this@SR2Controller.epubFileName, port))
+      this.append(publication.readingOrder[index].href)
     }
   }
 
@@ -537,7 +533,7 @@ internal class SR2Controller private constructor(
 
   override val bookMetadata: SR2BookMetadata =
     SR2BookMetadata(
-      id = this.publication.metadata.identifier,
+      id = this.publication.metadata.identifier!!, //FIXME : identifier is not mandatory in RWPM.
       readingOrder = this.makeReadingOrder()
     )
 
@@ -616,6 +612,12 @@ internal class SR2Controller private constructor(
         this.server.stop()
       } catch (e: Exception) {
         this.logger.error("could not stop server: ", e)
+      }
+
+      try {
+        this.publication.close()
+      } catch (e: Exception) {
+        this.logger.error("could not close publication: ", e)
       }
 
       try {

@@ -26,6 +26,8 @@ import org.librarysimplified.r2.views.SR2ControllerHostType
 import org.librarysimplified.r2.views.SR2ReaderFragment
 import org.librarysimplified.r2.views.SR2ReaderFragmentParameters
 import org.librarysimplified.r2.views.SR2TOCFragment
+import org.readium.r2.streamer.Streamer
+import org.readium.r2.streamer.parser.epub.EpubParser
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.FileNotFoundException
@@ -60,6 +62,8 @@ class DemoActivity : AppCompatActivity(), SR2ControllerHostType {
     resultCode: Int,
     data: Intent?
   ) {
+    super.onActivityResult(requestCode, resultCode, data)
+
     when (requestCode) {
       PICK_DOCUMENT -> this.onPickDocumentResult(resultCode, data)
     }
@@ -118,9 +122,16 @@ class DemoActivity : AppCompatActivity(), SR2ControllerHostType {
    */
 
   private fun startReader(file: File) {
+    val streamer = Streamer(
+      context = this,
+      parsers = listOf(EpubParser()),
+      ignoreDefaultParsers = true
+    )
+
     val fragment =
-      SR2ReaderFragment.create(
+      SR2ReaderFragment(
         SR2ReaderFragmentParameters(
+          streamer = streamer,
           bookFile = file
         )
       )

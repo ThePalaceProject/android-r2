@@ -90,12 +90,10 @@ internal class SR2Controller private constructor(
       configuration: SR2ControllerConfiguration
     ): SR2ControllerType {
       val bookFile = configuration.bookFile
-      val adobeRightsFile = configuration.adobeRightsFile
       this.logger.debug("creating controller for {}", bookFile)
 
-      val file = File(bookFile.path)
       val publication = runBlocking {
-        configuration.streamer.open(file, allowUserInteraction = false)
+        configuration.streamer.open(bookFile, allowUserInteraction = false)
       }.getOrElse {
         throw IOException("Failed to open EPUB", it)
       }

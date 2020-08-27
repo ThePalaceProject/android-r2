@@ -153,7 +153,6 @@ class SR2ReaderFragment(
       this.readerModel.createOrGet(
         configuration = SR2ControllerConfiguration(
           bookFile = this.parameters.bookFile,
-          adobeRightsFile = this.parameters.adobeRightsFile,
           context = activity,
           streamer = this.parameters.streamer,
           ioExecutor = this.readerModel.ioExecutor,

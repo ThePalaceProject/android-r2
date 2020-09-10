@@ -132,7 +132,7 @@ class DemoActivity : AppCompatActivity(), SR2ControllerHostType {
       SR2ReaderFragment(
         SR2ReaderFragmentParameters(
           streamer = streamer,
-          bookFile = file
+          bookFile = org.readium.r2.shared.util.File(file.path)
         )
       )
 

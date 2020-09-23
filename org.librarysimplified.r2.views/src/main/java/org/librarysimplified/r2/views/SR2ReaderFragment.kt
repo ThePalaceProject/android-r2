@@ -13,6 +13,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.UiThread
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentFactory
 import androidx.lifecycle.ViewModelProviders
 import com.google.common.base.Function
 import com.google.common.util.concurrent.FluentFuture
@@ -37,7 +38,9 @@ import org.librarysimplified.r2.views.internal.SR2ControllerReference
 import org.librarysimplified.r2.views.internal.SR2ReaderViewModel
 import org.slf4j.LoggerFactory
 
-class SR2ReaderFragment : Fragment() {
+class SR2ReaderFragment(
+  private val parameters: SR2ReaderFragmentParameters
+): Fragment() {
 
   private val logger = LoggerFactory.getLogger(SR2ReaderFragment::class.java)
 
@@ -49,21 +52,24 @@ class SR2ReaderFragment : Fragment() {
      * Create a book detail fragment for the given parameters.
      */
 
-    fun create(
+    fun createFactory(
       parameters: SR2ReaderFragmentParameters
-    ): SR2ReaderFragment {
-      val arguments = Bundle()
-      arguments.putSerializable(this.PARAMETERS_ID, parameters)
-      val fragment = SR2ReaderFragment()
-      fragment.arguments = arguments
-      return fragment
+    ): FragmentFactory = Factory(parameters)
+  }
+
+  private class Factory(val parameters: SR2ReaderFragmentParameters) : FragmentFactory() {
+
+    override fun instantiate(classLoader: ClassLoader, className: String): Fragment =
+      when(className) {
+        SR2ReaderFragment::javaClass.name -> SR2ReaderFragment(parameters)
+        else -> super.instantiate(classLoader, className)
     }
+
   }
 
   private lateinit var controllerHost: SR2ControllerHostType
   private lateinit var menu: Menu
   private lateinit var menuBookmarkItem: MenuItem
-  private lateinit var parameters: SR2ReaderFragmentParameters
   private lateinit var positionPageView: TextView
   private lateinit var positionPercentView: TextView
   private lateinit var positionTitleView: TextView
@@ -75,7 +81,6 @@ class SR2ReaderFragment : Fragment() {
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
-    this.parameters = this.arguments!![PARAMETERS_ID] as SR2ReaderFragmentParameters
     this.setHasOptionsMenu(true)
   }
 
@@ -149,6 +154,7 @@ class SR2ReaderFragment : Fragment() {
         configuration = SR2ControllerConfiguration(
           bookFile = this.parameters.bookFile,
           context = activity,
+          streamer = this.parameters.streamer,
           ioExecutor = this.readerModel.ioExecutor,
           uiExecutor = SR2UIThread::runOnUIThread
         ),

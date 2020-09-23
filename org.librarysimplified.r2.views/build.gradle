@@ -8,6 +8,8 @@ dependencies {
   implementation libraries.googleMaterial
   implementation libraries.kotlinStdlib
   implementation libraries.slf4j
+  implementation libraries.r2Shared
+  implementation libraries.r2Streamer
 
   api project(":org.librarysimplified.r2.api")
   api project(":org.librarysimplified.r2.ui_thread")

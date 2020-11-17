@@ -28,7 +28,6 @@ import org.librarysimplified.r2.vanilla.internal.SR2CommandInternal.SR2CommandIn
 import org.readium.r2.shared.publication.Publication
 import org.readium.r2.shared.publication.services.isRestricted
 import org.readium.r2.shared.publication.services.protectionError
-import org.readium.r2.shared.util.File
 import org.readium.r2.shared.util.getOrElse
 import org.readium.r2.streamer.server.Server
 import org.slf4j.LoggerFactory
@@ -531,7 +530,7 @@ internal class SR2Controller private constructor(
 
   override val bookMetadata: SR2BookMetadata =
     SR2BookMetadata(
-      id = this.publication.metadata.identifier!!, //FIXME : identifier is not mandatory in RWPM.
+      id = this.publication.metadata.identifier!!, // FIXME : identifier is not mandatory in RWPM.
       readingOrder = this.makeReadingOrder()
     )
 

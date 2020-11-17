@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory
 
 class SR2ReaderFragment(
   private val parameters: SR2ReaderFragmentParameters
-): Fragment() {
+) : Fragment() {
 
   private val logger = LoggerFactory.getLogger(SR2ReaderFragment::class.java)
 
@@ -60,11 +60,10 @@ class SR2ReaderFragment(
   private class Factory(val parameters: SR2ReaderFragmentParameters) : FragmentFactory() {
 
     override fun instantiate(classLoader: ClassLoader, className: String): Fragment =
-      when(className) {
+      when (className) {
         SR2ReaderFragment::javaClass.name -> SR2ReaderFragment(parameters)
         else -> super.instantiate(classLoader, className)
     }
-
   }
 
   private lateinit var controllerHost: SR2ControllerHostType

@@ -23,13 +23,11 @@ data class SR2ControllerConfiguration(
 
   val context: Context,
 
-
   /**
    * A Readium Streamer to open the book.
    */
 
   val streamer: Streamer,
-
 
   /**
    * An executor service used to execute I/O code on one or more background threads.

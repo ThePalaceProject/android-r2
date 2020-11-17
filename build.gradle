@@ -1,6 +1,6 @@
 buildscript {
-  if ("$gradle.gradleVersion" != "6.3") {
-    throw new GradleException("Gradle version 6.3 is required (received $gradle.gradleVersion)")
+  if ("$gradle.gradleVersion" != "6.7") {
+    throw new GradleException("Gradle version 6.7 is required (received $gradle.gradleVersion)")
   }
 
   ext.kotlin_version = "1.3.72"
@@ -13,10 +13,10 @@ buildscript {
   }
 
   dependencies {
-    classpath "biz.aQute.bnd:biz.aQute.bnd.gradle:5.1.1"
+    classpath "biz.aQute.bnd:biz.aQute.bnd.gradle:5.2.0"
     classpath "digital.wup:android-maven-publish:3.6.3"
     classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-    classpath "com.android.tools.build:gradle:4.0.1"
+    classpath "com.android.tools.build:gradle:4.1.1"
   }
 }
 
@@ -40,14 +40,6 @@ ext {
     nexusPassword = ""
   }
 
-  if (!project.hasProperty("org.librarysimplified.nexus.publish")) {
-    logger.warn("org.librarysimplified.nexus.publish is not set: We will publish artifacts to Maven Central")
-    useNYPLNexusPublish = false
-  } else {
-    logger.warn("org.librarysimplified.nexus.publish is set: We will publish artifacts to the NYPL Nexus")
-    useNYPLNexusPublish = true
-  }
-
   if (!project.hasProperty("org.librarysimplified.nexus.depend")) {
     logger.warn("org.librarysimplified.nexus.depend is not set: We will not depend on artifacts on the NYPL Nexus")
     useNYPLNexusDepend = false
@@ -64,6 +56,14 @@ ext {
     logger.warn("org.librarysimplified.directory.publish is not set: We will not publish artifacts to a custom directory")
     useDirectoryPublish = false
     useDirectoryPublishPath = null
+  }
+
+  if (project.hasProperty("org.librarysimplified.no_signing")) {
+    disableSigning = true
+    logger.warn("org.librarysimplified.no_signing is set: We will not sign artifacts")
+  } else {
+    disableSigning = false
+    logger.warn("org.librarysimplified.no_signing is not set: We will attempt to sign artifacts")
   }
 }
 
@@ -247,3 +247,11 @@ subprojects { project ->
 // the tasks for each subproject individually.
 
 apply from: file("$rootDir/ktlint.gradle")
+
+/**
+ * An empty task called by CI. We don't do semantic versioning analysis here yet.
+ */
+
+task verifySemanticVersioning {
+
+}

@@ -31,13 +31,13 @@ ext {
   androidMinimumSDKVersion = 21
   androidTargetSDKVersion = 28
 
-  if (!project.hasProperty("nexusUsername")) {
-    logger.warn("No nexusUsername property specified: Using an empty value")
-    nexusUsername = ""
+  if (!project.hasProperty("mavenCentralUsername")) {
+    logger.warn("No mavenCentralUsername property specified: Using an empty value")
+    mavenCentralUsername = ""
   }
-  if (!project.hasProperty("nexusPassword")) {
-    logger.warn("No nexusPassword property specified: Using an empty value")
-    nexusPassword = ""
+  if (!project.hasProperty("mavenCentralPassword")) {
+    logger.warn("No mavenCentralPassword property specified: Using an empty value")
+    mavenCentralPassword = ""
   }
 
   if (!project.hasProperty("org.librarysimplified.nexus.depend")) {

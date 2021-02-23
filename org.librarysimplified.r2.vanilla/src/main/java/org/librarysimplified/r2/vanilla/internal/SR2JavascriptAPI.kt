@@ -31,7 +31,7 @@ internal class SR2JavascriptAPI(
     this.webView.evaluateJavascript("readium.scrollRight();") {
       this.logger.debug("scrollRight => {}", it)
       when (it) {
-        "\"edge\"" -> {
+        "false" -> {
           this.commandQueue.submitCommand(SR2Command.OpenChapterNext)
         }
         else -> {
@@ -48,7 +48,7 @@ internal class SR2JavascriptAPI(
       this.logger.debug("scrollLeft => {}", it)
 
       when (it) {
-        "\"edge\"" -> {
+        "false" -> {
           this.commandQueue.submitCommand(SR2Command.OpenChapterPrevious(atEnd = true))
         }
         else -> {

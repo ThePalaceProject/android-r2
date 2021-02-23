@@ -1,15 +1,15 @@
 dependencies {
-  implementation libraries.androidXAppCompat
-  implementation libraries.androidXConstraintLayout
-  implementation libraries.androidXCore
-  implementation libraries.androidXLifecycle
-  implementation libraries.androidXLifecycleViewmodel
-  implementation libraries.androidXViewPager2
-  implementation libraries.googleMaterial
-  implementation libraries.kotlinStdlib
+  implementation libraries.androidx_app_compat
+  implementation libraries.androidx_constraint_layout
+  implementation libraries.androidx_core
+  implementation libraries.androidx_lifecycle
+  implementation libraries.androidx_lifecycle_viewmodel
+  implementation libraries.androidx_view_pager2
+  implementation libraries.google_material
+  implementation libraries.kotlin_stdlib
+  implementation libraries.r2_shared
+  implementation libraries.r2_streamer
   implementation libraries.slf4j
-  implementation libraries.r2Shared
-  implementation libraries.r2Streamer
 
   api project(":org.librarysimplified.r2.api")
   api project(":org.librarysimplified.r2.ui_thread")

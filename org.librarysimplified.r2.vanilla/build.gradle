@@ -1,12 +1,12 @@
 dependencies {
-  api libraries.kotlinStdlib
-  api libraries.kotlinCoroutines
-  api libraries.nanoHTTPD
-  api libraries.nanoHTTPDNanolets
-  api libraries.r2Shared
-  api libraries.r2Streamer
+  api libraries.kotlin_stdlib
+  api libraries.kotlin_coroutines
+  api libraries.nano_httpd
+  api libraries.nano_httpd_nanolets
+  api libraries.r2_shared
+  api libraries.r2_streamer
 
-  implementation libraries.androidXAnnotation
+  implementation libraries.androidx_annotation
   implementation libraries.slf4j
 
   api project(":org.librarysimplified.r2.api")

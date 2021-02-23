@@ -360,11 +360,13 @@ internal class SR2Controller private constructor(
 
       this.eventSubject.onNext(SR2WebViewInaccessible("No web view is connected"))
       this.submitCommandActual(SR2CommandInternalDelay(timeMilliseconds = 1_000L))
-      this.submitCommandActual(command.copy(
-        id = UUID.randomUUID(),
-        submitted = DateTime.now(),
-        isRetryOf = command.id
-      ))
+      this.submitCommandActual(
+        command.copy(
+          id = UUID.randomUUID(),
+          submitted = DateTime.now(),
+          isRetryOf = command.id
+        )
+      )
     }
   }
 
@@ -485,7 +487,8 @@ internal class SR2Controller private constructor(
             locator = SR2LocatorPercent(
               chapterIndex = chapterIndex,
               chapterProgress = chapterProgress
-            ))
+            )
+          )
         }
       }
 

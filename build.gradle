@@ -93,8 +93,8 @@ ext.versions = [
   mockito_android             : "2.22.0",
   nano_httpd                  : "master-SNAPSHOT",
   nano_httpd_nanolets         : "master-SNAPSHOT",
-  r2_shared                   : "nypl-SNAPSHOT",
-  r2_streamer                 : "nypl-SNAPSHOT",
+  r2_shared                   : "2.0.0-beta.1",
+  r2_streamer                 : "2.0.0-beta.1",
   rxjava2                     : "2.1.13",
   slf4j                       : "1.7.25",
 ]
@@ -126,8 +126,8 @@ ext.libraries = [
   mockito_android             : "org.mockito:mockito-android:${versions.mockito_android}",
   nano_httpd                  : "com.github.edrlab.nanohttpd:nanohttpd:${versions.nano_httpd}",
   nano_httpd_nanolets         : "com.github.edrlab.nanohttpd:nanohttpd-nanolets:${versions.nano_httpd_nanolets}",
-  r2_shared                   : "com.github.qnga:r2-shared-kotlin:${versions.r2_shared}",
-  r2_streamer                 : "com.github.qnga:r2-streamer-kotlin:${versions.r2_streamer}",
+  r2_shared                   : "com.github.readium:r2-shared-kotlin:${versions.r2_shared}",
+  r2_streamer                 : "com.github.readium:r2-streamer-kotlin:${versions.r2_streamer}",
   rxjava2                     : "io.reactivex.rxjava2:rxjava:${versions.rxjava2}",
   slf4j                       : "org.slf4j:slf4j-api:${versions.slf4j}",
 ]

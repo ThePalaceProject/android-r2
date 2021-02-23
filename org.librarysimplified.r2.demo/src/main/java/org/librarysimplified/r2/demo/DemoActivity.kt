@@ -26,6 +26,7 @@ import org.librarysimplified.r2.views.SR2ControllerHostType
 import org.librarysimplified.r2.views.SR2ReaderFragment
 import org.librarysimplified.r2.views.SR2ReaderFragmentParameters
 import org.librarysimplified.r2.views.SR2TOCFragment
+import org.readium.r2.shared.publication.asset.FileAsset
 import org.readium.r2.streamer.Streamer
 import org.readium.r2.streamer.parser.epub.EpubParser
 import org.slf4j.LoggerFactory
@@ -132,7 +133,7 @@ class DemoActivity : AppCompatActivity(), SR2ControllerHostType {
       SR2ReaderFragment(
         SR2ReaderFragmentParameters(
           streamer = streamer,
-          bookFile = org.readium.r2.shared.util.File(file.path)
+          bookFile = FileAsset(file)
         )
       )
 

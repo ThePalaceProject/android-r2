@@ -2,8 +2,8 @@ package org.librarysimplified.r2.api
 
 import android.content.Context
 import com.google.common.util.concurrent.ListeningExecutorService
+import org.readium.r2.shared.publication.asset.FileAsset
 import org.readium.r2.streamer.Streamer
-import org.readium.r2.shared.util.File
 
 /**
  * Configuration values for an R2 controller.
@@ -15,7 +15,7 @@ data class SR2ControllerConfiguration(
    * A file containing a book.
    */
 
-  val bookFile: File,
+  val bookFile: FileAsset,
 
   /**
    * The current Android application context.

@@ -1,7 +1,7 @@
 package org.librarysimplified.r2.views
 
+import org.readium.r2.shared.publication.asset.FileAsset
 import org.readium.r2.streamer.Streamer
-import org.readium.r2.shared.util.File
 
 /**
  * The parameters required to open an SR2 fragment.
@@ -19,6 +19,5 @@ data class SR2ReaderFragmentParameters(
    * The file containing the book to be opened.
    */
 
-  val bookFile: File
-
+  val bookFile: FileAsset
 )

@@ -28,7 +28,7 @@ internal class SR2JavascriptAPI(
   override fun openPageNext() {
     SR2UIThread.checkIsUIThread()
 
-    this.webView.evaluateJavascript("scrollRight();") {
+    this.webView.evaluateJavascript("readium.scrollRight();") {
       this.logger.debug("scrollRight => {}", it)
       when (it) {
         "\"edge\"" -> {
@@ -44,7 +44,7 @@ internal class SR2JavascriptAPI(
   override fun openPagePrevious() {
     SR2UIThread.checkIsUIThread()
 
-    this.webView.evaluateJavascript("scrollLeft();") {
+    this.webView.evaluateJavascript("readium.scrollLeft();") {
       this.logger.debug("scrollLeft => {}", it)
 
       when (it) {
@@ -61,7 +61,7 @@ internal class SR2JavascriptAPI(
   override fun openPageLast() {
     SR2UIThread.checkIsUIThread()
 
-    this.webView.evaluateJavascript("scrollToEnd();") {
+    this.webView.evaluateJavascript("readium.scrollToEnd();") {
       this.logger.debug("scrollToEnd => {}", it)
     }
   }
@@ -115,7 +115,7 @@ internal class SR2JavascriptAPI(
   override fun setProgression(progress: Double) {
     SR2UIThread.checkIsUIThread()
 
-    this.webView.evaluateJavascript("scrollToPosition($progress);") {
+    this.webView.evaluateJavascript("readium.scrollToPosition($progress);") {
       this.logger.debug("scrollToPosition => {}", it)
     }
   }
@@ -124,7 +124,7 @@ internal class SR2JavascriptAPI(
   fun setUserProperty(name: String, value: String) {
     SR2UIThread.checkIsUIThread()
 
-    val script = "setProperty(\"--USER__${name}\", \"${value}\");"
+    val script = "readium.setProperty(\"--USER__${name}\", \"${value}\");"
     this.webView.evaluateJavascript(script) {
       this.logger.debug("evaluation result: {}", it)
     }

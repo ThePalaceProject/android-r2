@@ -441,7 +441,9 @@ internal class SR2Controller private constructor(
    * WebView.
    */
 
-  private inner class JavascriptAPIReceiver : SR2JavascriptAPIReceiverType {
+  private inner class JavascriptAPIReceiver(
+    private val webView: WebView
+  ) : SR2JavascriptAPIReceiverType {
 
     private val logger =
       LoggerFactory.getLogger(JavascriptAPIReceiver::class.java)
@@ -521,6 +523,11 @@ internal class SR2Controller private constructor(
       this.logger.debug("onRightTapped")
       this@SR2Controller.submitCommand(SR2Command.OpenPageNext)
     }
+
+    @android.webkit.JavascriptInterface
+    override fun getViewportWidth(): Double {
+      return this.webView.width.toDouble()
+    }
   }
 
   private fun submitCommandActual(command: SR2CommandInternal) {
@@ -579,7 +586,7 @@ internal class SR2Controller private constructor(
     synchronized(this.webViewConnectionLock) {
       this.webViewConnection = SR2WebViewConnection.create(
         webView = webView,
-        jsReceiver = this.JavascriptAPIReceiver(),
+        jsReceiver = this.JavascriptAPIReceiver(webView),
         commandQueue = this
       )
     }

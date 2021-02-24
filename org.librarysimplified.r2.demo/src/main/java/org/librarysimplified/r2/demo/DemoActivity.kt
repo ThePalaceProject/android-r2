@@ -9,7 +9,6 @@ import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import io.reactivex.disposables.Disposable
-import org.librarysimplified.r2.api.SR2ColorScheme
 import org.librarysimplified.r2.api.SR2Command
 import org.librarysimplified.r2.api.SR2ControllerProviderType
 import org.librarysimplified.r2.api.SR2ControllerType
@@ -19,8 +18,6 @@ import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkDeleted
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarksLoaded
 import org.librarysimplified.r2.api.SR2Event.SR2Error.SR2ChapterNonexistent
 import org.librarysimplified.r2.api.SR2Event.SR2Error.SR2WebViewInaccessible
-import org.librarysimplified.r2.api.SR2Font
-import org.librarysimplified.r2.api.SR2Theme
 import org.librarysimplified.r2.ui_thread.SR2UIThread
 import org.librarysimplified.r2.vanilla.SR2Controllers
 import org.librarysimplified.r2.views.SR2ControllerHostType
@@ -102,6 +99,7 @@ class DemoActivity : AppCompatActivity(), SR2ControllerHostType {
       val lastRead = database.bookmarkFindLastReadLocation(bookId)
       controller.submitCommand(SR2Command.BookmarksLoad(database.bookmarksFor(bookId)))
       controller.submitCommand(SR2Command.OpenChapter(lastRead.locator))
+      controller.submitCommand(SR2Command.ThemeSet(database.theme()))
     } else {
       // Refresh whatever the controller was looking at previously.
       controller.submitCommand(SR2Command.Refresh)
@@ -134,12 +132,7 @@ class DemoActivity : AppCompatActivity(), SR2ControllerHostType {
       SR2ReaderFragment(
         SR2ReaderFragmentParameters(
           streamer = streamer,
-          bookFile = FileAsset(file),
-          theme = SR2Theme(
-            colorScheme = SR2ColorScheme.DARK_TEXT_LIGHT_BACKGROUND,
-            font = SR2Font.FONT_SANS,
-            textSize = 1.125
-          )
+          bookFile = FileAsset(file)
         )
       )
 
@@ -197,7 +190,8 @@ class DemoActivity : AppCompatActivity(), SR2ControllerHostType {
       }
 
       is SR2Event.SR2ThemeChanged -> {
-        // Nothing
+        val database = DemoApplication.application.database()
+        database.themeSet(event.theme)
       }
     }
   }

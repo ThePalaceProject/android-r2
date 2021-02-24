@@ -178,7 +178,6 @@ class SR2ReaderFragment(
           context = activity,
           ioExecutor = this.readerModel.ioExecutor,
           streamer = this.parameters.streamer,
-          theme = this.parameters.theme,
           uiExecutor = SR2UIThread::runOnUIThread
         ),
         controllers = this.controllerHost.onControllerRequired()

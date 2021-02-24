@@ -18,12 +18,6 @@ data class SR2ControllerConfiguration(
   val bookFile: FileAsset,
 
   /**
-   * The initial theme for the reader
-   */
-
-  val theme: SR2Theme,
-
-  /**
    * The current Android application context.
    */
 

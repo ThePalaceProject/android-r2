@@ -1,6 +1,11 @@
 package org.librarysimplified.r2.vanilla.internal
 
 import android.webkit.WebView
+import com.google.common.util.concurrent.AsyncFunction
+import com.google.common.util.concurrent.Futures
+import com.google.common.util.concurrent.ListenableFuture
+import com.google.common.util.concurrent.MoreExecutors
+import com.google.common.util.concurrent.SettableFuture
 import io.reactivex.Observable
 import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.Subject
@@ -10,7 +15,6 @@ import org.librarysimplified.r2.api.SR2BookChapter
 import org.librarysimplified.r2.api.SR2BookMetadata
 import org.librarysimplified.r2.api.SR2Bookmark
 import org.librarysimplified.r2.api.SR2Bookmark.Type.LAST_READ
-import org.librarysimplified.r2.api.SR2ColorScheme
 import org.librarysimplified.r2.api.SR2Command
 import org.librarysimplified.r2.api.SR2ControllerConfiguration
 import org.librarysimplified.r2.api.SR2ControllerType
@@ -18,11 +22,8 @@ import org.librarysimplified.r2.api.SR2Event
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkCreated
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkDeleted
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarksLoaded
-import org.librarysimplified.r2.api.SR2Event.SR2Error.SR2ChapterNonexistent
-import org.librarysimplified.r2.api.SR2Event.SR2Error.SR2WebViewInaccessible
 import org.librarysimplified.r2.api.SR2Event.SR2OnCenterTapped
 import org.librarysimplified.r2.api.SR2Event.SR2ReadingPositionChanged
-import org.librarysimplified.r2.api.SR2Font
 import org.librarysimplified.r2.api.SR2Locator
 import org.librarysimplified.r2.api.SR2Locator.SR2LocatorChapterEnd
 import org.librarysimplified.r2.api.SR2Locator.SR2LocatorPercent
@@ -37,7 +38,7 @@ import org.readium.r2.streamer.server.Server
 import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.net.ServerSocket
-import java.util.UUID
+import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.annotation.concurrent.GuardedBy
@@ -150,16 +151,18 @@ internal class SR2Controller private constructor(
     }
 
   private val closed = AtomicBoolean(false)
-  private val webViewConnectionLock = Any()
 
   @Volatile
-  private var currentTheme = configuration.theme
+  private var themeMostRecent: SR2Theme? = null
+
   private val eventSubject: Subject<SR2Event> =
     PublishSubject.create<SR2Event>()
       .toSerialized()
 
+  private val webViewConnectionLock = Any()
+
   @GuardedBy("webViewConnectionLock")
-  private var webViewConnection: SR2WebViewConnection? = null
+  private var webViewConnection: SR2WebViewConnectionType? = null
 
   @Volatile
   private var currentChapterIndex = 0
@@ -173,6 +176,10 @@ internal class SR2Controller private constructor(
   @Volatile
   private var bookmarks = listOf<SR2Bookmark>()
 
+  init {
+    this.eventSubject.subscribe { event -> this.logger.debug("event: {}", event) }
+  }
+
   private fun locationOfSpineItem(
     index: Int
   ): String {
@@ -181,8 +188,8 @@ internal class SR2Controller private constructor(
     }
 
     return buildString {
-      this.append(Publication.localBaseUrlOf(this@SR2Controller.epubFileName, port))
-      this.append(publication.readingOrder[index].href)
+      this.append(Publication.localBaseUrlOf(this@SR2Controller.epubFileName, this@SR2Controller.port))
+      this.append(this@SR2Controller.publication.readingOrder[index].href)
     }
   }
 
@@ -215,12 +222,14 @@ internal class SR2Controller private constructor(
     this.eventSubject.onNext(SR2BookmarkCreated(newBookmark))
   }
 
-  private fun executeInternalCommand(command: SR2CommandInternal) {
+  private fun executeInternalCommand(
+    command: SR2CommandInternal
+  ): ListenableFuture<*> {
     this.logger.debug("executing {}", command)
 
     if (this.closed.get()) {
       this.logger.debug("executor has been shut down")
-      return
+      return Futures.immediateFuture(Unit)
     }
 
     return when (command) {
@@ -231,11 +240,16 @@ internal class SR2Controller private constructor(
     }
   }
 
-  private fun executeCommandInternalDelay(command: SR2CommandInternalDelay) {
+  private fun executeCommandInternalDelay(
+    command: SR2CommandInternalDelay
+  ): ListenableFuture<*> {
     Thread.sleep(command.timeMilliseconds)
+    return Futures.immediateFuture(Unit)
   }
 
-  private fun executeCommandInternalAPI(command: SR2CommandInternalAPI) {
+  private fun executeCommandInternalAPI(
+    command: SR2CommandInternalAPI
+  ): ListenableFuture<*> {
     return when (val apiCommand = command.command) {
       is SR2Command.OpenChapter ->
         this.executeCommandOpenChapter(command, apiCommand)
@@ -256,56 +270,59 @@ internal class SR2Controller private constructor(
       is SR2Command.BookmarkDelete ->
         this.executeCommandBookmarkDelete(command, apiCommand)
       is SR2Command.ThemeSet ->
-        this.executeCommandThemeSet(command, apiCommand)
+        this.executeCommandThemeSet(apiCommand)
     }
   }
 
   private fun executeCommandThemeSet(
-    command: SR2CommandInternalAPI,
     apiCommand: SR2Command.ThemeSet
-  ) {
-    this.executeWithWebView(command) { connection ->
-      val theme = apiCommand.theme
-      connection.jsAPI.setFontFamily(fontFamilyOf(theme.font))
-      connection.jsAPI.setTheme(internalThemeOf(theme.colorScheme))
-      connection.jsAPI.setTypeScale(apiCommand.theme.textSize)
-      this.currentTheme = theme
-      this.eventSubject.onNext(SR2Event.SR2ThemeChanged(theme))
-    }
+  ): ListenableFuture<*> {
+    val viewConnection = this.waitForWebViewAvailability()
+    val theme = apiCommand.theme
+
+    val f0 = viewConnection.executeJS { js -> js.setFontFamily(SR2Fonts.fontFamilyStringOf(theme.font)) }
+    val f1 = viewConnection.executeJS { js -> js.setTheme(SR2ReadiumInternalTheme.from(theme.colorScheme)) }
+    val f2 = viewConnection.executeJS { js -> js.setTypeScale(theme.textSize) }
+
+    val allFutures = Futures.allAsList(f0, f1, f2)
+    val setFuture = SettableFuture.create<Unit>()
+    allFutures.addListener(
+      {
+        this.themeMostRecent = theme
+        this.eventSubject.onNext(SR2Event.SR2ThemeChanged(theme))
+        setFuture.set(Unit)
+      },
+      MoreExecutors.directExecutor()
+    )
+    return setFuture
   }
 
-  private fun internalThemeOf(colorScheme: SR2ColorScheme): SR2ReadiumInternalTheme {
-    return when (colorScheme) {
-      SR2ColorScheme.DARK_TEXT_LIGHT_BACKGROUND -> SR2ReadiumInternalTheme.LIGHT
-      SR2ColorScheme.LIGHT_TEXT_DARK_BACKGROUND -> SR2ReadiumInternalTheme.DARK
-      SR2ColorScheme.DARK_TEXT_ON_SEPIA -> SR2ReadiumInternalTheme.SEPIA
-    }
-  }
-
-  private fun fontFamilyOf(font: SR2Font): String {
-    return when (font) {
-      SR2Font.FONT_SANS -> "sans-serif"
-      SR2Font.FONT_SERIF -> "serif"
-      SR2Font.FONT_OPEN_DYSLEXIC -> "OpenDyslexic"
+  private fun executeCommandThemeRefresh(): ListenableFuture<*> {
+    val themeNow = this.themeMostRecent
+    return if (themeNow != null) {
+      this.executeCommandThemeSet(SR2Command.ThemeSet(themeNow))
+    } else {
+      Futures.immediateFuture(Unit)
     }
   }
 
   private fun executeCommandBookmarkDelete(
     command: SR2CommandInternalAPI,
     apiCommand: SR2Command.BookmarkDelete
-  ) {
+  ): ListenableFuture<*> {
     val newBookmarks = this.bookmarks.toMutableList()
     val removed = newBookmarks.remove(apiCommand.bookmark)
     if (removed) {
       this.bookmarks = newBookmarks.toList()
       this.eventSubject.onNext(SR2BookmarkDeleted(apiCommand.bookmark))
     }
+    return Futures.immediateFuture(Unit)
   }
 
   private fun executeCommandBookmarkCreate(
     command: SR2CommandInternalAPI,
     createBookmark: SR2Command.BookmarkCreate
-  ) {
+  ): ListenableFuture<*> {
     val bookmark =
       SR2Bookmark(
         date = DateTime.now(),
@@ -319,33 +336,45 @@ internal class SR2Controller private constructor(
     newBookmarks.add(bookmark)
     this.bookmarks = newBookmarks.toList()
     this.eventSubject.onNext(SR2BookmarkCreated(bookmark))
+    return Futures.immediateFuture(Unit)
   }
 
   private fun executeCommandRefresh(
     command: SR2CommandInternalAPI,
     refresh: SR2Command.Refresh
-  ) {
-    this.openChapterIndex(
-      command,
-      SR2LocatorPercent(this.currentChapterIndex, this.currentChapterProgress)
+  ): ListenableFuture<*> {
+    val openFuture =
+      this.openChapterIndex(
+        command, SR2LocatorPercent(this.currentChapterIndex, this.currentChapterProgress)
+      )
+
+    /*
+     * If there was previously a theme set, then refresh the theme.
+     */
+
+    return Futures.transformAsync(
+      openFuture,
+      AsyncFunction { this.executeCommandThemeRefresh() },
+      MoreExecutors.directExecutor()
     )
   }
 
   private fun executeCommandBookmarksLoad(
     command: SR2CommandInternalAPI,
     apiCommand: SR2Command.BookmarksLoad
-  ) {
+  ): ListenableFuture<*> {
     val newBookmarks = this.bookmarks.toMutableList()
     newBookmarks.addAll(apiCommand.bookmarks)
     this.bookmarks = newBookmarks.toList()
     this.eventSubject.onNext(SR2BookmarksLoaded)
+    return Futures.immediateFuture(Unit)
   }
 
   private fun executeCommandOpenChapterPrevious(
     command: SR2CommandInternalAPI,
     apiCommand: SR2Command.OpenChapterPrevious
-  ) {
-    this.openChapterIndex(
+  ): ListenableFuture<*> {
+    return this.openChapterIndex(
       command,
       SR2LocatorChapterEnd(chapterIndex = Math.max(0, this.currentChapterIndex - 1))
     )
@@ -354,8 +383,8 @@ internal class SR2Controller private constructor(
   private fun executeCommandOpenChapterNext(
     command: SR2CommandInternalAPI,
     apiCommand: SR2Command.OpenChapterNext
-  ) {
-    this.openChapterIndex(
+  ): ListenableFuture<*> {
+    return this.openChapterIndex(
       command,
       SR2LocatorPercent(
         chapterIndex = Math.max(0, this.currentChapterIndex + 1),
@@ -367,104 +396,62 @@ internal class SR2Controller private constructor(
   private fun executeCommandOpenPagePrevious(
     command: SR2CommandInternalAPI,
     apiCommand: SR2Command.OpenPagePrevious
-  ) {
-    this.executeWithWebView(command) { connection -> connection.jsAPI.openPagePrevious() }
+  ): ListenableFuture<*> {
+    return this.waitForWebViewAvailability().executeJS(SR2JavascriptAPIType::openPagePrevious)
   }
 
   private fun executeCommandOpenPageNext(
     command: SR2CommandInternalAPI,
     apiCommand: SR2Command.OpenPageNext
-  ) {
-    this.executeWithWebView(command) { connection -> connection.jsAPI.openPageNext() }
+  ): ListenableFuture<*> {
+    return this.waitForWebViewAvailability().executeJS(SR2JavascriptAPIType::openPageNext)
   }
 
   private fun executeCommandOpenChapter(
     command: SR2CommandInternalAPI,
     apiCommand: SR2Command.OpenChapter
-  ) {
-    this.openChapterIndex(command, apiCommand.locator)
-  }
-
-  private fun executeWithWebView(
-    command: SR2CommandInternalAPI,
-    exec: (SR2WebViewConnection) -> Unit
-  ) {
-    val webViewRef = synchronized(this.webViewConnectionLock) { this.webViewConnection }
-    if (webViewRef != null) {
-      this.configuration.uiExecutor.invoke { exec.invoke(webViewRef) }
-    } else {
-
-      /*
-       * If the web view isn't connected, submit a delay and then submit a retry of the
-       * existing command. Either the web view will be reconnected shortly, or the controller
-       * will be shut down entirely.
-       */
-
-      this.eventSubject.onNext(SR2WebViewInaccessible("No web view is connected"))
-      this.submitCommandActual(SR2CommandInternalDelay(timeMilliseconds = 1_000L))
-      this.submitCommandActual(
-        command.copy(
-          id = UUID.randomUUID(),
-          submitted = DateTime.now(),
-          isRetryOf = command.id
-        )
-      )
-    }
+  ): ListenableFuture<*> {
+    return this.openChapterIndex(command, apiCommand.locator)
   }
 
   private fun openChapterIndex(
     command: SR2CommandInternalAPI,
     locator: SR2Locator
-  ) {
+  ): ListenableFuture<*> {
     val previousLocator =
       SR2LocatorPercent(this.currentChapterIndex, this.currentChapterProgress)
 
     try {
       val location = this.locationOfSpineItem(locator.chapterIndex)
       this.logger.debug("openChapterIndex: {}", location)
-
-      // Warning: The current chapter must be set before loading the spine location. The
-      // page will send a reading position changed event immediately on load, but before our
-      // callback returns. If we don't update the chapter index first we'll report the wrong
-      // chapter location in our SR2ReadingPositionChanged event. This is fragile and should
-      // be fixed later.
       this.setCurrentChapter(locator)
 
-      this.openURL(
-        command = command,
-        location = location,
-        onLoad = { webViewConnection ->
+      val connection = this.waitForWebViewAvailability()
+      val openFuture = connection.openURL(location)
+      return Futures.transformAsync(
+        openFuture,
+        {
           when (locator) {
-            is SR2LocatorPercent -> {
-              webViewConnection.jsAPI.setProgression(locator.chapterProgress)
-            }
-            is SR2LocatorChapterEnd -> {
-              webViewConnection.jsAPI.openPageLast()
-            }
+            is SR2LocatorPercent ->
+              connection.executeJS { js -> js.setProgression(locator.chapterProgress) }
+            is SR2LocatorChapterEnd ->
+              connection.executeJS { js -> js.openPageLast() }
           }
-        }
+        },
+        MoreExecutors.directExecutor()
       )
     } catch (e: Exception) {
       this.logger.error("unable to open chapter ${locator.chapterIndex}: ", e)
       this.setCurrentChapter(previousLocator)
       this.eventSubject.onNext(
-        SR2ChapterNonexistent(
+        SR2Event.SR2Error.SR2ChapterNonexistent(
           chapterIndex = locator.chapterIndex,
           message = e.message ?: "Unable to open chapter ${locator.chapterIndex}"
         )
       )
-    }
-  }
-
-  private fun openURL(
-    command: SR2CommandInternalAPI,
-    location: String,
-    onLoad: (SR2WebViewConnection) -> Unit
-  ) {
-    this.executeWithWebView(command) { webViewConnection ->
-      webViewConnection.openURL(location) {
-        onLoad.invoke(webViewConnection)
-      }
+      val future = SettableFuture.create<Unit>()
+      future.setException(e)
+      return future
     }
   }
 
@@ -577,7 +564,28 @@ internal class SR2Controller private constructor(
 
   private fun submitCommandActual(command: SR2CommandInternal) {
     this.logger.debug("submitCommand (isRetryOf: {}) {}", command.isRetryOf, command)
-    this.queueExecutor.execute { this.executeInternalCommand(command) }
+
+    this.queueExecutor.execute {
+      val future = this.executeInternalCommand(command)
+
+      future.addListener(
+        {
+          try {
+            try {
+              future.get()
+            } catch (e: ExecutionException) {
+              throw e.cause!!
+            }
+          } catch (e: SR2WebViewDisconnectedException) {
+            this.logger.debug("webview disconnected: could not execute {}", command)
+            this.eventSubject.onNext(SR2Event.SR2Error.SR2WebViewInaccessible("No web view is connected"))
+          } catch (e: Exception) {
+            this.logger.error("{}: ", command, e)
+          }
+        },
+        this.queueExecutor
+      )
+    }
   }
 
   override val bookMetadata: SR2BookMetadata =
@@ -627,30 +635,49 @@ internal class SR2Controller private constructor(
     )
   }
 
-  override fun themeNow(): SR2Theme {
-    return this.currentTheme
+  override fun themeNow(): SR2Theme? {
+    return this.themeMostRecent
   }
 
   override fun viewConnect(webView: WebView) {
-    synchronized(this.webViewConnectionLock) {
-      this.webViewConnection = SR2WebViewConnection.create(
+    this.logger.debug("viewConnect")
+
+    val newConnection =
+      SR2WebViewConnection.create(
         webView = webView,
         jsReceiver = this.JavascriptAPIReceiver(webView),
-        commandQueue = this
+        commandQueue = this,
+        uiExecutor = this.configuration.uiExecutor
       )
+
+    synchronized(this.webViewConnectionLock) {
+      this.webViewConnection = newConnection
     }
-
-    /*
-     * As soon as the web view is connected, submit a command to
-     * configure the theme information.
-     */
-
-    this.submitCommand(SR2Command.ThemeSet(this.themeNow()))
   }
 
   override fun viewDisconnect() {
+    this.logger.debug("viewDisconnect")
+
     synchronized(this.webViewConnectionLock) {
+      this.webViewConnection?.close()
       this.webViewConnection = null
+    }
+  }
+
+  private fun waitForWebViewAvailability(): SR2WebViewConnectionType {
+    while (true) {
+      synchronized(this.webViewConnectionLock) {
+        val webView = this.webViewConnection
+        if (webView != null) {
+          return webView
+        }
+      }
+
+      try {
+        Thread.sleep(5_00L)
+      } catch (e: InterruptedException) {
+        throw SR2WebViewDisconnectedException("No web view connection is available")
+      }
     }
   }
 

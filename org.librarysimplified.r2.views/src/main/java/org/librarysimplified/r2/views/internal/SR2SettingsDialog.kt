@@ -12,15 +12,25 @@ import org.librarysimplified.r2.api.SR2ControllerType
 import org.librarysimplified.r2.api.SR2Font
 import org.librarysimplified.r2.api.SR2Theme
 import org.librarysimplified.r2.views.R
+import org.slf4j.LoggerFactory
 
 class SR2SettingsDialog private constructor() {
   companion object {
+
+    private val logger =
+      LoggerFactory.getLogger(SR2SettingsDialog::class.java)
 
     private fun updateTheme(
       controller: SR2ControllerType,
       updater: (SR2Theme) -> SR2Theme
     ) {
-      controller.submitCommand(SR2Command.ThemeSet(updater.invoke(controller.themeNow())))
+      val themeCurrent = controller.themeNow()
+      if (themeCurrent == null) {
+        logger.error("no theme is current")
+        return
+      }
+
+      controller.submitCommand(SR2Command.ThemeSet(updater.invoke(themeCurrent)))
     }
 
     fun create(

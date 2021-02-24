@@ -12,7 +12,9 @@ sealed class SR2Command {
    * Reload whatever the controller opened last.
    */
 
-  object Refresh : SR2Command()
+  object Refresh : SR2Command() {
+    override fun toString(): String = "[Refresh]"
+  }
 
   /**
    * Open the chapter using the given locator.
@@ -32,7 +34,9 @@ sealed class SR2Command {
    * @see [SR2Event.SR2Error.SR2ChapterNonexistent]
    */
 
-  object OpenPageNext : SR2Command()
+  object OpenPageNext : SR2Command() {
+    override fun toString(): String = "[OpenPageNext]"
+  }
 
   /**
    * Open the next chapter, moving to the first page in that chapter.
@@ -40,7 +44,9 @@ sealed class SR2Command {
    * @see [SR2Event.SR2Error.SR2ChapterNonexistent]
    */
 
-  object OpenChapterNext : SR2Command()
+  object OpenChapterNext : SR2Command() {
+    override fun toString(): String = "[OpenChapterNext]"
+  }
 
   /**
    * Open the previous page. If the current reading position is the start of the chapter, then
@@ -50,7 +56,9 @@ sealed class SR2Command {
    * @see [SR2Event.SR2Error.SR2ChapterNonexistent]
    */
 
-  object OpenPagePrevious : SR2Command()
+  object OpenPagePrevious : SR2Command() {
+    override fun toString(): String = "[OpenPagePrevious]"
+  }
 
   /**
    * Open the previous chapter. If [atEnd] is `true`, then seek to the last page in the
@@ -77,7 +85,9 @@ sealed class SR2Command {
    * Create a new (explicit) bookmark at the current reading position.
    */
 
-  object BookmarkCreate : SR2Command()
+  object BookmarkCreate : SR2Command() {
+    override fun toString(): String = "[BookmarkCreate]"
+  }
 
   /**
    * Delete a specific bookmark.

@@ -256,23 +256,27 @@ internal class SR2Controller private constructor(
       SR2Command.OpenPageNext ->
         this.executeCommandOpenPageNext(command, apiCommand as SR2Command.OpenPageNext)
       SR2Command.OpenChapterNext ->
-        this.executeCommandOpenChapterNext(command, apiCommand as SR2Command.OpenChapterNext)
+        this.executeCommandOpenChapterNext(command)
       SR2Command.OpenPagePrevious ->
-        this.executeCommandOpenPagePrevious(command, apiCommand as SR2Command.OpenPagePrevious)
+        this.executeCommandOpenPagePrevious()
       is SR2Command.OpenChapterPrevious ->
-        this.executeCommandOpenChapterPrevious(command, apiCommand)
+        this.executeCommandOpenChapterPrevious(command)
       is SR2Command.BookmarksLoad ->
-        this.executeCommandBookmarksLoad(command, apiCommand)
+        this.executeCommandBookmarksLoad(apiCommand)
       SR2Command.Refresh ->
-        this.executeCommandRefresh(command, apiCommand as SR2Command.Refresh)
+        this.executeCommandRefresh(command)
       SR2Command.BookmarkCreate ->
-        this.executeCommandBookmarkCreate(command, apiCommand as SR2Command.BookmarkCreate)
+        this.executeCommandBookmarkCreate()
       is SR2Command.BookmarkDelete ->
-        this.executeCommandBookmarkDelete(command, apiCommand)
+        this.executeCommandBookmarkDelete(apiCommand)
       is SR2Command.ThemeSet ->
         this.executeCommandThemeSet(apiCommand)
     }
   }
+
+  /**
+   * Execute the [SR2Command.ThemeSet] command.
+   */
 
   private fun executeCommandThemeSet(
     apiCommand: SR2Command.ThemeSet
@@ -306,8 +310,11 @@ internal class SR2Controller private constructor(
     }
   }
 
+  /**
+   * Execute the [SR2Command.BookmarkDelete] command.
+   */
+
   private fun executeCommandBookmarkDelete(
-    command: SR2CommandInternalAPI,
     apiCommand: SR2Command.BookmarkDelete
   ): ListenableFuture<*> {
     val newBookmarks = this.bookmarks.toMutableList()
@@ -319,10 +326,11 @@ internal class SR2Controller private constructor(
     return Futures.immediateFuture(Unit)
   }
 
-  private fun executeCommandBookmarkCreate(
-    command: SR2CommandInternalAPI,
-    createBookmark: SR2Command.BookmarkCreate
-  ): ListenableFuture<*> {
+  /**
+   * Execute the [SR2Command.BookmarkCreate] command.
+   */
+
+  private fun executeCommandBookmarkCreate(): ListenableFuture<*> {
     val bookmark =
       SR2Bookmark(
         date = DateTime.now(),
@@ -339,9 +347,12 @@ internal class SR2Controller private constructor(
     return Futures.immediateFuture(Unit)
   }
 
+  /**
+   * Execute the [SR2Command.Refresh] command.
+   */
+
   private fun executeCommandRefresh(
-    command: SR2CommandInternalAPI,
-    refresh: SR2Command.Refresh
+    command: SR2CommandInternalAPI
   ): ListenableFuture<*> {
     val openFuture =
       this.openChapterIndex(
@@ -359,8 +370,11 @@ internal class SR2Controller private constructor(
     )
   }
 
+  /**
+   * Execute the [SR2Command.BookmarksLoad] command.
+   */
+
   private fun executeCommandBookmarksLoad(
-    command: SR2CommandInternalAPI,
     apiCommand: SR2Command.BookmarksLoad
   ): ListenableFuture<*> {
     val newBookmarks = this.bookmarks.toMutableList()
@@ -370,9 +384,12 @@ internal class SR2Controller private constructor(
     return Futures.immediateFuture(Unit)
   }
 
+  /**
+   * Execute the [SR2Command.OpenChapterPrevious] command.
+   */
+
   private fun executeCommandOpenChapterPrevious(
-    command: SR2CommandInternalAPI,
-    apiCommand: SR2Command.OpenChapterPrevious
+    command: SR2CommandInternalAPI
   ): ListenableFuture<*> {
     return this.openChapterIndex(
       command,
@@ -380,9 +397,12 @@ internal class SR2Controller private constructor(
     )
   }
 
+  /**
+   * Execute the [SR2Command.OpenChapterNext] command.
+   */
+
   private fun executeCommandOpenChapterNext(
-    command: SR2CommandInternalAPI,
-    apiCommand: SR2Command.OpenChapterNext
+    command: SR2CommandInternalAPI
   ): ListenableFuture<*> {
     return this.openChapterIndex(
       command,
@@ -393,12 +413,17 @@ internal class SR2Controller private constructor(
     )
   }
 
-  private fun executeCommandOpenPagePrevious(
-    command: SR2CommandInternalAPI,
-    apiCommand: SR2Command.OpenPagePrevious
-  ): ListenableFuture<*> {
+  /**
+   * Execute the [SR2Command.OpenPagePrevious] command.
+   */
+
+  private fun executeCommandOpenPagePrevious(): ListenableFuture<*> {
     return this.waitForWebViewAvailability().executeJS(SR2JavascriptAPIType::openPagePrevious)
   }
+
+  /**
+   * Execute the [SR2Command.OpenPageNext] command.
+   */
 
   private fun executeCommandOpenPageNext(
     command: SR2CommandInternalAPI,
@@ -406,6 +431,10 @@ internal class SR2Controller private constructor(
   ): ListenableFuture<*> {
     return this.waitForWebViewAvailability().executeJS(SR2JavascriptAPIType::openPageNext)
   }
+
+  /**
+   * Execute the [SR2Command.OpenChapter] command.
+   */
 
   private fun executeCommandOpenChapter(
     command: SR2CommandInternalAPI,

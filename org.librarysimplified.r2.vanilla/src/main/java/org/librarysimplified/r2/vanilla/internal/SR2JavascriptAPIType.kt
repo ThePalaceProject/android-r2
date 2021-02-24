@@ -33,10 +33,10 @@ internal interface SR2JavascriptAPIType {
   fun setFontFamily(value: String)
 
   @UiThread
-  fun setTextSize(value: Int)
+  fun setTextAlign(value: String)
 
   @UiThread
-  fun setTextAlign(value: String)
+  fun setTypeScale(value: Double)
 
   @UiThread
   fun setPageMargin(value: Double)
@@ -51,7 +51,7 @@ internal interface SR2JavascriptAPIType {
   fun setWordSpacing(value: Double)
 
   @UiThread
-  fun setTheme(value: SR2ReaderTheme)
+  fun setTheme(value: SR2ReadiumInternalTheme)
 
   /**
    * Set the current chapter position. This must be in the range [0, 1].

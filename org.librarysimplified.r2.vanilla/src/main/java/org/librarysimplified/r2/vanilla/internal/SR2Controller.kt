@@ -3,12 +3,14 @@ package org.librarysimplified.r2.vanilla.internal
 import android.webkit.WebView
 import io.reactivex.Observable
 import io.reactivex.subjects.PublishSubject
+import io.reactivex.subjects.Subject
 import kotlinx.coroutines.runBlocking
 import org.joda.time.DateTime
 import org.librarysimplified.r2.api.SR2BookChapter
 import org.librarysimplified.r2.api.SR2BookMetadata
 import org.librarysimplified.r2.api.SR2Bookmark
 import org.librarysimplified.r2.api.SR2Bookmark.Type.LAST_READ
+import org.librarysimplified.r2.api.SR2ColorScheme
 import org.librarysimplified.r2.api.SR2Command
 import org.librarysimplified.r2.api.SR2ControllerConfiguration
 import org.librarysimplified.r2.api.SR2ControllerType
@@ -20,9 +22,11 @@ import org.librarysimplified.r2.api.SR2Event.SR2Error.SR2ChapterNonexistent
 import org.librarysimplified.r2.api.SR2Event.SR2Error.SR2WebViewInaccessible
 import org.librarysimplified.r2.api.SR2Event.SR2OnCenterTapped
 import org.librarysimplified.r2.api.SR2Event.SR2ReadingPositionChanged
+import org.librarysimplified.r2.api.SR2Font
 import org.librarysimplified.r2.api.SR2Locator
 import org.librarysimplified.r2.api.SR2Locator.SR2LocatorChapterEnd
 import org.librarysimplified.r2.api.SR2Locator.SR2LocatorPercent
+import org.librarysimplified.r2.api.SR2Theme
 import org.librarysimplified.r2.vanilla.internal.SR2CommandInternal.SR2CommandInternalAPI
 import org.librarysimplified.r2.vanilla.internal.SR2CommandInternal.SR2CommandInternalDelay
 import org.readium.r2.shared.publication.Publication
@@ -47,7 +51,7 @@ internal class SR2Controller private constructor(
   private val port: Int,
   private val server: Server,
   private val publication: Publication,
-  private val epubFileName: String
+  private val epubFileName: String,
 ) : SR2ControllerType {
 
   companion object {
@@ -97,8 +101,9 @@ internal class SR2Controller private constructor(
         throw IOException("Failed to open EPUB", it)
       }
 
-      if (publication.isRestricted)
+      if (publication.isRestricted) {
         throw IOException("Failed to unlock EPUB", publication.protectionError)
+      }
 
       this.logger.debug("publication title: {}", publication.metadata.title)
       val port = this.fetchUnusedHTTPPort()
@@ -146,7 +151,12 @@ internal class SR2Controller private constructor(
 
   private val closed = AtomicBoolean(false)
   private val webViewConnectionLock = Any()
-  private val eventSubject: PublishSubject<SR2Event> = PublishSubject.create()
+
+  @Volatile
+  private var currentTheme = configuration.theme
+  private val eventSubject: Subject<SR2Event> =
+    PublishSubject.create<SR2Event>()
+      .toSerialized()
 
   @GuardedBy("webViewConnectionLock")
   private var webViewConnection: SR2WebViewConnection? = null
@@ -245,6 +255,38 @@ internal class SR2Controller private constructor(
         this.executeCommandBookmarkCreate(command, apiCommand as SR2Command.BookmarkCreate)
       is SR2Command.BookmarkDelete ->
         this.executeCommandBookmarkDelete(command, apiCommand)
+      is SR2Command.ThemeSet ->
+        this.executeCommandThemeSet(command, apiCommand)
+    }
+  }
+
+  private fun executeCommandThemeSet(
+    command: SR2CommandInternalAPI,
+    apiCommand: SR2Command.ThemeSet
+  ) {
+    this.executeWithWebView(command) { connection ->
+      val theme = apiCommand.theme
+      connection.jsAPI.setFontFamily(fontFamilyOf(theme.font))
+      connection.jsAPI.setTheme(internalThemeOf(theme.colorScheme))
+      connection.jsAPI.setTypeScale(apiCommand.theme.textSize)
+      this.currentTheme = theme
+      this.eventSubject.onNext(SR2Event.SR2ThemeChanged(theme))
+    }
+  }
+
+  private fun internalThemeOf(colorScheme: SR2ColorScheme): SR2ReadiumInternalTheme {
+    return when (colorScheme) {
+      SR2ColorScheme.DARK_TEXT_LIGHT_BACKGROUND -> SR2ReadiumInternalTheme.LIGHT
+      SR2ColorScheme.LIGHT_TEXT_DARK_BACKGROUND -> SR2ReadiumInternalTheme.DARK
+      SR2ColorScheme.DARK_TEXT_ON_SEPIA -> SR2ReadiumInternalTheme.SEPIA
+    }
+  }
+
+  private fun fontFamilyOf(font: SR2Font): String {
+    return when (font) {
+      SR2Font.FONT_SANS -> "sans-serif"
+      SR2Font.FONT_SERIF -> "serif"
+      SR2Font.FONT_OPEN_DYSLEXIC -> "OpenDyslexic"
     }
   }
 
@@ -585,6 +627,10 @@ internal class SR2Controller private constructor(
     )
   }
 
+  override fun themeNow(): SR2Theme {
+    return this.currentTheme
+  }
+
   override fun viewConnect(webView: WebView) {
     synchronized(this.webViewConnectionLock) {
       this.webViewConnection = SR2WebViewConnection.create(
@@ -593,6 +639,13 @@ internal class SR2Controller private constructor(
         commandQueue = this
       )
     }
+
+    /*
+     * As soon as the web view is connected, submit a command to
+     * configure the theme information.
+     */
+
+    this.submitCommand(SR2Command.ThemeSet(this.themeNow()))
   }
 
   override fun viewDisconnect() {

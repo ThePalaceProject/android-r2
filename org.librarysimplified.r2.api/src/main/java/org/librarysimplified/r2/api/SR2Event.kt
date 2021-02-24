@@ -95,4 +95,12 @@ sealed class SR2Event {
 
     object SR2BookmarksLoaded : SR2BookmarkEvent()
   }
+
+  /**
+   * The reader theme was changed.
+   */
+
+  data class SR2ThemeChanged(
+    val theme: SR2Theme
+  ) : SR2Event()
 }

@@ -10,7 +10,6 @@ import android.view.ViewGroup
 import android.webkit.WebView
 import android.widget.ProgressBar
 import android.widget.TextView
-import android.widget.Toast
 import androidx.annotation.UiThread
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentFactory
@@ -27,15 +26,19 @@ import org.librarysimplified.r2.api.SR2ControllerConfiguration
 import org.librarysimplified.r2.api.SR2ControllerType
 import org.librarysimplified.r2.api.SR2Event
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkCreated
+import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkDeleted
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarksLoaded
 import org.librarysimplified.r2.api.SR2Event.SR2Error.SR2ChapterNonexistent
 import org.librarysimplified.r2.api.SR2Event.SR2Error.SR2WebViewInaccessible
 import org.librarysimplified.r2.api.SR2Event.SR2OnCenterTapped
 import org.librarysimplified.r2.api.SR2Event.SR2ReadingPositionChanged
+import org.librarysimplified.r2.api.SR2Event.SR2ThemeChanged
 import org.librarysimplified.r2.api.SR2Locator
 import org.librarysimplified.r2.ui_thread.SR2UIThread
+import org.librarysimplified.r2.views.internal.SR2BrightnessService
 import org.librarysimplified.r2.views.internal.SR2ControllerReference
 import org.librarysimplified.r2.views.internal.SR2ReaderViewModel
+import org.librarysimplified.r2.views.internal.SR2SettingsDialog
 import org.slf4j.LoggerFactory
 
 class SR2ReaderFragment(
@@ -57,12 +60,18 @@ class SR2ReaderFragment(
     ): FragmentFactory = Factory(parameters)
   }
 
-  private class Factory(val parameters: SR2ReaderFragmentParameters) : FragmentFactory() {
-
-    override fun instantiate(classLoader: ClassLoader, className: String): Fragment =
+  private class Factory(
+    val parameters: SR2ReaderFragmentParameters
+  ) : FragmentFactory() {
+    override fun instantiate(
+      classLoader: ClassLoader,
+      className: String
+    ): Fragment =
       when (className) {
-        SR2ReaderFragment::javaClass.name -> SR2ReaderFragment(parameters)
-        else -> super.instantiate(classLoader, className)
+        SR2ReaderFragment::javaClass.name ->
+          SR2ReaderFragment(this.parameters)
+        else ->
+          super.instantiate(classLoader, className)
       }
   }
 
@@ -91,11 +100,16 @@ class SR2ReaderFragment(
     val view =
       inflater.inflate(R.layout.sr2_reader, container, false)
 
-    this.webView = view.findViewById(R.id.readerWebView)
-    this.progressView = view.findViewById(R.id.reader2_progress)
-    this.positionPageView = view.findViewById(R.id.reader2_position_page)
-    this.positionTitleView = view.findViewById(R.id.reader2_position_title)
-    this.positionPercentView = view.findViewById(R.id.reader2_position_percent)
+    this.webView =
+      view.findViewById(R.id.readerWebView)
+    this.progressView =
+      view.findViewById(R.id.reader2_progress)
+    this.positionPageView =
+      view.findViewById(R.id.reader2_position_page)
+    this.positionTitleView =
+      view.findViewById(R.id.reader2_position_title)
+    this.positionPercentView =
+      view.findViewById(R.id.reader2_position_percent)
 
     return view
   }
@@ -113,7 +127,7 @@ class SR2ReaderFragment(
     val controllerNow = this.controller
     return when (item.itemId) {
       R.id.readerMenuSettings -> {
-        Toast.makeText(this.requireContext(), "Settings!", Toast.LENGTH_SHORT).show()
+        this.openSettings()
         true
       }
       R.id.readerMenuTOC -> {
@@ -135,6 +149,15 @@ class SR2ReaderFragment(
     }
   }
 
+  private fun openSettings() {
+    val activity = this.requireActivity()
+    SR2SettingsDialog.create(
+      brightness = SR2BrightnessService(activity),
+      context = activity,
+      controller = this.controller!!
+    )
+  }
+
   override fun onStart() {
     super.onStart()
 
@@ -153,8 +176,9 @@ class SR2ReaderFragment(
         configuration = SR2ControllerConfiguration(
           bookFile = this.parameters.bookFile,
           context = activity,
-          streamer = this.parameters.streamer,
           ioExecutor = this.readerModel.ioExecutor,
+          streamer = this.parameters.streamer,
+          theme = this.parameters.theme,
           uiExecutor = SR2UIThread::runOnUIThread
         ),
         controllers = this.controllerHost.onControllerRequired()
@@ -262,11 +286,12 @@ class SR2ReaderFragment(
       }
 
       SR2BookmarksLoaded,
-      is SR2Event.SR2BookmarkEvent.SR2BookmarkDeleted,
+      is SR2BookmarkDeleted,
       is SR2BookmarkCreated -> {
         this.onBookmarksChanged()
       }
 
+      is SR2ThemeChanged,
       is SR2ChapterNonexistent,
       is SR2WebViewInaccessible,
       is SR2OnCenterTapped -> {

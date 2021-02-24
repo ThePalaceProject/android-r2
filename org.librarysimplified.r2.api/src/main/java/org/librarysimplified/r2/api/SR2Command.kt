@@ -86,4 +86,12 @@ sealed class SR2Command {
   data class BookmarkDelete(
     val bookmark: SR2Bookmark
   ) : SR2Command()
+
+  /**
+   * Set the overall theme for the reader.
+   */
+
+  data class ThemeSet(
+    val theme: SR2Theme
+  ) : SR2Command()
 }

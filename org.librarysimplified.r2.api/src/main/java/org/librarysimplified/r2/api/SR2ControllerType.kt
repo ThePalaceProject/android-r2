@@ -61,4 +61,10 @@ interface SR2ControllerType : Closeable, SR2ControllerCommandQueueType {
    */
 
   fun positionNow(): SR2Locator
+
+  /**
+   * The current reader theme.
+   */
+
+  fun themeNow(): SR2Theme
 }

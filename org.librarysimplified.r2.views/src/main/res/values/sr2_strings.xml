@@ -12,10 +12,24 @@
   <string name="readerAddBookmark">Add A Bookmark</string>
   <string name="readerSettings">Settings</string>
   <string name="readerTableOfContents">Table Of Contents &amp; Bookmarks</string>
+  <string name="settingsABC">ABC</string>
+  <string name="settingsABCLarger">ABC↑</string>
+  <string name="settingsABCSmaller">ABC↓</string>
+  <string name="settingsAa">A a</string>
   <string name="tocAccessBookmarkDelete">Delete A Bookmark</string>
-  <string name="tocBookmarkDeleteMessage">Are you sure you want to delete this bookmark?</string>
   <string name="tocBookmarkDelete">Delete</string>
+  <string name="tocBookmarkDeleteMessage">Are you sure you want to delete this bookmark?</string>
   <string name="tocBookmarks">Bookmarks</string>
   <string name="tocChapterIndexed">%1$d. %2$s</string>
   <string name="tocTitle">Table Of Contents</string>
+
+  <string name="settingsAccessibilitySetSans">Set book font to sans-serif.</string>
+  <string name="settingsAccessibilitySetSerif">Set book font to serif.</string>
+  <string name="settingsAccessibilitySetDyslexic">Set book font to Open Dyslexic.</string>
+  <string name="settingsAccessibilitySetBlackTextOnWhite">Set color scheme to black text on a white background.</string>
+  <string name="settingsAccessibilitySetWhiteTextOnBlack">Set color scheme to white text on a black background.</string>
+  <string name="settingsAccessibilitySetBlackTextOnSepia">Set color scheme to black text on a beige background.</string>
+  <string name="settingsAccessibilitySetSizeLarger">Increase text size.</string>
+  <string name="settingsAccessibilitySetSizeSmaller">Decrease text size.</string>
+  <string name="settingsAccessibilityBrightnessSlider">Brightness adjustment slider</string>
 </resources>

@@ -9,6 +9,7 @@ import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import io.reactivex.disposables.Disposable
+import org.librarysimplified.r2.api.SR2ColorScheme
 import org.librarysimplified.r2.api.SR2Command
 import org.librarysimplified.r2.api.SR2ControllerProviderType
 import org.librarysimplified.r2.api.SR2ControllerType
@@ -18,8 +19,8 @@ import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkDeleted
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarksLoaded
 import org.librarysimplified.r2.api.SR2Event.SR2Error.SR2ChapterNonexistent
 import org.librarysimplified.r2.api.SR2Event.SR2Error.SR2WebViewInaccessible
-import org.librarysimplified.r2.api.SR2Event.SR2OnCenterTapped
-import org.librarysimplified.r2.api.SR2Event.SR2ReadingPositionChanged
+import org.librarysimplified.r2.api.SR2Font
+import org.librarysimplified.r2.api.SR2Theme
 import org.librarysimplified.r2.ui_thread.SR2UIThread
 import org.librarysimplified.r2.vanilla.SR2Controllers
 import org.librarysimplified.r2.views.SR2ControllerHostType
@@ -133,7 +134,12 @@ class DemoActivity : AppCompatActivity(), SR2ControllerHostType {
       SR2ReaderFragment(
         SR2ReaderFragmentParameters(
           streamer = streamer,
-          bookFile = FileAsset(file)
+          bookFile = FileAsset(file),
+          theme = SR2Theme(
+            colorScheme = SR2ColorScheme.DARK_TEXT_LIGHT_BACKGROUND,
+            font = SR2Font.FONT_SANS,
+            textSize = 1.125
+          )
         )
       )
 
@@ -162,7 +168,7 @@ class DemoActivity : AppCompatActivity(), SR2ControllerHostType {
         // Nothing
       }
 
-      is SR2OnCenterTapped -> {
+      is SR2Event.SR2OnCenterTapped -> {
         SR2UIThread.runOnUIThread {
           Toast.makeText(
             this,
@@ -172,7 +178,7 @@ class DemoActivity : AppCompatActivity(), SR2ControllerHostType {
         }
       }
 
-      is SR2ReadingPositionChanged -> {
+      is SR2Event.SR2ReadingPositionChanged -> {
         // Nothing
       }
 
@@ -188,6 +194,10 @@ class DemoActivity : AppCompatActivity(), SR2ControllerHostType {
       is SR2BookmarkDeleted -> {
         val database = DemoApplication.application.database()
         database.bookmarkDelete(this.controller!!.bookMetadata.id, event.bookmark)
+      }
+
+      is SR2Event.SR2ThemeChanged -> {
+        // Nothing
       }
     }
   }

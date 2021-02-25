@@ -22,6 +22,16 @@ var readium = (function() {
 
     var pageWidth = 1;
 
+    function onScrollPositionChanged() {
+      var scrollX       = window.scrollX;
+      var viewportWidth = Android.getViewportWidth();
+      var documentWidth = document.scrollingElement.scrollWidth;
+      var pageCount     = documentWidth / viewportWidth;
+      var pageIndex     = (scrollX / viewportWidth) + 1;
+
+      Android.onReadingPositionChanged(pageIndex, pageCount);
+    }
+
     function onViewportWidthChanged() {
         // We can't rely on window.innerWidth for the pageWidth on Android, because if the
         // device pixel ratio is not an integer, we get rounding issues offsetting the pages.
@@ -69,6 +79,8 @@ var readium = (function() {
             var offset = documentWidth * position * factor;
             document.scrollingElement.scrollLeft = snapOffset(offset);
         }
+
+        onScrollPositionChanged();
     }
 
     function scrollToStart() {
@@ -79,6 +91,7 @@ var readium = (function() {
             document.scrollingElement.scrollTop = 0;
             window.scrollTo(0, 0);
         }
+        onScrollPositionChanged();
     }
 
     function scrollToEnd() {
@@ -90,6 +103,7 @@ var readium = (function() {
             document.scrollingElement.scrollTop = document.body.scrollHeight;
             window.scrollTo(0, document.body.scrollHeight);
         }
+        onScrollPositionChanged();
     }
 
     // Returns false if the page is already at the left-most scroll offset.
@@ -120,6 +134,7 @@ var readium = (function() {
         document.scrollingElement.scrollLeft = snapOffset(offset);
         // In some case the scrollX cannot reach the position respecting to innerWidth
         var diff = Math.abs(currentOffset - offset) / pageWidth;
+        onScrollPositionChanged();
         return (diff > 0.01);
     }
 

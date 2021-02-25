@@ -16,10 +16,12 @@ import org.librarysimplified.r2.api.SR2Event
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkCreated
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkDeleted
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarksLoaded
+import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandEventCompleted.SR2CommandExecutionFailed
+import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandEventCompleted.SR2CommandExecutionSucceeded
+import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandExecutionRunningLong
+import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandExecutionStarted
 import org.librarysimplified.r2.api.SR2Event.SR2Error.SR2ChapterNonexistent
 import org.librarysimplified.r2.api.SR2Event.SR2Error.SR2WebViewInaccessible
-import org.librarysimplified.r2.api.SR2Event.SR2OnCenterTapped
-import org.librarysimplified.r2.api.SR2Event.SR2ReadingPositionChanged
 import org.librarysimplified.r2.ui_thread.SR2UIThread
 import org.librarysimplified.r2.vanilla.SR2Controllers
 import org.librarysimplified.r2.views.SR2ControllerHostType
@@ -123,18 +125,23 @@ class DemoActivity : AppCompatActivity(), SR2ControllerHostType {
    */
 
   private fun startReader(file: File) {
-    val streamer = Streamer(
-      context = this,
-      parsers = listOf(EpubParser()),
-      ignoreDefaultParsers = true
-    )
+    val streamer =
+      Streamer(
+        context = this,
+        parsers = listOf(EpubParser()),
+        ignoreDefaultParsers = true
+      )
+
+    val database =
+      DemoApplication.application.database()
 
     val fragment =
       SR2ReaderFragment(
         SR2ReaderFragmentParameters(
           streamer = streamer,
-          bookFile = FileAsset(file)
-        )
+          bookFile = FileAsset(file),
+          theme = database.theme()
+        ),
       )
 
     this.supportFragmentManager.beginTransaction()
@@ -148,32 +155,15 @@ class DemoActivity : AppCompatActivity(), SR2ControllerHostType {
 
   private fun onControllerEvent(event: SR2Event) {
     return when (event) {
-      is SR2ChapterNonexistent -> {
+      is SR2Event.SR2OnCenterTapped -> {
         SR2UIThread.runOnUIThread {
-          Toast.makeText(
-            this,
-            "Chapter nonexistent: ${event.chapterIndex}",
-            Toast.LENGTH_SHORT
-          ).show()
+          val actionBar = this.supportActionBar ?: return@runOnUIThread
+          if (event.uiVisible) {
+            actionBar.show()
+          } else {
+            actionBar.hide()
+          }
         }
-      }
-
-      is SR2WebViewInaccessible -> {
-        // Nothing
-      }
-
-      is SR2OnCenterTapped -> {
-        SR2UIThread.runOnUIThread {
-          Toast.makeText(
-            this,
-            "Center tap!",
-            Toast.LENGTH_SHORT
-          ).show()
-        }
-      }
-
-      is SR2ReadingPositionChanged -> {
-        // Nothing
       }
 
       is SR2BookmarkCreated -> {
@@ -181,13 +171,25 @@ class DemoActivity : AppCompatActivity(), SR2ControllerHostType {
         database.bookmarkSave(this.controller!!.bookMetadata.id, event.bookmark)
       }
 
-      SR2BookmarksLoaded -> {
-        // Nothing
-      }
-
       is SR2BookmarkDeleted -> {
         val database = DemoApplication.application.database()
         database.bookmarkDelete(this.controller!!.bookMetadata.id, event.bookmark)
+      }
+
+      is SR2Event.SR2ThemeChanged -> {
+        val database = DemoApplication.application.database()
+        database.themeSet(event.theme)
+      }
+
+      is SR2Event.SR2ReadingPositionChanged,
+      SR2BookmarksLoaded,
+      is SR2ChapterNonexistent,
+      is SR2WebViewInaccessible,
+      is SR2CommandExecutionStarted,
+      is SR2CommandExecutionRunningLong,
+      is SR2CommandExecutionSucceeded,
+      is SR2CommandExecutionFailed -> {
+        // Nothing
       }
     }
   }

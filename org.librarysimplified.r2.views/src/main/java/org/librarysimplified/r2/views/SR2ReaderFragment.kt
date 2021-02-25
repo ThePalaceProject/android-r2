@@ -10,12 +10,10 @@ import android.view.ViewGroup
 import android.webkit.WebView
 import android.widget.ProgressBar
 import android.widget.TextView
-import android.widget.Toast
 import androidx.annotation.UiThread
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentFactory
 import androidx.lifecycle.ViewModelProviders
-import com.google.common.base.Function
 import com.google.common.util.concurrent.FluentFuture
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
@@ -27,19 +25,28 @@ import org.librarysimplified.r2.api.SR2ControllerConfiguration
 import org.librarysimplified.r2.api.SR2ControllerType
 import org.librarysimplified.r2.api.SR2Event
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkCreated
+import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkDeleted
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarksLoaded
+import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandEventCompleted.SR2CommandExecutionFailed
+import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandEventCompleted.SR2CommandExecutionSucceeded
+import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandExecutionRunningLong
+import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandExecutionStarted
 import org.librarysimplified.r2.api.SR2Event.SR2Error.SR2ChapterNonexistent
 import org.librarysimplified.r2.api.SR2Event.SR2Error.SR2WebViewInaccessible
 import org.librarysimplified.r2.api.SR2Event.SR2OnCenterTapped
 import org.librarysimplified.r2.api.SR2Event.SR2ReadingPositionChanged
+import org.librarysimplified.r2.api.SR2Event.SR2ThemeChanged
 import org.librarysimplified.r2.api.SR2Locator
+import org.librarysimplified.r2.api.SR2Theme
 import org.librarysimplified.r2.ui_thread.SR2UIThread
+import org.librarysimplified.r2.views.internal.SR2BrightnessService
 import org.librarysimplified.r2.views.internal.SR2ControllerReference
 import org.librarysimplified.r2.views.internal.SR2ReaderViewModel
+import org.librarysimplified.r2.views.internal.SR2SettingsDialog
 import org.slf4j.LoggerFactory
 
 class SR2ReaderFragment(
-  private val parameters: SR2ReaderFragmentParameters
+  private val parameters: SR2ReaderFragmentParameters,
 ) : Fragment() {
 
   private val logger = LoggerFactory.getLogger(SR2ReaderFragment::class.java)
@@ -57,21 +64,30 @@ class SR2ReaderFragment(
     ): FragmentFactory = Factory(parameters)
   }
 
-  private class Factory(val parameters: SR2ReaderFragmentParameters) : FragmentFactory() {
-
-    override fun instantiate(classLoader: ClassLoader, className: String): Fragment =
+  private class Factory(
+    val parameters: SR2ReaderFragmentParameters
+  ) : FragmentFactory() {
+    override fun instantiate(
+      classLoader: ClassLoader,
+      className: String
+    ): Fragment =
       when (className) {
-        SR2ReaderFragment::javaClass.name -> SR2ReaderFragment(parameters)
-        else -> super.instantiate(classLoader, className)
+        SR2ReaderFragment::javaClass.name ->
+          SR2ReaderFragment(this.parameters)
+        else ->
+          super.instantiate(classLoader, className)
       }
   }
 
+  private lateinit var container: ViewGroup
   private lateinit var controllerHost: SR2ControllerHostType
+  private lateinit var loadingView: ProgressBar
   private lateinit var menu: Menu
   private lateinit var menuBookmarkItem: MenuItem
   private lateinit var positionPageView: TextView
   private lateinit var positionPercentView: TextView
   private lateinit var positionTitleView: TextView
+  private lateinit var progressContainer: ViewGroup
   private lateinit var progressView: ProgressBar
   private lateinit var readerModel: SR2ReaderViewModel
   private lateinit var webView: WebView
@@ -91,13 +107,39 @@ class SR2ReaderFragment(
     val view =
       inflater.inflate(R.layout.sr2_reader, container, false)
 
-    this.webView = view.findViewById(R.id.readerWebView)
-    this.progressView = view.findViewById(R.id.reader2_progress)
-    this.positionPageView = view.findViewById(R.id.reader2_position_page)
-    this.positionTitleView = view.findViewById(R.id.reader2_position_title)
-    this.positionPercentView = view.findViewById(R.id.reader2_position_percent)
+    this.container =
+      view.findViewById(R.id.readerContainer)
+    this.progressContainer =
+      view.findViewById(R.id.readerProgressContainer)
+    this.webView =
+      view.findViewById(R.id.readerWebView)
+    this.progressView =
+      view.findViewById(R.id.reader2_progress)
+    this.positionPageView =
+      view.findViewById(R.id.reader2_position_page)
+    this.positionTitleView =
+      view.findViewById(R.id.reader2_position_title)
+    this.positionPercentView =
+      view.findViewById(R.id.reader2_position_percent)
+    this.loadingView =
+      view.findViewById(R.id.readerLoading)
 
+    this.configureForTheme(this.controller?.themeNow() ?: this.parameters.theme)
+    this.viewsShowLoading()
     return view
+  }
+
+  @UiThread
+  private fun configureForTheme(theme: SR2Theme) {
+    val background =
+      theme.colorScheme.background()
+    val foreground =
+      theme.colorScheme.foreground()
+
+    this.container.setBackgroundColor(background)
+    this.positionPageView.setTextColor(foreground)
+    this.positionTitleView.setTextColor(foreground)
+    this.positionPercentView.setTextColor(foreground)
   }
 
   override fun onCreateOptionsMenu(
@@ -113,7 +155,7 @@ class SR2ReaderFragment(
     val controllerNow = this.controller
     return when (item.itemId) {
       R.id.readerMenuSettings -> {
-        Toast.makeText(this.requireContext(), "Settings!", Toast.LENGTH_SHORT).show()
+        this.openSettings()
         true
       }
       R.id.readerMenuTOC -> {
@@ -135,6 +177,15 @@ class SR2ReaderFragment(
     }
   }
 
+  private fun openSettings() {
+    val activity = this.requireActivity()
+    SR2SettingsDialog.create(
+      brightness = SR2BrightnessService(activity),
+      context = activity,
+      controller = this.controller!!
+    )
+  }
+
   override fun onStart() {
     super.onStart()
 
@@ -153,8 +204,9 @@ class SR2ReaderFragment(
         configuration = SR2ControllerConfiguration(
           bookFile = this.parameters.bookFile,
           context = activity,
-          streamer = this.parameters.streamer,
           ioExecutor = this.readerModel.ioExecutor,
+          streamer = this.parameters.streamer,
+          theme = this.parameters.theme,
           uiExecutor = SR2UIThread::runOnUIThread
         ),
         controllers = this.controllerHost.onControllerRequired()
@@ -162,18 +214,16 @@ class SR2ReaderFragment(
 
     FluentFuture.from(controllerFuture)
       .transform(
-        Function<SR2ControllerReference, Unit> { reference ->
-          this.onBookOpenSucceeded(reference!!.controller, reference.isFirstStartup)
-        },
+        { reference -> this.onBookOpenSucceeded(reference!!.controller, reference.isFirstStartup) },
         MoreExecutors.directExecutor()
       )
       .catching(
         Throwable::class.java,
-        Function<Throwable, Unit> { e ->
-          this.onBookOpenFailed(e!!)
-        },
+        { e -> this.onBookOpenFailed(e!!) },
         MoreExecutors.directExecutor()
       )
+
+    this.showOrHideReadingUI(true)
   }
 
   override fun onStop() {
@@ -213,9 +263,10 @@ class SR2ReaderFragment(
 
   @UiThread
   private fun onReadingPositionChanged(event: SR2ReadingPositionChanged) {
+    val context = this.context ?: return
     this.logger.debug("chapterTitle=${event.chapterTitle}")
     this.progressView.apply { this.max = 100; this.progress = event.bookProgressPercent }
-    this.positionPageView.text = this.getString(R.string.progress_page, event.currentPage, event.pageCount)
+    this.positionPageView.text = context.getString(R.string.progress_page, event.currentPage, event.pageCount)
     this.positionTitleView.text = event.chapterTitle
     this.positionPercentView.text = this.getString(R.string.progress_percent, event.bookProgressPercent)
     this.reconfigureBookmarkMenuItem(event.locator)
@@ -262,16 +313,81 @@ class SR2ReaderFragment(
       }
 
       SR2BookmarksLoaded,
-      is SR2Event.SR2BookmarkEvent.SR2BookmarkDeleted,
+      is SR2BookmarkDeleted,
       is SR2BookmarkCreated -> {
         this.onBookmarksChanged()
       }
 
+      is SR2ThemeChanged -> {
+        SR2UIThread.runOnUIThread {
+          if (!this.isDetached) {
+            this.configureForTheme(event.theme)
+          }
+        }
+      }
+
       is SR2ChapterNonexistent,
-      is SR2WebViewInaccessible,
-      is SR2OnCenterTapped -> {
+      is SR2WebViewInaccessible -> {
         // Nothing
       }
+
+      is SR2OnCenterTapped -> {
+        SR2UIThread.runOnUIThread {
+          if (!this.isDetached) {
+            this.showOrHideReadingUI(event.uiVisible)
+          }
+        }
+      }
+
+      is SR2CommandExecutionStarted -> {
+        // Nothing
+      }
+
+      is SR2CommandExecutionRunningLong -> {
+        SR2UIThread.runOnUIThread {
+          if (!this.isDetached) {
+            this.viewsShowLoading()
+          }
+        }
+      }
+
+      is SR2CommandExecutionSucceeded,
+      is SR2CommandExecutionFailed -> {
+        SR2UIThread.runOnUIThread {
+          if (!this.isDetached) {
+            this.viewsHideLoading()
+          }
+        }
+      }
+    }
+  }
+
+  @UiThread
+  private fun showOrHideReadingUI(uiVisible: Boolean) {
+    if (uiVisible) {
+      this.progressContainer.visibility = View.VISIBLE
+    } else {
+      this.progressContainer.visibility = View.GONE
+    }
+  }
+
+  @UiThread
+  private fun viewsHideLoading() {
+    if (this.webView.visibility != View.VISIBLE) {
+      this.webView.visibility = View.VISIBLE
+    }
+    if (this.loadingView.visibility != View.INVISIBLE) {
+      this.loadingView.visibility = View.INVISIBLE
+    }
+  }
+
+  @UiThread
+  private fun viewsShowLoading() {
+    if (this.webView.visibility != View.INVISIBLE) {
+      this.webView.visibility = View.INVISIBLE
+    }
+    if (this.loadingView.visibility != View.VISIBLE) {
+      this.loadingView.visibility = View.VISIBLE
     }
   }
 

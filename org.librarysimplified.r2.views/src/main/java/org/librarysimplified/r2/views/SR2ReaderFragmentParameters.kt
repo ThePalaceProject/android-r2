@@ -1,5 +1,6 @@
 package org.librarysimplified.r2.views
 
+import org.librarysimplified.r2.api.SR2Theme
 import org.readium.r2.shared.publication.asset.FileAsset
 import org.readium.r2.streamer.Streamer
 
@@ -19,5 +20,11 @@ data class SR2ReaderFragmentParameters(
    * The file containing the book to be opened.
    */
 
-  val bookFile: FileAsset
+  val bookFile: FileAsset,
+
+  /**
+   * The initial theme used for the reader.
+   */
+
+  val theme: SR2Theme
 )

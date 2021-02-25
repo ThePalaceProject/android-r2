@@ -16,11 +16,12 @@ import org.librarysimplified.r2.api.SR2Event
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkCreated
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkDeleted
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarksLoaded
+import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandEventCompleted.SR2CommandExecutionFailed
+import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandEventCompleted.SR2CommandExecutionSucceeded
+import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandExecutionRunningLong
+import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandExecutionStarted
 import org.librarysimplified.r2.api.SR2Event.SR2Error.SR2ChapterNonexistent
 import org.librarysimplified.r2.api.SR2Event.SR2Error.SR2WebViewInaccessible
-import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandExecutionStarted
-import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandEventCompleted.SR2CommandExecutionSucceeded
-import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandEventCompleted.SR2CommandExecutionFailed
 import org.librarysimplified.r2.ui_thread.SR2UIThread
 import org.librarysimplified.r2.vanilla.SR2Controllers
 import org.librarysimplified.r2.views.SR2ControllerHostType
@@ -102,7 +103,6 @@ class DemoActivity : AppCompatActivity(), SR2ControllerHostType {
       val lastRead = database.bookmarkFindLastReadLocation(bookId)
       controller.submitCommand(SR2Command.BookmarksLoad(database.bookmarksFor(bookId)))
       controller.submitCommand(SR2Command.OpenChapter(lastRead.locator))
-      controller.submitCommand(SR2Command.ThemeSet(database.theme()))
     } else {
       // Refresh whatever the controller was looking at previously.
       controller.submitCommand(SR2Command.Refresh)
@@ -125,18 +125,23 @@ class DemoActivity : AppCompatActivity(), SR2ControllerHostType {
    */
 
   private fun startReader(file: File) {
-    val streamer = Streamer(
-      context = this,
-      parsers = listOf(EpubParser()),
-      ignoreDefaultParsers = true
-    )
+    val streamer =
+      Streamer(
+        context = this,
+        parsers = listOf(EpubParser()),
+        ignoreDefaultParsers = true
+      )
+
+    val database =
+      DemoApplication.application.database()
 
     val fragment =
       SR2ReaderFragment(
         SR2ReaderFragmentParameters(
           streamer = streamer,
-          bookFile = FileAsset(file)
-        )
+          bookFile = FileAsset(file),
+          theme = database.theme()
+        ),
       )
 
     this.supportFragmentManager.beginTransaction()
@@ -198,6 +203,7 @@ class DemoActivity : AppCompatActivity(), SR2ControllerHostType {
       }
 
       is SR2CommandExecutionStarted,
+      is SR2CommandExecutionRunningLong,
       is SR2CommandExecutionSucceeded,
       is SR2CommandExecutionFailed -> {
         // Nothing

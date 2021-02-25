@@ -41,11 +41,13 @@ import org.librarysimplified.r2.views.internal.SR2ReaderViewModel
 import org.librarysimplified.r2.views.internal.SR2SettingsDialog
 import org.slf4j.LoggerFactory
 import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandExecutionStarted
+import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandExecutionRunningLong
 import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandEventCompleted.SR2CommandExecutionSucceeded
 import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandEventCompleted.SR2CommandExecutionFailed
+import org.librarysimplified.r2.api.SR2Theme
 
 class SR2ReaderFragment(
-  private val parameters: SR2ReaderFragmentParameters
+  private val parameters: SR2ReaderFragmentParameters,
 ) : Fragment() {
 
   private val logger = LoggerFactory.getLogger(SR2ReaderFragment::class.java)
@@ -72,13 +74,15 @@ class SR2ReaderFragment(
     ): Fragment =
       when (className) {
         SR2ReaderFragment::javaClass.name ->
-          SR2ReaderFragment(this.parameters)
+          SR2ReaderFragment(this.parameters,)
         else ->
           super.instantiate(classLoader, className)
       }
   }
 
+  private lateinit var container: ViewGroup
   private lateinit var controllerHost: SR2ControllerHostType
+  private lateinit var loadingView: ProgressBar
   private lateinit var menu: Menu
   private lateinit var menuBookmarkItem: MenuItem
   private lateinit var positionPageView: TextView
@@ -103,6 +107,8 @@ class SR2ReaderFragment(
     val view =
       inflater.inflate(R.layout.sr2_reader, container, false)
 
+    this.container =
+      view.findViewById(R.id.readerContainer)
     this.webView =
       view.findViewById(R.id.readerWebView)
     this.progressView =
@@ -113,8 +119,25 @@ class SR2ReaderFragment(
       view.findViewById(R.id.reader2_position_title)
     this.positionPercentView =
       view.findViewById(R.id.reader2_position_percent)
+    this.loadingView =
+      view.findViewById(R.id.readerLoading)
 
+    this.configureForTheme(this.controller?.themeNow() ?: this.parameters.theme)
+    this.viewsShowLoading()
     return view
+  }
+
+  @UiThread
+  private fun configureForTheme(theme: SR2Theme) {
+    val background =
+      theme.colorScheme.background()
+    val foreground =
+      theme.colorScheme.foreground()
+
+    this.container.setBackgroundColor(background)
+    this.positionPageView.setTextColor(foreground)
+    this.positionTitleView.setTextColor(foreground)
+    this.positionPercentView.setTextColor(foreground)
   }
 
   override fun onCreateOptionsMenu(
@@ -181,6 +204,7 @@ class SR2ReaderFragment(
           context = activity,
           ioExecutor = this.readerModel.ioExecutor,
           streamer = this.parameters.streamer,
+          theme = this.parameters.theme,
           uiExecutor = SR2UIThread::runOnUIThread
         ),
         controllers = this.controllerHost.onControllerRequired()
@@ -293,18 +317,60 @@ class SR2ReaderFragment(
         this.onBookmarksChanged()
       }
 
-      is SR2ThemeChanged,
+      is SR2ThemeChanged -> {
+        SR2UIThread.runOnUIThread {
+          if (!this.isDetached) {
+            this.configureForTheme(event.theme)
+          }
+        }
+      }
+
       is SR2ChapterNonexistent,
       is SR2WebViewInaccessible,
       is SR2OnCenterTapped -> {
         // Nothing
       }
 
-      is SR2CommandExecutionStarted,
-      is SR2CommandExecutionSucceeded,
-      is SR2CommandExecutionFailed -> {
+      is SR2CommandExecutionStarted -> {
         // Nothing
       }
+
+      is SR2CommandExecutionRunningLong -> {
+        SR2UIThread.runOnUIThread {
+          if (!this.isDetached) {
+            this.viewsShowLoading()
+          }
+        }
+      }
+
+      is SR2CommandExecutionSucceeded,
+      is SR2CommandExecutionFailed -> {
+        SR2UIThread.runOnUIThread {
+          if (!this.isDetached) {
+            this.viewsHideLoading()
+          }
+        }
+      }
+    }
+  }
+
+  @UiThread
+  private fun viewsHideLoading() {
+    if (this.webView.visibility != View.VISIBLE) {
+      this.webView.visibility = View.VISIBLE
+    }
+    if (this.loadingView.visibility != View.INVISIBLE) {
+      this.loadingView.visibility = View.INVISIBLE
+    }
+  }
+
+  @UiThread
+  private fun viewsShowLoading() {
+    if (this.webView.visibility != View.INVISIBLE) {
+      this.webView.visibility = View.INVISIBLE
+    }
+    if (this.loadingView.visibility != View.VISIBLE) {
+      this.loadingView.visibility = View.VISIBLE
     }
   }
 

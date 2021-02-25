@@ -24,13 +24,7 @@ class SR2SettingsDialog private constructor() {
       controller: SR2ControllerType,
       updater: (SR2Theme) -> SR2Theme
     ) {
-      val themeCurrent = controller.themeNow()
-      if (themeCurrent == null) {
-        logger.error("no theme is current")
-        return
-      }
-
-      controller.submitCommand(SR2Command.ThemeSet(updater.invoke(themeCurrent)))
+      controller.submitCommand(SR2Command.ThemeSet(updater.invoke(controller.themeNow())))
     }
 
     fun create(

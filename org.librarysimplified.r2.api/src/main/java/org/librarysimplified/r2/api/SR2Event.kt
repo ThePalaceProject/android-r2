@@ -133,6 +133,15 @@ sealed class SR2Event {
     ) : SR2CommandEvent()
 
     /**
+     * A command is executing and is expected to take long enough that the user should probably
+     * be shown a progress bar.
+     */
+
+    data class SR2CommandExecutionRunningLong(
+      override val command: SR2Command
+    ) : SR2CommandEvent()
+
+    /**
      * The execution of a command finished.
      */
 

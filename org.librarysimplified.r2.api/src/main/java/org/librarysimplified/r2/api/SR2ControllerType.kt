@@ -66,5 +66,5 @@ interface SR2ControllerType : Closeable, SR2ControllerCommandQueueType {
    * The most recently configured reader theme.
    */
 
-  fun themeNow(): SR2Theme?
+  fun themeNow(): SR2Theme
 }

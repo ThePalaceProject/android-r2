@@ -23,6 +23,7 @@ import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkDeleted
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarksLoaded
 import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandEventCompleted.SR2CommandExecutionFailed
 import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandEventCompleted.SR2CommandExecutionSucceeded
+import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandExecutionRunningLong
 import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandExecutionStarted
 import org.librarysimplified.r2.api.SR2Event.SR2OnCenterTapped
 import org.librarysimplified.r2.api.SR2Event.SR2ReadingPositionChanged
@@ -30,8 +31,6 @@ import org.librarysimplified.r2.api.SR2Locator
 import org.librarysimplified.r2.api.SR2Locator.SR2LocatorChapterEnd
 import org.librarysimplified.r2.api.SR2Locator.SR2LocatorPercent
 import org.librarysimplified.r2.api.SR2Theme
-import org.librarysimplified.r2.vanilla.internal.SR2CommandInternal.SR2CommandInternalAPI
-import org.librarysimplified.r2.vanilla.internal.SR2CommandInternal.SR2CommandInternalDelay
 import org.readium.r2.shared.publication.Publication
 import org.readium.r2.shared.publication.services.isRestricted
 import org.readium.r2.shared.publication.services.protectionError
@@ -155,7 +154,8 @@ internal class SR2Controller private constructor(
   private val closed = AtomicBoolean(false)
 
   @Volatile
-  private var themeMostRecent: SR2Theme? = null
+  private var themeMostRecent: SR2Theme =
+    this.configuration.theme
 
   private val eventSubject: Subject<SR2Event> =
     PublishSubject.create<SR2Event>()
@@ -225,7 +225,7 @@ internal class SR2Controller private constructor(
   }
 
   private fun executeInternalCommand(
-    command: SR2CommandInternal
+    command: SR2CommandSubmission
   ): ListenableFuture<*> {
     this.logger.debug("executing {}", command)
 
@@ -234,29 +234,17 @@ internal class SR2Controller private constructor(
       return Futures.immediateFuture(Unit)
     }
 
-    return when (command) {
-      is SR2CommandInternalDelay ->
-        this.executeCommandInternalDelay(command)
-      is SR2CommandInternalAPI ->
-        this.executeCommandInternalAPI(command)
-    }
+    return this.executeCommandSubmission(command)
   }
 
-  private fun executeCommandInternalDelay(
-    command: SR2CommandInternalDelay
-  ): ListenableFuture<*> {
-    Thread.sleep(command.timeMilliseconds)
-    return Futures.immediateFuture(Unit)
-  }
-
-  private fun executeCommandInternalAPI(
-    command: SR2CommandInternalAPI
+  private fun executeCommandSubmission(
+    command: SR2CommandSubmission
   ): ListenableFuture<*> {
     return when (val apiCommand = command.command) {
       is SR2Command.OpenChapter ->
         this.executeCommandOpenChapter(command, apiCommand)
       SR2Command.OpenPageNext ->
-        this.executeCommandOpenPageNext(command, apiCommand as SR2Command.OpenPageNext)
+        this.executeCommandOpenPageNext()
       SR2Command.OpenChapterNext ->
         this.executeCommandOpenChapterNext(command)
       SR2Command.OpenPagePrevious ->
@@ -272,7 +260,7 @@ internal class SR2Controller private constructor(
       is SR2Command.BookmarkDelete ->
         this.executeCommandBookmarkDelete(apiCommand)
       is SR2Command.ThemeSet ->
-        this.executeCommandThemeSet(apiCommand)
+        this.executeCommandThemeSet(command, apiCommand)
     }
   }
 
@@ -281,20 +269,30 @@ internal class SR2Controller private constructor(
    */
 
   private fun executeCommandThemeSet(
+    command: SR2CommandSubmission,
     apiCommand: SR2Command.ThemeSet
   ): ListenableFuture<*> {
-    val viewConnection = this.waitForWebViewAvailability()
-    val theme = apiCommand.theme
+    this.publishCommmandRunningLong(command)
+    return this.executeThemeSet(waitForWebViewAvailability(), apiCommand.theme)
+  }
 
-    val f0 = viewConnection.executeJS { js -> js.setFontFamily(SR2Fonts.fontFamilyStringOf(theme.font)) }
-    val f1 = viewConnection.executeJS { js -> js.setTheme(SR2ReadiumInternalTheme.from(theme.colorScheme)) }
-    val f2 = viewConnection.executeJS { js -> js.setTypeScale(theme.textSize) }
+  private fun executeThemeSet(
+    viewConnection: SR2WebViewConnectionType,
+    theme: SR2Theme
+  ): ListenableFuture<*> {
+    this.themeMostRecent = theme
+
+    val f0 =
+      viewConnection.executeJS { js -> js.setFontFamily(SR2Fonts.fontFamilyStringOf(theme.font)) }
+    val f1 =
+      viewConnection.executeJS { js -> js.setTheme(SR2ReadiumInternalTheme.from(theme.colorScheme)) }
+    val f2 =
+      viewConnection.executeJS { js -> js.setTypeScale(theme.textSize) }
 
     val allFutures = Futures.allAsList(f0, f1, f2)
     val setFuture = SettableFuture.create<Unit>()
     allFutures.addListener(
       {
-        this.themeMostRecent = theme
         this.eventSubject.onNext(SR2Event.SR2ThemeChanged(theme))
         setFuture.set(Unit)
       },
@@ -304,12 +302,7 @@ internal class SR2Controller private constructor(
   }
 
   private fun executeCommandThemeRefresh(): ListenableFuture<*> {
-    val themeNow = this.themeMostRecent
-    return if (themeNow != null) {
-      this.executeCommandThemeSet(SR2Command.ThemeSet(themeNow))
-    } else {
-      Futures.immediateFuture(Unit)
-    }
+    return this.executeThemeSet(waitForWebViewAvailability(), this.themeMostRecent)
   }
 
   /**
@@ -354,7 +347,7 @@ internal class SR2Controller private constructor(
    */
 
   private fun executeCommandRefresh(
-    command: SR2CommandInternalAPI
+    command: SR2CommandSubmission
   ): ListenableFuture<*> {
     val openFuture =
       this.openChapterIndex(
@@ -391,7 +384,7 @@ internal class SR2Controller private constructor(
    */
 
   private fun executeCommandOpenChapterPrevious(
-    command: SR2CommandInternalAPI
+    command: SR2CommandSubmission
   ): ListenableFuture<*> {
     return this.openChapterIndex(
       command,
@@ -404,7 +397,7 @@ internal class SR2Controller private constructor(
    */
 
   private fun executeCommandOpenChapterNext(
-    command: SR2CommandInternalAPI
+    command: SR2CommandSubmission
   ): ListenableFuture<*> {
     return this.openChapterIndex(
       command,
@@ -427,10 +420,7 @@ internal class SR2Controller private constructor(
    * Execute the [SR2Command.OpenPageNext] command.
    */
 
-  private fun executeCommandOpenPageNext(
-    command: SR2CommandInternalAPI,
-    apiCommand: SR2Command.OpenPageNext
-  ): ListenableFuture<*> {
+  private fun executeCommandOpenPageNext(): ListenableFuture<*> {
     return this.waitForWebViewAvailability().executeJS(SR2JavascriptAPIType::openPageNext)
   }
 
@@ -439,7 +429,7 @@ internal class SR2Controller private constructor(
    */
 
   private fun executeCommandOpenChapter(
-    command: SR2CommandInternalAPI,
+    command: SR2CommandSubmission,
     apiCommand: SR2Command.OpenChapter
   ): ListenableFuture<*> {
     return this.openChapterIndex(command, apiCommand.locator)
@@ -450,31 +440,39 @@ internal class SR2Controller private constructor(
    */
 
   private fun openChapterIndex(
-    command: SR2CommandInternalAPI,
+    command: SR2CommandSubmission,
     locator: SR2Locator
   ): ListenableFuture<*> {
     val previousLocator =
       SR2LocatorPercent(this.currentChapterIndex, this.currentChapterProgress)
 
     try {
+      this.publishCommmandRunningLong(command)
+
       val location = this.locationOfSpineItem(locator.chapterIndex)
       this.logger.debug("openChapterIndex: {}", location)
       this.setCurrentChapter(locator)
 
-      val connection = this.waitForWebViewAvailability()
-      val openFuture = connection.openURL(location)
-      return Futures.transformAsync(
-        openFuture,
-        {
-          when (locator) {
-            is SR2LocatorPercent ->
-              connection.executeJS { js -> js.setProgression(locator.chapterProgress) }
-            is SR2LocatorChapterEnd ->
-              connection.executeJS { js -> js.openPageLast() }
-          }
-        },
-        MoreExecutors.directExecutor()
-      )
+      val connection =
+        this.waitForWebViewAvailability()
+      val openFuture =
+        connection.openURL(location)
+
+      val themeFuture =
+        Futures.transformAsync(
+          openFuture,
+          AsyncFunction { this.executeThemeSet(connection, this.themeMostRecent) },
+          MoreExecutors.directExecutor()
+        )
+
+      val moveFuture =
+        Futures.transformAsync(
+          themeFuture,
+          AsyncFunction { this.executeLocatorSet(connection, locator) },
+          MoreExecutors.directExecutor()
+        )
+
+      return moveFuture
     } catch (e: Exception) {
       this.logger.error("unable to open chapter ${locator.chapterIndex}: ", e)
       this.setCurrentChapter(previousLocator)
@@ -489,6 +487,17 @@ internal class SR2Controller private constructor(
       return future
     }
   }
+
+  private fun executeLocatorSet(
+    connection: SR2WebViewConnectionType,
+    locator: SR2Locator
+  ): ListenableFuture<*> =
+    when (locator) {
+      is SR2LocatorPercent ->
+        connection.executeJS { js -> js.setProgression(locator.chapterProgress) }
+      is SR2LocatorChapterEnd ->
+        connection.executeJS { js -> js.openPageLast() }
+    }
 
   private fun getBookProgress(chapterProgress: Double): Double {
     require(chapterProgress < 1 || chapterProgress > 0) {
@@ -598,7 +607,7 @@ internal class SR2Controller private constructor(
   }
 
   private fun submitCommandActual(
-    command: SR2CommandInternal
+    command: SR2CommandSubmission
   ) {
     this.logger.debug("submitCommand: {}", command)
 
@@ -623,38 +632,27 @@ internal class SR2Controller private constructor(
     }
   }
 
-  private fun publishCommmandSucceeded(
-    command: SR2CommandInternal
-  ) {
-    return when (command) {
-      is SR2CommandInternalDelay ->
-        Unit
-      is SR2CommandInternalAPI ->
-        this.eventSubject.onNext(SR2CommandExecutionSucceeded(command.command))
-    }
+  /**
+   * Publish an event to indicate that the current command is taking a long time to execute.
+   */
+
+  private fun publishCommmandRunningLong(command: SR2CommandSubmission) {
+    this.eventSubject.onNext(SR2CommandExecutionRunningLong(command.command))
+  }
+
+  private fun publishCommmandSucceeded(command: SR2CommandSubmission) {
+    this.eventSubject.onNext(SR2CommandExecutionSucceeded(command.command))
   }
 
   private fun publishCommmandFailed(
-    command: SR2CommandInternal,
+    command: SR2CommandSubmission,
     exception: Exception
   ) {
-    return when (command) {
-      is SR2CommandInternalDelay ->
-        Unit
-      is SR2CommandInternalAPI ->
-        this.eventSubject.onNext(SR2CommandExecutionFailed(command.command, exception))
-    }
+    this.eventSubject.onNext(SR2CommandExecutionFailed(command.command, exception))
   }
 
-  private fun publishCommmandStart(
-    command: SR2CommandInternal
-  ) {
-    return when (command) {
-      is SR2CommandInternalDelay ->
-        Unit
-      is SR2CommandInternalAPI ->
-        this.eventSubject.onNext(SR2CommandExecutionStarted(command.command))
-    }
+  private fun publishCommmandStart(command: SR2CommandSubmission) {
+    this.eventSubject.onNext(SR2CommandExecutionStarted(command.command))
   }
 
   override val bookMetadata: SR2BookMetadata =
@@ -664,7 +662,7 @@ internal class SR2Controller private constructor(
     this.eventSubject
 
   override fun submitCommand(command: SR2Command) =
-    this.submitCommandActual(SR2CommandInternalAPI(command = command))
+    this.submitCommandActual(SR2CommandSubmission(command = command))
 
   override fun bookmarksNow(): List<SR2Bookmark> =
     this.bookmarks
@@ -676,7 +674,7 @@ internal class SR2Controller private constructor(
     )
   }
 
-  override fun themeNow(): SR2Theme? {
+  override fun themeNow(): SR2Theme {
     return this.themeMostRecent
   }
 
@@ -704,6 +702,10 @@ internal class SR2Controller private constructor(
       this.webViewConnection = null
     }
   }
+
+  /**
+   * Busy-wait for a web view connection.
+   */
 
   private fun waitForWebViewAvailability(): SR2WebViewConnectionType {
     while (true) {

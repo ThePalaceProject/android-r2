@@ -155,41 +155,20 @@ class DemoActivity : AppCompatActivity(), SR2ControllerHostType {
 
   private fun onControllerEvent(event: SR2Event) {
     return when (event) {
-      is SR2ChapterNonexistent -> {
-        SR2UIThread.runOnUIThread {
-          Toast.makeText(
-            this,
-            "Chapter nonexistent: ${event.chapterIndex}",
-            Toast.LENGTH_SHORT
-          ).show()
-        }
-      }
-
-      is SR2WebViewInaccessible -> {
-        // Nothing
-      }
-
       is SR2Event.SR2OnCenterTapped -> {
         SR2UIThread.runOnUIThread {
-          Toast.makeText(
-            this,
-            "Center tap!",
-            Toast.LENGTH_SHORT
-          ).show()
+          val actionBar = this.supportActionBar ?: return@runOnUIThread
+          if (event.uiVisible) {
+            actionBar.show()
+          } else {
+            actionBar.hide()
+          }
         }
-      }
-
-      is SR2Event.SR2ReadingPositionChanged -> {
-        // Nothing
       }
 
       is SR2BookmarkCreated -> {
         val database = DemoApplication.application.database()
         database.bookmarkSave(this.controller!!.bookMetadata.id, event.bookmark)
-      }
-
-      SR2BookmarksLoaded -> {
-        // Nothing
       }
 
       is SR2BookmarkDeleted -> {
@@ -202,6 +181,10 @@ class DemoActivity : AppCompatActivity(), SR2ControllerHostType {
         database.themeSet(event.theme)
       }
 
+      is SR2Event.SR2ReadingPositionChanged,
+      SR2BookmarksLoaded,
+      is SR2ChapterNonexistent,
+      is SR2WebViewInaccessible,
       is SR2CommandExecutionStarted,
       is SR2CommandExecutionRunningLong,
       is SR2CommandExecutionSucceeded,

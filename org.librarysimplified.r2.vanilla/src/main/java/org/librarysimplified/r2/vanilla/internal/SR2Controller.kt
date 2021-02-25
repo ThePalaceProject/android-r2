@@ -178,6 +178,9 @@ internal class SR2Controller private constructor(
   @Volatile
   private var bookmarks = listOf<SR2Bookmark>()
 
+  @Volatile
+  private var uiVisible: Boolean = true
+
   init {
     this.eventSubject.subscribe { event -> this.logger.debug("event: {}", event) }
   }
@@ -386,9 +389,13 @@ internal class SR2Controller private constructor(
   private fun executeCommandOpenChapterPrevious(
     command: SR2CommandSubmission
   ): ListenableFuture<*> {
+    val prevIndex =
+      SR2Chapters.previousChapter(this.currentChapterIndex, this.bookMetadata.readingOrder)
+        ?: return Futures.immediateFuture(Unit)
+
     return this.openChapterIndex(
       command,
-      SR2LocatorChapterEnd(chapterIndex = Math.max(0, this.currentChapterIndex - 1))
+      SR2LocatorChapterEnd(chapterIndex = prevIndex)
     )
   }
 
@@ -399,10 +406,14 @@ internal class SR2Controller private constructor(
   private fun executeCommandOpenChapterNext(
     command: SR2CommandSubmission
   ): ListenableFuture<*> {
+    val nextIndex =
+      SR2Chapters.nextChapter(this.currentChapterIndex, this.bookMetadata.readingOrder)
+        ?: return Futures.immediateFuture(Unit)
+
     return this.openChapterIndex(
       command,
       SR2LocatorPercent(
-        chapterIndex = Math.max(0, this.currentChapterIndex + 1),
+        chapterIndex = nextIndex,
         chapterProgress = 0.0
       )
     )
@@ -580,7 +591,8 @@ internal class SR2Controller private constructor(
     @android.webkit.JavascriptInterface
     override fun onCenterTapped() {
       this.logger.debug("onCenterTapped")
-      this@SR2Controller.eventSubject.onNext(SR2OnCenterTapped())
+      this@SR2Controller.uiVisible = !this@SR2Controller.uiVisible
+      this@SR2Controller.eventSubject.onNext(SR2OnCenterTapped(this@SR2Controller.uiVisible))
     }
 
     @android.webkit.JavascriptInterface
@@ -676,6 +688,10 @@ internal class SR2Controller private constructor(
 
   override fun themeNow(): SR2Theme {
     return this.themeMostRecent
+  }
+
+  override fun uiVisibleNow(): Boolean {
+    return this.uiVisible
   }
 
   override fun viewConnect(webView: WebView) {

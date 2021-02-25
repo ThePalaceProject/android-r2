@@ -1,7 +1,5 @@
 package org.librarysimplified.r2.api
 
-import java.lang.Exception
-
 /**
  * The type of events published by R2 controllers.
  */
@@ -35,13 +33,15 @@ sealed class SR2Event {
 
   /**
    * The center of the webview was tapped. Implementors may want to show reader
-   * controls as a result of this event.
+   * controls as a result of this event. For convenience, the controller tracks
+   * a boolean value indicating whether or not the UI should be shown, assuming
+   * that the UI starts initially visible and the visibility is toggled on each
+   * center tap.
    */
 
-  class SR2OnCenterTapped : SR2Event() {
-    override fun toString(): String =
-      "[SR2OnCenterTapped]"
-  }
+  class SR2OnCenterTapped(
+    val uiVisible: Boolean
+  ) : SR2Event()
 
   /**
    * The reading position changed.

@@ -11,13 +11,13 @@
     android:id="@+id/readerWebView"
     android:layout_width="0dp"
     android:layout_height="0dp"
-    app:layout_constraintBottom_toTopOf="@+id/include"
+    app:layout_constraintBottom_toTopOf="@+id/readerProgressContainer"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintTop_toTopOf="parent" />
 
   <include
-    android:id="@+id/include"
+    android:id="@+id/readerProgressContainer"
     android:layout_width="0dp"
     android:layout_height="wrap_content"
     layout="@layout/sr2_reader_progress"

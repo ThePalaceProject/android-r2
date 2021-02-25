@@ -79,7 +79,7 @@ internal class SR2TOCChaptersFragment : Fragment() {
       Runnable {
         this.controllerHost.onNavigationClose()
       },
-      1_000L
+      SR2TOC.tocSelectionDelay()
     )
   }
 }

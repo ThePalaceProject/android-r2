@@ -124,7 +124,7 @@ internal class SR2TOCBookmarksFragment : Fragment() {
       Runnable {
         this.controllerHost.onNavigationClose()
       },
-      1_000L
+      SR2TOC.tocSelectionDelay()
     )
   }
 

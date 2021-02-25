@@ -24,13 +24,6 @@ internal sealed class SR2CommandInternal {
   abstract val submitted: DateTime
 
   /**
-   * The ID of the command of which this is a resubmission, if any. Resubmitted commands
-   * _must_ have fresh [id] fields.
-   */
-
-  abstract val isRetryOf: UUID?
-
-  /**
    * A command that produces a delay of [timeMilliseconds].
    */
 
@@ -38,9 +31,7 @@ internal sealed class SR2CommandInternal {
     override val id: UUID = UUID.randomUUID(),
     override val submitted: DateTime = DateTime.now(),
     val timeMilliseconds: Long
-  ) : SR2CommandInternal() {
-    override val isRetryOf: UUID? = null
-  }
+  ) : SR2CommandInternal()
 
   /**
    * A command that executes an API command.
@@ -51,7 +42,6 @@ internal sealed class SR2CommandInternal {
   data class SR2CommandInternalAPI(
     override val id: UUID = UUID.randomUUID(),
     override val submitted: DateTime = DateTime.now(),
-    override val isRetryOf: UUID? = null,
     val command: SR2Command
   ) : SR2CommandInternal()
 }

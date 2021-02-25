@@ -13,7 +13,8 @@ sealed class SR2Command {
    */
 
   object Refresh : SR2Command() {
-    override fun toString(): String = "[Refresh]"
+    override fun toString(): String =
+      "[Refresh]"
   }
 
   /**
@@ -35,7 +36,8 @@ sealed class SR2Command {
    */
 
   object OpenPageNext : SR2Command() {
-    override fun toString(): String = "[OpenPageNext]"
+    override fun toString(): String =
+      "[OpenPageNext]"
   }
 
   /**
@@ -45,7 +47,8 @@ sealed class SR2Command {
    */
 
   object OpenChapterNext : SR2Command() {
-    override fun toString(): String = "[OpenChapterNext]"
+    override fun toString(): String =
+      "[OpenChapterNext]"
   }
 
   /**
@@ -57,7 +60,8 @@ sealed class SR2Command {
    */
 
   object OpenPagePrevious : SR2Command() {
-    override fun toString(): String = "[OpenPagePrevious]"
+    override fun toString(): String =
+      "[OpenPagePrevious]"
   }
 
   /**
@@ -86,7 +90,8 @@ sealed class SR2Command {
    */
 
   object BookmarkCreate : SR2Command() {
-    override fun toString(): String = "[BookmarkCreate]"
+    override fun toString(): String =
+      "[BookmarkCreate]"
   }
 
   /**

@@ -18,6 +18,9 @@ import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkDeleted
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarksLoaded
 import org.librarysimplified.r2.api.SR2Event.SR2Error.SR2ChapterNonexistent
 import org.librarysimplified.r2.api.SR2Event.SR2Error.SR2WebViewInaccessible
+import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandExecutionStarted
+import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandEventCompleted.SR2CommandExecutionSucceeded
+import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandEventCompleted.SR2CommandExecutionFailed
 import org.librarysimplified.r2.ui_thread.SR2UIThread
 import org.librarysimplified.r2.vanilla.SR2Controllers
 import org.librarysimplified.r2.views.SR2ControllerHostType
@@ -192,6 +195,12 @@ class DemoActivity : AppCompatActivity(), SR2ControllerHostType {
       is SR2Event.SR2ThemeChanged -> {
         val database = DemoApplication.application.database()
         database.themeSet(event.theme)
+      }
+
+      is SR2CommandExecutionStarted,
+      is SR2CommandExecutionSucceeded,
+      is SR2CommandExecutionFailed -> {
+        // Nothing
       }
     }
   }

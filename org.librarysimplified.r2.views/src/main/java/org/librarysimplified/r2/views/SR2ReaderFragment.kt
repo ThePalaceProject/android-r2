@@ -40,6 +40,9 @@ import org.librarysimplified.r2.views.internal.SR2ControllerReference
 import org.librarysimplified.r2.views.internal.SR2ReaderViewModel
 import org.librarysimplified.r2.views.internal.SR2SettingsDialog
 import org.slf4j.LoggerFactory
+import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandExecutionStarted
+import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandEventCompleted.SR2CommandExecutionSucceeded
+import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandEventCompleted.SR2CommandExecutionFailed
 
 class SR2ReaderFragment(
   private val parameters: SR2ReaderFragmentParameters
@@ -294,6 +297,12 @@ class SR2ReaderFragment(
       is SR2ChapterNonexistent,
       is SR2WebViewInaccessible,
       is SR2OnCenterTapped -> {
+        // Nothing
+      }
+
+      is SR2CommandExecutionStarted,
+      is SR2CommandExecutionSucceeded,
+      is SR2CommandExecutionFailed -> {
         // Nothing
       }
     }

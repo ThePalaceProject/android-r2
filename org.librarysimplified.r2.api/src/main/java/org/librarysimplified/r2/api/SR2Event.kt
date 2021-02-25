@@ -1,5 +1,7 @@
 package org.librarysimplified.r2.api
 
+import java.lang.Exception
+
 /**
  * The type of events published by R2 controllers.
  */
@@ -36,7 +38,10 @@ sealed class SR2Event {
    * controls as a result of this event.
    */
 
-  class SR2OnCenterTapped : SR2Event()
+  class SR2OnCenterTapped : SR2Event() {
+    override fun toString(): String =
+      "[SR2OnCenterTapped]"
+  }
 
   /**
    * The reading position changed.
@@ -93,7 +98,10 @@ sealed class SR2Event {
      * Bookmarks were loaded into the controller.
      */
 
-    object SR2BookmarksLoaded : SR2BookmarkEvent()
+    object SR2BookmarksLoaded : SR2BookmarkEvent() {
+      override fun toString(): String =
+        "[SR2BookmarksLoaded]"
+    }
   }
 
   /**
@@ -103,4 +111,49 @@ sealed class SR2Event {
   data class SR2ThemeChanged(
     val theme: SR2Theme
   ) : SR2Event()
+
+  /**
+   * The set of events related to commands.
+   */
+
+  sealed class SR2CommandEvent : SR2Event() {
+
+    /**
+     * The command to which the event refers.
+     */
+
+    abstract val command: SR2Command
+
+    /**
+     * The execution of a command started.
+     */
+
+    data class SR2CommandExecutionStarted(
+      override val command: SR2Command
+    ) : SR2CommandEvent()
+
+    /**
+     * The execution of a command finished.
+     */
+
+    sealed class SR2CommandEventCompleted : SR2CommandEvent() {
+
+      /**
+       * The execution of a command succeeded.
+       */
+
+      data class SR2CommandExecutionSucceeded(
+        override val command: SR2Command
+      ) : SR2CommandEventCompleted()
+
+      /**
+       * The execution of a command failed.
+       */
+
+      data class SR2CommandExecutionFailed(
+        override val command: SR2Command,
+        val exception: Exception
+      ) : SR2CommandEventCompleted()
+    }
+  }
 }

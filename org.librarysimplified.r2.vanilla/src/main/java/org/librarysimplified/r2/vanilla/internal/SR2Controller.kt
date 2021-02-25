@@ -11,7 +11,6 @@ import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.Subject
 import kotlinx.coroutines.runBlocking
 import org.joda.time.DateTime
-import org.librarysimplified.r2.api.SR2BookChapter
 import org.librarysimplified.r2.api.SR2BookMetadata
 import org.librarysimplified.r2.api.SR2Bookmark
 import org.librarysimplified.r2.api.SR2Bookmark.Type.LAST_READ
@@ -22,6 +21,9 @@ import org.librarysimplified.r2.api.SR2Event
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkCreated
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkDeleted
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarksLoaded
+import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandEventCompleted.SR2CommandExecutionFailed
+import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandEventCompleted.SR2CommandExecutionSucceeded
+import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandExecutionStarted
 import org.librarysimplified.r2.api.SR2Event.SR2OnCenterTapped
 import org.librarysimplified.r2.api.SR2Event.SR2ReadingPositionChanged
 import org.librarysimplified.r2.api.SR2Locator
@@ -335,7 +337,7 @@ internal class SR2Controller private constructor(
       SR2Bookmark(
         date = DateTime.now(),
         type = SR2Bookmark.Type.EXPLICIT,
-        title = this.makeChapterTitleOf(this.currentChapterIndex),
+        title = SR2Books.makeChapterTitleOf(this.publication, this.currentChapterIndex),
         locator = SR2LocatorPercent(this.currentChapterIndex, this.currentChapterProgress),
         bookProgress = this.currentBookProgress
       )
@@ -443,6 +445,10 @@ internal class SR2Controller private constructor(
     return this.openChapterIndex(command, apiCommand.locator)
   }
 
+  /**
+   * Load the chapter for the given locator, and set the reading position appropriately.
+   */
+
   private fun openChapterIndex(
     command: SR2CommandInternalAPI,
     locator: SR2Locator
@@ -518,7 +524,7 @@ internal class SR2Controller private constructor(
       val chapterProgress =
         currentPage.toDouble() / pageCount.toDouble()
       val chapterTitle =
-        this@SR2Controller.makeChapterTitleOf(chapterIndex)
+        SR2Books.makeChapterTitleOf(this@SR2Controller.publication, chapterIndex)
 
       this@SR2Controller.currentBookProgress =
         this@SR2Controller.getBookProgress(chapterProgress)
@@ -591,62 +597,68 @@ internal class SR2Controller private constructor(
     }
   }
 
-  private fun submitCommandActual(command: SR2CommandInternal) {
-    this.logger.debug("submitCommand (isRetryOf: {}) {}", command.isRetryOf, command)
+  private fun submitCommandActual(
+    command: SR2CommandInternal
+  ) {
+    this.logger.debug("submitCommand: {}", command)
 
     this.queueExecutor.execute {
+      this.publishCommmandStart(command)
       val future = this.executeInternalCommand(command)
+      try {
+        try {
+          future.get()
+          this.publishCommmandSucceeded(command)
+        } catch (e: ExecutionException) {
+          throw e.cause!!
+        }
+      } catch (e: SR2WebViewDisconnectedException) {
+        this.logger.debug("webview disconnected: could not execute {}", command)
+        this.eventSubject.onNext(SR2Event.SR2Error.SR2WebViewInaccessible("No web view is connected"))
+        this.publishCommmandFailed(command, e)
+      } catch (e: Exception) {
+        this.logger.error("{}: ", command, e)
+        this.publishCommmandFailed(command, e)
+      }
+    }
+  }
 
-      future.addListener(
-        {
-          try {
-            try {
-              future.get()
-            } catch (e: ExecutionException) {
-              throw e.cause!!
-            }
-          } catch (e: SR2WebViewDisconnectedException) {
-            this.logger.debug("webview disconnected: could not execute {}", command)
-            this.eventSubject.onNext(SR2Event.SR2Error.SR2WebViewInaccessible("No web view is connected"))
-          } catch (e: Exception) {
-            this.logger.error("{}: ", command, e)
-          }
-        },
-        this.queueExecutor
-      )
+  private fun publishCommmandSucceeded(
+    command: SR2CommandInternal
+  ) {
+    return when (command) {
+      is SR2CommandInternalDelay ->
+        Unit
+      is SR2CommandInternalAPI ->
+        this.eventSubject.onNext(SR2CommandExecutionSucceeded(command.command))
+    }
+  }
+
+  private fun publishCommmandFailed(
+    command: SR2CommandInternal,
+    exception: Exception
+  ) {
+    return when (command) {
+      is SR2CommandInternalDelay ->
+        Unit
+      is SR2CommandInternalAPI ->
+        this.eventSubject.onNext(SR2CommandExecutionFailed(command.command, exception))
+    }
+  }
+
+  private fun publishCommmandStart(
+    command: SR2CommandInternal
+  ) {
+    return when (command) {
+      is SR2CommandInternalDelay ->
+        Unit
+      is SR2CommandInternalAPI ->
+        this.eventSubject.onNext(SR2CommandExecutionStarted(command.command))
     }
   }
 
   override val bookMetadata: SR2BookMetadata =
-    SR2BookMetadata(
-      id = this.publication.metadata.identifier!!, // FIXME : identifier is not mandatory in RWPM.
-      readingOrder = this.makeReadingOrder()
-    )
-
-  private fun makeReadingOrder() =
-    this.publication.readingOrder.mapIndexed { index, _ -> this.makeChapter(index) }
-
-  private fun makeChapter(
-    index: Int
-  ): SR2BookChapter {
-    return SR2BookChapter(
-      chapterIndex = index,
-      title = this.makeChapterTitleOf(index)
-    )
-  }
-
-  /**
-   * Return the title of the given chapter.
-   */
-
-  private fun makeChapterTitleOf(index: Int): String {
-    val chapter = this.publication.readingOrder[index]
-
-    // The title is actually part of the table of contents; however, there may not be a
-    // one-to-one mapping between chapters and table of contents entries. We do a lookup
-    // based on the chapter href.
-    return this.publication.tableOfContents.firstOrNull { it.href == chapter.href }?.title ?: ""
-  }
+    SR2Books.makeMetadata(this.publication)
 
   override val events: Observable<SR2Event> =
     this.eventSubject

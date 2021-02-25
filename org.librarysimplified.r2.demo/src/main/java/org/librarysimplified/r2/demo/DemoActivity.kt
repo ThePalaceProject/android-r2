@@ -22,7 +22,6 @@ import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandExecution
 import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandExecutionStarted
 import org.librarysimplified.r2.api.SR2Event.SR2Error.SR2ChapterNonexistent
 import org.librarysimplified.r2.api.SR2Event.SR2Error.SR2WebViewInaccessible
-import org.librarysimplified.r2.ui_thread.SR2UIThread
 import org.librarysimplified.r2.vanilla.SR2Controllers
 import org.librarysimplified.r2.views.SR2ControllerHostType
 import org.librarysimplified.r2.views.SR2ReaderFragment
@@ -155,17 +154,6 @@ class DemoActivity : AppCompatActivity(), SR2ControllerHostType {
 
   private fun onControllerEvent(event: SR2Event) {
     return when (event) {
-      is SR2Event.SR2OnCenterTapped -> {
-        SR2UIThread.runOnUIThread {
-          val actionBar = this.supportActionBar ?: return@runOnUIThread
-          if (event.uiVisible) {
-            actionBar.show()
-          } else {
-            actionBar.hide()
-          }
-        }
-      }
-
       is SR2BookmarkCreated -> {
         val database = DemoApplication.application.database()
         database.bookmarkSave(this.controller!!.bookMetadata.id, event.bookmark)
@@ -181,6 +169,7 @@ class DemoActivity : AppCompatActivity(), SR2ControllerHostType {
         database.themeSet(event.theme)
       }
 
+      is SR2Event.SR2OnCenterTapped,
       is SR2Event.SR2ReadingPositionChanged,
       SR2BookmarksLoaded,
       is SR2ChapterNonexistent,

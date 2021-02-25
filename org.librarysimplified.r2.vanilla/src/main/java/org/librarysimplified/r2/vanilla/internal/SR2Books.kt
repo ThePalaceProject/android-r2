@@ -11,7 +11,8 @@ internal object SR2Books {
   ): SR2BookMetadata {
     return SR2BookMetadata(
       id = publication.metadata.identifier!!, // FIXME : identifier is not mandatory in RWPM.
-      readingOrder = makeReadingOrder(publication)
+      title = publication.metadata.title,
+      readingOrder = this.makeReadingOrder(publication)
     )
   }
 

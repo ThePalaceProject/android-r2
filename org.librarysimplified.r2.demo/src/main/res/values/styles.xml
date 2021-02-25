@@ -7,7 +7,7 @@
   <color name="demoColorDisabled">#dddddd</color>
   <color name="demoColorBackground">#ffffff</color>
 
-  <style name="DemoTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+  <style name="DemoTheme" parent="Theme.AppCompat.Light.NoActionBar">
     <item name="colorPrimary">@color/demoColorPrimary</item>
     <item name="colorPrimaryDark">@color/demoColorPrimaryDark</item>
     <item name="colorAccent">@color/demoColorPrimaryLight</item>
@@ -16,16 +16,4 @@
     <item name="android:colorAccent">@color/demoColorPrimaryLight</item>
   </style>
 
-  <style name="DemoToolBarStyle" parent="Widget.AppCompat.Toolbar">
-    <item name="titleTextAppearance">@style/DemoTitleTextAppearance</item>
-    <item name="subtitleTextAppearance">@style/DemoSubTitleTextAppearance</item>
-  </style>
-
-  <style name="DemoTitleTextAppearance" parent="TextAppearance.Widget.AppCompat.Toolbar.Title">
-    <item name="android:textColor">#ffffff</item>
-  </style>
-
-  <style name="DemoSubTitleTextAppearance" parent="TextAppearance.Widget.AppCompat.Toolbar.Subtitle">
-    <item name="android:textSize">11sp</item>
-  </style>
 </resources>

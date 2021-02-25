@@ -2,8 +2,6 @@ package org.librarysimplified.r2.views
 
 import android.os.Bundle
 import android.view.LayoutInflater
-import android.view.Menu
-import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
@@ -11,6 +9,7 @@ import android.webkit.WebView
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.annotation.UiThread
+import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentFactory
 import androidx.lifecycle.ViewModelProviders
@@ -82,7 +81,6 @@ class SR2ReaderFragment(
   private lateinit var container: ViewGroup
   private lateinit var controllerHost: SR2ControllerHostType
   private lateinit var loadingView: ProgressBar
-  private lateinit var menu: Menu
   private lateinit var menuBookmarkItem: MenuItem
   private lateinit var positionPageView: TextView
   private lateinit var positionPercentView: TextView
@@ -90,6 +88,7 @@ class SR2ReaderFragment(
   private lateinit var progressContainer: ViewGroup
   private lateinit var progressView: ProgressBar
   private lateinit var readerModel: SR2ReaderViewModel
+  private lateinit var toolbar: Toolbar
   private lateinit var webView: WebView
   private var controller: SR2ControllerType? = null
   private var controllerSubscription: Disposable? = null
@@ -109,6 +108,8 @@ class SR2ReaderFragment(
 
     this.container =
       view.findViewById(R.id.readerContainer)
+    this.toolbar =
+      view.findViewById(R.id.readerToolbar)
     this.progressContainer =
       view.findViewById(R.id.readerProgressContainer)
     this.webView =
@@ -124,57 +125,52 @@ class SR2ReaderFragment(
     this.loadingView =
       view.findViewById(R.id.readerLoading)
 
+    this.toolbar.inflateMenu(R.menu.sr2_reader_menu)
+    this.menuBookmarkItem = this.toolbar.menu.findItem(R.id.readerMenuAddBookmark)
+    this.toolbar.menu.findItem(R.id.readerMenuSettings)
+      .setOnMenuItemClickListener { this.onReaderMenuSettingsSelected() }
+    this.toolbar.menu.findItem(R.id.readerMenuTOC)
+      .setOnMenuItemClickListener { this.onReaderMenuTOCSelected() }
+    this.toolbar.menu.findItem(R.id.readerMenuAddBookmark)
+      .setOnMenuItemClickListener { this.onReaderMenuAddBookmarkSelected() }
+
     this.configureForTheme(this.controller?.themeNow() ?: this.parameters.theme)
     this.viewsShowLoading()
     return view
   }
 
+  private fun onReaderMenuAddBookmarkSelected(): Boolean {
+    val controllerNow = this.controller
+    if (controllerNow != null) {
+      if (this.findBookmarkForCurrentPage(controllerNow, controllerNow.positionNow()) == null) {
+        controllerNow.submitCommand(SR2Command.BookmarkCreate)
+      }
+    }
+    return true
+  }
+
+  private fun onReaderMenuTOCSelected(): Boolean {
+    val controllerNow = this.controller
+    if (controllerNow != null) {
+      this.controllerHost.onNavigationOpenTableOfContents()
+    }
+    return true
+  }
+
+  private fun onReaderMenuSettingsSelected(): Boolean {
+    this.openSettings()
+    return true
+  }
+
   @UiThread
   private fun configureForTheme(theme: SR2Theme) {
-    val background =
-      theme.colorScheme.background()
-    val foreground =
-      theme.colorScheme.foreground()
+    val background = theme.colorScheme.background()
+    val foreground = theme.colorScheme.foreground()
 
     this.container.setBackgroundColor(background)
     this.positionPageView.setTextColor(foreground)
     this.positionTitleView.setTextColor(foreground)
     this.positionPercentView.setTextColor(foreground)
-  }
-
-  override fun onCreateOptionsMenu(
-    menu: Menu,
-    inflater: MenuInflater
-  ) {
-    inflater.inflate(R.menu.sr2_reader_menu, menu)
-    this.menu = menu
-    this.menuBookmarkItem = menu.findItem(R.id.readerMenuAddBookmark)
-  }
-
-  override fun onOptionsItemSelected(item: MenuItem): Boolean {
-    val controllerNow = this.controller
-    return when (item.itemId) {
-      R.id.readerMenuSettings -> {
-        this.openSettings()
-        true
-      }
-      R.id.readerMenuTOC -> {
-        if (controllerNow != null) {
-          this.controllerHost.onNavigationOpenTableOfContents()
-        }
-        true
-      }
-      R.id.readerMenuAddBookmark -> {
-        if (controllerNow != null) {
-          if (this.findBookmarkForCurrentPage(controllerNow, controllerNow.positionNow()) == null) {
-            controllerNow.submitCommand(SR2Command.BookmarkCreate)
-          }
-        }
-        true
-      }
-      else ->
-        super.onOptionsItemSelected(item)
-    }
   }
 
   private fun openSettings() {
@@ -249,6 +245,7 @@ class SR2ReaderFragment(
     controller.viewConnect(this.webView)
     this.controllerSubscription = controller.events.subscribe(this::onControllerEvent)
     this.controllerHost.onControllerBecameAvailable(controller, isFirstStartup)
+    this.toolbar.title = controller.bookMetadata.title
   }
 
   private fun onBookOpenFailed(e: Throwable) {
@@ -366,8 +363,10 @@ class SR2ReaderFragment(
   private fun showOrHideReadingUI(uiVisible: Boolean) {
     if (uiVisible) {
       this.progressContainer.visibility = View.VISIBLE
+      this.toolbar.visibility = View.VISIBLE
     } else {
       this.progressContainer.visibility = View.GONE
+      this.toolbar.visibility = View.GONE
     }
   }
 

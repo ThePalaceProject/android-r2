@@ -13,8 +13,9 @@
   <string name="readerSettings">Settings</string>
   <string name="readerTableOfContents">Table Of Contents &amp; Bookmarks</string>
   <string name="settingsABC">ABC</string>
-  <string name="settingsABCLarger">ABC↑</string>
-  <string name="settingsABCSmaller">ABC↓</string>
+  <string name="settingsABCLarger">ABC ↑</string>
+  <string name="settingsABCReset">ABC ↺</string>
+  <string name="settingsABCSmaller">ABC ↓</string>
   <string name="settingsAa">A a</string>
   <string name="tocAccessBookmarkDelete">Delete A Bookmark</string>
   <string name="tocBookmarkDelete">Delete</string>
@@ -30,6 +31,7 @@
   <string name="settingsAccessibilitySetWhiteTextOnBlack">Set color scheme to white text on a black background.</string>
   <string name="settingsAccessibilitySetBlackTextOnSepia">Set color scheme to black text on a beige background.</string>
   <string name="settingsAccessibilitySetSizeLarger">Increase text size.</string>
+  <string name="settingsAccessibilitySetSizeReset">Reset the text size.</string>
   <string name="settingsAccessibilitySetSizeSmaller">Decrease text size.</string>
   <string name="settingsAccessibilityBrightnessSlider">Brightness adjustment slider</string>
 </resources>

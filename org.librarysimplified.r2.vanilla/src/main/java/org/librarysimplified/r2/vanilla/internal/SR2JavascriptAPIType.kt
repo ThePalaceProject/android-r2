@@ -42,7 +42,7 @@ internal interface SR2JavascriptAPIType {
    */
 
   @UiThread
-  fun setTypeScale(value: Double): ListenableFuture<String>
+  fun setFontSize(value: Double): ListenableFuture<String>
 
   /**
    * Set the reader color scheme.

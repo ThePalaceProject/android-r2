@@ -12,14 +12,9 @@ import org.librarysimplified.r2.api.SR2ControllerType
 import org.librarysimplified.r2.api.SR2Font
 import org.librarysimplified.r2.api.SR2Theme
 import org.librarysimplified.r2.views.R
-import org.slf4j.LoggerFactory
 
 internal class SR2SettingsDialog private constructor() {
   companion object {
-
-    private val logger =
-      LoggerFactory.getLogger(SR2SettingsDialog::class.java)
-
     private fun updateTheme(
       controller: SR2ControllerType,
       updater: (SR2Theme) -> SR2Theme
@@ -55,6 +50,8 @@ internal class SR2SettingsDialog private constructor() {
         dialog.findViewById<View>(R.id.setThemeSepia)!!
       val setTextSmaller =
         dialog.findViewById<View>(R.id.setTextSmaller)!!
+      val setTextReset =
+        dialog.findViewById<View>(R.id.setTextSizeReset)!!
       val setTextLarger =
         dialog.findViewById<View>(R.id.setTextLarger)!!
       val setBrightness =
@@ -82,10 +79,13 @@ internal class SR2SettingsDialog private constructor() {
         this.updateTheme(controller) { it.copy(colorScheme = SR2ColorScheme.DARK_TEXT_ON_SEPIA) }
       }
       setTextLarger.setOnClickListener {
-        this.updateTheme(controller) { it.copy(textSize = it.textSize + 0.25) }
+        this.updateTheme(controller) { it.copy(textSize = SR2Theme.sizeConstrain(it.textSize + 0.1)) }
+      }
+      setTextReset.setOnClickListener {
+        this.updateTheme(controller) { it.copy(textSize = 1.0) }
       }
       setTextSmaller.setOnClickListener {
-        this.updateTheme(controller) { it.copy(textSize = it.textSize - 0.25) }
+        this.updateTheme(controller) { it.copy(textSize = SR2Theme.sizeConstrain(it.textSize - 0.1)) }
       }
 
       val brightnessInitial = brightness.brightness()
@@ -99,8 +99,10 @@ internal class SR2SettingsDialog private constructor() {
         ) {
           this.bright = progress / 100.0
         }
+
         override fun onStartTrackingTouch(seekBar: SeekBar) {
         }
+
         override fun onStopTrackingTouch(seekBar: SeekBar) {
           brightness.setBrightness(this.bright)
         }

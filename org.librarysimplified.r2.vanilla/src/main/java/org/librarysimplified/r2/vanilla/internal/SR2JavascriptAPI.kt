@@ -98,8 +98,9 @@ internal class SR2JavascriptAPI(
   }
 
   @UiThread
-  override fun setTypeScale(value: Double): ListenableFuture<String> {
-    return this.setUserProperty("typeScale", "$value")
+  override fun setFontSize(value: Double): ListenableFuture<String> {
+    val percent = (value * 100.0).toString() + "%"
+    return this.setUserProperty("fontSize", percent)
   }
 
   private fun setTextAlign(value: String): ListenableFuture<String> {

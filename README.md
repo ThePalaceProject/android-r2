@@ -31,7 +31,7 @@ the project and functionality that must be provided by the hosting application.
 
 ![Architecture](./src/site/resources/arch.png?raw=true)
 
-The [org.librarysimplified.r2.api] module defines a _controller API_ that accepts
+The [org.librarysimplified.r2.api](org.librarysimplified.r2.api) module defines a _controller API_ that accepts
 commands and publishes events in response to those commands. A _controller_ encapsulates
 a Readium [Publication](https://readium.org/webpub-manifest/) and an internal server
 used to expose resources from that `Publication`. A single _controller_ instance has
@@ -39,7 +39,7 @@ a lifetime matching that of the `Publication`; when the user wants to open a boo
 a new _controller_ instance is created for that book, and then destroyed when the
 user closes the book.
 
-The [org.librarysimplified.r2.views] module defines a set of Android [Fragments](https://developer.android.com/guide/fragments)
+The [org.librarysimplified.r2.views](org.librarysimplified.r2.views) module defines a set of Android [Fragments](https://developer.android.com/guide/fragments)
 that implement a simple user interface for displaying a book and allowing the user to
 manage bookmarks and choose items from the book's table of contents. The fragments are
 conceptually stateless views that simply respond to events published by the current

@@ -37,7 +37,12 @@ a Readium [Publication](https://readium.org/webpub-manifest/) and an internal se
 used to expose resources from that `Publication`. A single _controller_ instance has
 a lifetime matching that of the `Publication`; when the user wants to open a book,
 a new _controller_ instance is created for that book, and then destroyed when the
-user closes the book.
+user closes the book. Because Readium requires a [WebView](https://developer.android.com/guide/webapps/webview)
+in order to execute JavaScript code, the controller API provides methods to dynamically
+attach and detach a `WebView` in accordance with the Android Fragment lifecycle; the
+_controller_ is responsible for effectively managing state such as the currently
+selected color scheme, the current reading position, and is responsible for correctly
+restoring this state each time a `WebView` is (re)connected.
 
 The [org.librarysimplified.r2.views](org.librarysimplified.r2.views) module defines a set of Android [Fragments](https://developer.android.com/guide/fragments)
 that implement a simple user interface for displaying a book and allowing the user to

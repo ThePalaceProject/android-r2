@@ -7,6 +7,10 @@ Simplified-R2-Android
 
 The [Library Simplified](http://www.librarysimplified.org/) Android Readium 2 navigator component.
 
+![r2](./src/site/resources/r2.jpg?raw=true)
+
+_Image by [Jose Antonio Alba](https://pixabay.com/users/josealbafotos-1624766/) from [Pixabay](https://pixabay.com/photos/leaves-books-color-coffee-cup-1076307/)_
+
 |Build|Status|
 |-----|------|
 |[Nightly, DRM, JDK 11](https://github.com/NYPL-Simplified/Simplified-R2-Android/actions?query=workflow%3A%22Android+CI+%28Daily+Authenticated%2C+JDK+11%29%22)|[![Build Status](https://img.shields.io/github/workflow/status/NYPL-Simplified/Simplified-R2-Android/Android%20CI%20(Daily%20Authenticated,%20JDK%2011)?style=flat-square)](https://github.com/NYPL-Simplified/Simplified-R2-Android/actions?query=workflow%3A%22Android+CI+%28Daily+Authenticated%2C+JDK+11%29%22)|

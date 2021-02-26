@@ -39,14 +39,14 @@ a Readium [Publication](https://readium.org/webpub-manifest/) and an internal se
 used to expose resources from that `Publication`. A single _controller_ instance has
 a lifetime matching that of the `Publication`; when the user wants to open a book,
 a new _controller_ instance is created for that book, and then destroyed when the
-user closes the book. The _controller_ is thread-safe and commands can be submitted
-from any thread - a single-threaded executor is used internally to execute commands
-in submission order and without interleaving command executions.
+user closes the book.
 
 #### Commands
 
 The _controller_ accepts commands in the form of values of a sealed `SR2Command` type. Commands
-are accepted by the controller and executed serially and asynchronously.
+are accepted by the controller and executed serially and asynchronously. The _controller_ is 
+thread-safe and commands can be submitted from any thread - a single-threaded executor is used 
+internally to execute commands in submission order and without interleaving command executions.
 
 #### Events
 

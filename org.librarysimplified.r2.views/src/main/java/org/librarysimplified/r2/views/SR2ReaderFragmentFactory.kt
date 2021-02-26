@@ -13,11 +13,11 @@ class SR2ReaderFragmentFactory(
     classLoader: ClassLoader,
     className: String
   ): Fragment {
-    val clazz: Class<*> = loadFragmentClass(classLoader, className)
-
-    return when (clazz) {
+    return when (loadFragmentClass(classLoader, className)) {
       SR2ReaderFragment::class.java ->
         SR2ReaderFragment.create(this.parameters)
+      SR2TOCFragment::class.java ->
+        SR2TOCFragment.create(this.parameters)
       SR2TOCBookmarksFragment::class.java ->
         SR2TOCBookmarksFragment.create(this.parameters)
       SR2TOCChaptersFragment::class.java ->

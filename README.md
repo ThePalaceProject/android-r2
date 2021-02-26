@@ -31,18 +31,38 @@ the project and functionality that must be provided by the hosting application.
 
 ![Architecture](./src/site/resources/arch.png?raw=true)
 
+### Controller
+
 The [org.librarysimplified.r2.api](org.librarysimplified.r2.api) module defines a _controller API_ that accepts
 commands and publishes events in response to those commands. A _controller_ encapsulates
 a Readium [Publication](https://readium.org/webpub-manifest/) and an internal server
 used to expose resources from that `Publication`. A single _controller_ instance has
 a lifetime matching that of the `Publication`; when the user wants to open a book,
 a new _controller_ instance is created for that book, and then destroyed when the
-user closes the book. Because Readium requires a [WebView](https://developer.android.com/guide/webapps/webview)
+user closes the book. 
+
+#### Commands
+
+The _controller_ accepts commands in the form of values of a sealed `SR2Command` type. Commands
+are accepted by the controller and executed serially and asynchronously.
+
+#### Events
+
+The _controller_ exposes an [rxjava](https://github.com/ReactiveX/RxJava) `Observable` stream
+of events to which subscribers can react. The events are values of a sealed `SR2Event` type,
+so consumers of the events are given static guarantees that they have handled all possible events
+(assuming that they use total `when` expressions to examine the events).
+
+#### Web Views
+
+Readium requires a [WebView](https://developer.android.com/guide/webapps/webview)
 in order to execute JavaScript code, the controller API provides methods to dynamically
 attach and detach a `WebView` in accordance with the Android Fragment lifecycle; the
 _controller_ is responsible for effectively managing state such as the currently
 selected color scheme, the current reading position, and is responsible for correctly
 restoring this state each time a `WebView` is (re)connected.
+
+### Views
 
 The [org.librarysimplified.r2.views](org.librarysimplified.r2.views) module defines a set of Android [Fragments](https://developer.android.com/guide/fragments)
 that implement a simple user interface for displaying a book and allowing the user to
@@ -50,6 +70,8 @@ manage bookmarks and choose items from the book's table of contents. The fragmen
 conceptually stateless views that simply respond to events published by the current
 _controller_ instance. The fragments communicate by a shared, public [ViewModel](https://developer.android.com/topic/libraries/architecture/viewmodel),
 with the _controller_ instance being stored in this `ViewModel`.
+
+### Usage
 
 The user's application has the following responsibilities:
 
@@ -66,7 +88,7 @@ The user's application has the following responsibilities:
     attach a `SR2TOCFragment` in order to show the table of contents. Failing to handle
     these events will merely result in a UI that does nothing when the user selects
     various menu items.
-    
+
 An extremely minimal [demo application](org.librarysimplified.r2.demo) is included that
 describes the bare minimum an application can do in order to provide a basic reading
 experience.

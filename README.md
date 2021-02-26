@@ -2,8 +2,8 @@ Simplified-R2-Android
 =====================
 
 [![Build Status](https://img.shields.io/github/workflow/status/NYPL-Simplified/Simplified-R2-Android/Android%20CI%20(Authenticated)?style=flat-square)](https://github.com/NYPL-Simplified/Simplified-R2-Android/actions?query=workflow%3A%22Android+CI+%28Authenticated%29%22)
-[![Maven Central](https://img.shields.io/maven-central/v/org.librarysimplified/org.librarysimplified.r2.api?style=flat-square)](https://repo1.maven.org/maven2/org/librarysimplified/r2/)
-[![Maven Central (snapshot)](https://img.shields.io/nexus/s/https/oss.sonatype.org/org.librarysimplified/org.librarysimplified.r2.api.svg?style=flat-square)](https://oss.sonatype.org/content/repositories/snapshots/org/librarysimplified/r2/)
+[![Maven Central](https://img.shields.io/maven-central/v/org.librarysimplified.r2/org.librarysimplified.r2.api?style=flat-square)](https://repo1.maven.org/maven2/org/librarysimplified/r2/)
+[![Maven Central (snapshot)](https://img.shields.io/nexus/s/https/oss.sonatype.org/org.librarysimplified.r2/org.librarysimplified.r2.api.svg?style=flat-square)](https://oss.sonatype.org/content/repositories/snapshots/org/librarysimplified/r2/org.librarysimplified.r2.api/)
 
 The [Library Simplified](http://www.librarysimplified.org/) Android Readium 2 navigator component.
 

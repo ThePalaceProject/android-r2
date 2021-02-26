@@ -67,7 +67,7 @@ The user's application has the following responsibilities:
     these events will merely result in a UI that does nothing when the user selects
     various menu items.
     
-An extremely minimal [org.librarysimplified.r2.demo](demo application) is included that
+An extremely minimal [demo application](org.librarysimplified.r2.demo) is included that
 describes the bare minimum an application can do in order to provide a basic reading
 experience.
 

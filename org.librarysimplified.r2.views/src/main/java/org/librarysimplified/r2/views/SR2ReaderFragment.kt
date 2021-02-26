@@ -11,8 +11,7 @@ import android.widget.TextView
 import androidx.annotation.UiThread
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentFactory
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
 import com.google.common.util.concurrent.FluentFuture
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
@@ -38,48 +37,27 @@ import org.librarysimplified.r2.api.SR2Event.SR2ThemeChanged
 import org.librarysimplified.r2.api.SR2Locator
 import org.librarysimplified.r2.api.SR2Theme
 import org.librarysimplified.r2.ui_thread.SR2UIThread
+import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewBookEvent.SR2BookLoadingFailed
+import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewControllerEvent.SR2ControllerBecameAvailable
+import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewNavigationEvent.SR2ReaderViewNavigationOpenTOC
 import org.librarysimplified.r2.views.internal.SR2BrightnessService
-import org.librarysimplified.r2.views.internal.SR2ControllerReference
-import org.librarysimplified.r2.views.internal.SR2ReaderViewModel
 import org.librarysimplified.r2.views.internal.SR2SettingsDialog
 import org.slf4j.LoggerFactory
 
-class SR2ReaderFragment(
-  private val parameters: SR2ReaderFragmentParameters,
+class SR2ReaderFragment private constructor(
+  private val parameters: SR2ReaderParameters
 ) : Fragment() {
 
-  private val logger = LoggerFactory.getLogger(SR2ReaderFragment::class.java)
+  private val logger =
+    LoggerFactory.getLogger(SR2ReaderFragment::class.java)
 
   companion object {
-    private const val PARAMETERS_ID =
-      "org.librarysimplified.r2.views.SR2ReaderFragment.parameters"
-
-    /**
-     * Create a book detail fragment for the given parameters.
-     */
-
-    fun createFactory(
-      parameters: SR2ReaderFragmentParameters
-    ): FragmentFactory = Factory(parameters)
-  }
-
-  private class Factory(
-    val parameters: SR2ReaderFragmentParameters
-  ) : FragmentFactory() {
-    override fun instantiate(
-      classLoader: ClassLoader,
-      className: String
-    ): Fragment =
-      when (className) {
-        SR2ReaderFragment::javaClass.name ->
-          SR2ReaderFragment(this.parameters)
-        else ->
-          super.instantiate(classLoader, className)
-      }
+    fun create(parameters: SR2ReaderParameters): SR2ReaderFragment {
+      return SR2ReaderFragment(parameters)
+    }
   }
 
   private lateinit var container: ViewGroup
-  private lateinit var controllerHost: SR2ControllerHostType
   private lateinit var loadingView: ProgressBar
   private lateinit var menuBookmarkItem: MenuItem
   private lateinit var positionPageView: TextView
@@ -150,10 +128,7 @@ class SR2ReaderFragment(
   }
 
   private fun onReaderMenuTOCSelected(): Boolean {
-    val controllerNow = this.controller
-    if (controllerNow != null) {
-      this.controllerHost.onNavigationOpenTableOfContents()
-    }
+    this.readerModel.publishViewEvent(SR2ReaderViewNavigationOpenTOC)
     return true
   }
 
@@ -185,10 +160,11 @@ class SR2ReaderFragment(
   override fun onStart() {
     super.onStart()
 
-    val activity = this.requireActivity()
-    this.controllerHost = activity as SR2ControllerHostType
+    val activity =
+      this.requireActivity()
+
     this.readerModel =
-      ViewModelProviders.of(activity)
+      ViewModelProvider(activity, SR2ReaderViewModelFactory(this.parameters))
         .get(SR2ReaderViewModel::class.java)
 
     /*
@@ -204,8 +180,7 @@ class SR2ReaderFragment(
           streamer = this.parameters.streamer,
           theme = this.parameters.theme,
           uiExecutor = SR2UIThread::runOnUIThread
-        ),
-        controllers = this.controllerHost.onControllerRequired()
+        )
       )
 
     FluentFuture.from(controllerFuture)
@@ -244,18 +219,15 @@ class SR2ReaderFragment(
     this.controller = controller
     controller.viewConnect(this.webView)
     this.controllerSubscription = controller.events.subscribe(this::onControllerEvent)
-    this.controllerHost.onControllerBecameAvailable(controller, isFirstStartup)
+    this.readerModel.publishViewEvent(
+      SR2ControllerBecameAvailable(SR2ControllerReference(controller, isFirstStartup))
+    )
     this.toolbar.title = controller.bookMetadata.title
   }
 
   private fun onBookOpenFailed(e: Throwable) {
     this.logger.error("onBookOpenFailed: ", e)
-    SR2UIThread.runOnUIThread { this.onBookOpenFailedUI(e) }
-  }
-
-  @UiThread
-  private fun onBookOpenFailedUI(e: Throwable) {
-    TODO()
+    this.readerModel.publishViewEvent(SR2BookLoadingFailed(e))
   }
 
   @UiThread

@@ -6,7 +6,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.ListAdapter
 import org.librarysimplified.r2.api.SR2Bookmark
 import org.librarysimplified.r2.views.R
-import org.librarysimplified.r2.views.internal.SR2Adapters.bookmarkDiffCallback
+import org.librarysimplified.r2.views.internal.SR2DiffUtils.bookmarkDiffCallback
 
 internal class SR2TOCBookmarkAdapter(
   private val resources: Resources,

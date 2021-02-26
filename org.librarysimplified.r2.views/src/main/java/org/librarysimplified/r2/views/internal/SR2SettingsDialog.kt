@@ -14,7 +14,7 @@ import org.librarysimplified.r2.api.SR2Theme
 import org.librarysimplified.r2.views.R
 import org.slf4j.LoggerFactory
 
-class SR2SettingsDialog private constructor() {
+internal class SR2SettingsDialog private constructor() {
   companion object {
 
     private val logger =

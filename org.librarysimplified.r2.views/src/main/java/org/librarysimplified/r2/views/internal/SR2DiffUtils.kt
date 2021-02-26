@@ -4,7 +4,7 @@ import androidx.recyclerview.widget.DiffUtil
 import org.librarysimplified.r2.api.SR2BookChapter
 import org.librarysimplified.r2.api.SR2Bookmark
 
-internal object SR2Adapters {
+internal object SR2DiffUtils {
 
   val bookmarkDiffCallback: DiffUtil.ItemCallback<SR2Bookmark> =
     object : DiffUtil.ItemCallback<SR2Bookmark>() {

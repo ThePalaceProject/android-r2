@@ -541,8 +541,11 @@ internal class SR2Controller private constructor(
     ) {
       val chapterIndex =
         this@SR2Controller.currentChapterIndex
+
+      val pageZeroBased =
+        Math.max(0, currentPage - 1)
       val chapterProgress =
-        currentPage.toDouble() / pageCount.toDouble()
+        pageZeroBased.toDouble() / pageCount.toDouble()
       val chapterTitle =
         SR2Books.makeChapterTitleOf(this@SR2Controller.publication, chapterIndex)
 

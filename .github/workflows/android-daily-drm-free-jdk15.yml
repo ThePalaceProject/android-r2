@@ -1,4 +1,4 @@
-name: Android CI (Daily DRM-Free, JDK 15)
+name: Android CI (Daily Unauthenticated, JDK 15)
 
 on:
   schedule:

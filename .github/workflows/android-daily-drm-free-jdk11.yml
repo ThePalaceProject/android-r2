@@ -1,4 +1,4 @@
-name: Android CI (Daily DRM-Free, JDK 11)
+name: Android CI (Daily Unauthenticated, JDK 11)
 
 on:
   schedule:

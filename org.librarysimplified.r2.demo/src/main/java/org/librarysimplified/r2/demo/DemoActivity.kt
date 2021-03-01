@@ -180,11 +180,13 @@ class DemoActivity : AppCompatActivity() {
   }
 
   private fun onBookLoadingFailed(exception: Throwable) {
-    AlertDialog.Builder(this)
-      .setMessage(exception.message)
-      .setOnDismissListener { this.finish() }
-      .create()
-      .show()
+    SR2UIThread.runOnUIThread {
+      AlertDialog.Builder(this)
+        .setMessage(exception.message)
+        .setOnDismissListener { this.finish() }
+        .create()
+        .show()
+    }
   }
 
   private fun openTOC() {

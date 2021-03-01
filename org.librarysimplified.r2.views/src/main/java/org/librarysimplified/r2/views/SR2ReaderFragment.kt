@@ -12,7 +12,6 @@ import androidx.annotation.UiThread
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import com.google.common.util.concurrent.FluentFuture
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import io.reactivex.disposables.Disposable
@@ -43,6 +42,7 @@ import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewNavigation
 import org.librarysimplified.r2.views.internal.SR2BrightnessService
 import org.librarysimplified.r2.views.internal.SR2SettingsDialog
 import org.slf4j.LoggerFactory
+import java.util.concurrent.ExecutionException
 
 class SR2ReaderFragment private constructor(
   private val parameters: SR2ReaderParameters
@@ -183,16 +183,19 @@ class SR2ReaderFragment private constructor(
         )
       )
 
-    FluentFuture.from(controllerFuture)
-      .transform(
-        { reference -> this.onBookOpenSucceeded(reference!!.controller, reference.isFirstStartup) },
-        MoreExecutors.directExecutor()
-      )
-      .catching(
-        Throwable::class.java,
-        { e -> this.onBookOpenFailed(e!!) },
-        MoreExecutors.directExecutor()
-      )
+    controllerFuture.addListener({
+      try {
+        try {
+          val ref = controllerFuture.get()
+          this.onBookOpenSucceeded(ref.controller, ref.isFirstStartup)
+        } catch (e: ExecutionException) {
+          throw e.cause!!
+        }
+      } catch (e: Exception) {
+        this.onBookOpenFailed(e)
+      }
+    },
+      MoreExecutors.directExecutor())
 
     this.showOrHideReadingUI(true)
   }

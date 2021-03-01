@@ -3,7 +3,7 @@ name: Android CI (Authenticated)
 on:
   push:
     branches: [ develop, master ]
-    tags: v[0-9]+.[0-9]+.[0-9]+
+    tags: org.librarysimplified.r2-[0-9]+.[0-9]+.[0-9]+
 
 jobs:
   build:

@@ -183,19 +183,21 @@ class SR2ReaderFragment private constructor(
         )
       )
 
-    controllerFuture.addListener({
-      try {
+    controllerFuture.addListener(
+      {
         try {
-          val ref = controllerFuture.get()
-          this.onBookOpenSucceeded(ref.controller, ref.isFirstStartup)
-        } catch (e: ExecutionException) {
-          throw e.cause!!
+          try {
+            val ref = controllerFuture.get()
+            this.onBookOpenSucceeded(ref.controller, ref.isFirstStartup)
+          } catch (e: ExecutionException) {
+            throw e.cause!!
+          }
+        } catch (e: Exception) {
+          this.onBookOpenFailed(e)
         }
-      } catch (e: Exception) {
-        this.onBookOpenFailed(e)
-      }
-    },
-      MoreExecutors.directExecutor())
+      },
+      MoreExecutors.directExecutor()
+    )
 
     this.showOrHideReadingUI(true)
   }

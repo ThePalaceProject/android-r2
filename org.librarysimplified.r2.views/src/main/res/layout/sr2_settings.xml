@@ -1,0 +1,327 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent">
+
+  <LinearLayout
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="16dp"
+    android:layout_marginTop="16dp"
+    android:layout_marginEnd="16dp"
+    android:layout_marginBottom="16dp"
+    android:orientation="vertical"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toTopOf="parent">
+
+    <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_height="64dp"
+      android:orientation="horizontal">
+
+      <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/setFontSans"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:background="?attr/selectableItemBackground"
+        android:contentDescription="@string/settingsAccessibilitySetSans"
+        android:clickable="true"
+        android:focusable="true">
+
+        <TextView
+          android:layout_width="0dp"
+          android:layout_height="0dp"
+          android:gravity="center"
+          android:background="@drawable/sr2_transparent_bordered"
+          android:text="@string/settingsABC"
+          android:textAlignment="center"
+          android:textSize="24sp"
+          android:typeface="sans"
+          android:clickable="false"
+          android:focusable="false"
+          app:layout_constraintBottom_toBottomOf="parent"
+          app:layout_constraintEnd_toEndOf="parent"
+          app:layout_constraintStart_toStartOf="parent"
+          app:layout_constraintTop_toTopOf="parent" />
+      </androidx.constraintlayout.widget.ConstraintLayout>
+
+      <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/setFontSerif"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:background="?attr/selectableItemBackground"
+        android:contentDescription="@string/settingsAccessibilitySetSerif"
+        android:clickable="true"
+        android:focusable="true">
+
+        <TextView
+          android:layout_width="0dp"
+          android:layout_height="0dp"
+          android:gravity="center"
+          android:background="@drawable/sr2_transparent_bordered"
+          android:text="@string/settingsABC"
+          android:textAlignment="center"
+          android:textSize="24sp"
+          android:typeface="serif"
+          android:clickable="false"
+          android:focusable="false"
+          app:layout_constraintBottom_toBottomOf="parent"
+          app:layout_constraintEnd_toEndOf="parent"
+          app:layout_constraintStart_toStartOf="parent"
+          app:layout_constraintTop_toTopOf="parent" />
+      </androidx.constraintlayout.widget.ConstraintLayout>
+
+      <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/setFontDyslexic"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:background="?attr/selectableItemBackground"
+        android:contentDescription="@string/settingsAccessibilitySetDyslexic"
+        android:clickable="true"
+        android:focusable="true">
+
+        <TextView
+          android:id="@+id/setFontDyslexicText"
+          android:layout_width="0dp"
+          android:layout_height="0dp"
+          android:background="@drawable/sr2_transparent_bordered"
+          android:gravity="center"
+          android:text="@string/settingsABC"
+          android:textAlignment="center"
+          android:textSize="24sp"
+          android:clickable="false"
+          android:focusable="false"
+          app:layout_constraintBottom_toBottomOf="parent"
+          app:layout_constraintEnd_toEndOf="parent"
+          app:layout_constraintStart_toStartOf="parent"
+          app:layout_constraintTop_toTopOf="parent" />
+      </androidx.constraintlayout.widget.ConstraintLayout>
+    </LinearLayout>
+
+    <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_height="64dp"
+      android:orientation="horizontal">
+
+      <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/setThemeLight"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:background="@drawable/sr2_white"
+        android:contentDescription="@string/settingsAccessibilitySetBlackTextOnWhite"
+        android:clickable="true"
+        android:focusable="true">
+
+        <TextView
+          android:layout_width="0dp"
+          android:layout_height="match_parent"
+          android:layout_weight="1"
+          android:background="?attr/selectableItemBackground"
+          android:gravity="center"
+          android:text="@string/settingsAa"
+          android:textAlignment="center"
+          android:textColor="#000000"
+          android:textSize="24sp"
+          android:clickable="false"
+          android:focusable="false"
+          app:layout_constraintBottom_toBottomOf="parent"
+          app:layout_constraintEnd_toEndOf="parent"
+          app:layout_constraintStart_toStartOf="parent"
+          app:layout_constraintTop_toTopOf="parent" />
+      </androidx.constraintlayout.widget.ConstraintLayout>
+
+      <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/setThemeDark"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:background="@drawable/sr2_black"
+        android:contentDescription="@string/settingsAccessibilitySetWhiteTextOnBlack"
+        android:clickable="true"
+        android:focusable="true">
+        <TextView
+          android:layout_width="0dp"
+          android:layout_height="match_parent"
+          android:layout_weight="1"
+          android:background="?attr/selectableItemBackground"
+          android:gravity="center"
+          android:text="@string/settingsAa"
+          android:textAlignment="center"
+          android:textColor="#FFFFFF"
+          android:textSize="24sp"
+          android:clickable="false"
+          android:focusable="false"
+          app:layout_constraintBottom_toBottomOf="parent"
+          app:layout_constraintEnd_toEndOf="parent"
+          app:layout_constraintStart_toStartOf="parent"
+          app:layout_constraintTop_toTopOf="parent" />
+      </androidx.constraintlayout.widget.ConstraintLayout>
+
+      <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/setThemeSepia"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:background="@drawable/sr2_beige"
+        android:contentDescription="@string/settingsAccessibilitySetBlackTextOnSepia"
+        android:clickable="true"
+        android:focusable="true">
+
+        <TextView
+          android:layout_width="0dp"
+          android:layout_height="match_parent"
+          android:layout_weight="1"
+          android:background="?attr/selectableItemBackground"
+          android:gravity="center"
+          android:text="@string/settingsAa"
+          android:textAlignment="center"
+          android:textColor="#000000"
+          android:textSize="24sp"
+          android:clickable="false"
+          android:focusable="false"
+          app:layout_constraintBottom_toBottomOf="parent"
+          app:layout_constraintEnd_toEndOf="parent"
+          app:layout_constraintStart_toStartOf="parent"
+          app:layout_constraintTop_toTopOf="parent" />
+      </androidx.constraintlayout.widget.ConstraintLayout>
+    </LinearLayout>
+
+    <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_height="64dp"
+      android:orientation="horizontal">
+
+      <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/setTextSmaller"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:background="?attr/selectableItemBackground"
+        android:contentDescription="@string/settingsAccessibilitySetSizeSmaller"
+        android:clickable="true"
+        android:focusable="true">
+
+        <TextView
+          android:layout_width="0dp"
+          android:layout_height="match_parent"
+          android:layout_weight="1"
+          android:gravity="center"
+          android:background="@drawable/sr2_transparent_bordered"
+          android:text="@string/settingsABCSmaller"
+          android:textAlignment="center"
+          android:textSize="12sp"
+          android:clickable="false"
+          android:focusable="false"
+          app:layout_constraintBottom_toBottomOf="parent"
+          app:layout_constraintEnd_toEndOf="parent"
+          app:layout_constraintStart_toStartOf="parent"
+          app:layout_constraintTop_toTopOf="parent" />
+      </androidx.constraintlayout.widget.ConstraintLayout>
+
+      <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/setTextSizeReset"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:background="?attr/selectableItemBackground"
+        android:contentDescription="@string/settingsAccessibilitySetSizeReset"
+        android:clickable="true"
+        android:focusable="true">
+
+        <TextView
+          android:layout_width="0dp"
+          android:layout_height="match_parent"
+          android:layout_weight="1"
+          android:gravity="center"
+          android:background="@drawable/sr2_transparent_bordered"
+          android:text="@string/settingsABCReset"
+          android:textAlignment="center"
+          android:textSize="24sp"
+          android:clickable="false"
+          android:focusable="false"
+          app:layout_constraintBottom_toBottomOf="parent"
+          app:layout_constraintEnd_toEndOf="parent"
+          app:layout_constraintStart_toStartOf="parent"
+          app:layout_constraintTop_toTopOf="parent" />
+      </androidx.constraintlayout.widget.ConstraintLayout>
+
+      <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/setTextLarger"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:background="?attr/selectableItemBackground"
+        android:contentDescription="@string/settingsAccessibilitySetSizeLarger"
+        android:clickable="true"
+        android:focusable="true">
+
+        <TextView
+          android:layout_width="0dp"
+          android:layout_height="match_parent"
+          android:layout_weight="1"
+          android:background="@drawable/sr2_transparent_bordered"
+          android:gravity="center"
+          android:text="@string/settingsABCLarger"
+          android:textAlignment="center"
+          android:textSize="36sp"
+          android:clickable="false"
+          android:focusable="false"
+          app:layout_constraintBottom_toBottomOf="parent"
+          app:layout_constraintEnd_toEndOf="parent"
+          app:layout_constraintStart_toStartOf="parent"
+          app:layout_constraintTop_toTopOf="parent" />
+      </androidx.constraintlayout.widget.ConstraintLayout>
+    </LinearLayout>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+      android:background="@drawable/sr2_transparent_bordered"
+      android:layout_width="match_parent"
+      android:layout_height="64dp">
+
+      <ImageView
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_marginStart="16dp"
+        android:layout_weight="1"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/sr2_brightness_low" />
+
+      <SeekBar
+        android:id="@+id/setBrightness"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="56dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="56dp"
+        android:layout_marginBottom="16dp"
+        android:contentDescription="@string/settingsAccessibilityBrightnessSlider"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+      <ImageView
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/sr2_brightness_high" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+  </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

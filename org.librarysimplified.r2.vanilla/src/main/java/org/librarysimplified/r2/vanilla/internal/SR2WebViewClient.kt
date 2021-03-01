@@ -6,41 +6,47 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import com.google.common.util.concurrent.SettableFuture
 import org.slf4j.LoggerFactory
-import java.util.LinkedList
-import java.util.Queue
 import java.util.concurrent.ConcurrentHashMap
 
 /**
  * A web view client that provides logging of errors and also allows for the execution of
- * functions when pages have loaded.
+ * functions when pages have loaded. A client handles a single request; there's a 1:1 correspondence
+ * between requests the user makes to open chapters and URLs, and clients.
  */
 
-internal class SR2WebViewClient : WebViewClient() {
+internal class SR2WebViewClient(
+  private val requestLocation: String,
+  private val future: SettableFuture<Unit>
+) : WebViewClient() {
 
   companion object {
-    val emptyResponse = WebResourceResponse(
-      "text/plain",
-      "utf-8",
-      404,
-      "Not Found",
-      null,
-      null
-    )
+    val emptyOKResponse =
+      WebResourceResponse(
+        "text/plain",
+        "utf-8",
+        200,
+        "OK",
+        null,
+        null
+      )
   }
 
   private val logger =
     LoggerFactory.getLogger(SR2WebViewClient::class.java)
+  private val errors =
+    ConcurrentHashMap<String, String>()
 
-  private val onLoadHandlers =
-    ConcurrentHashMap<String, Queue<() -> Unit>>()
-
-  override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
+  override fun shouldInterceptRequest(
+    view: WebView?,
+    request: WebResourceRequest?
+  ): WebResourceResponse? {
     if (request != null) {
       val url = request.url?.toString() ?: ""
 
       if (url.endsWith("favicon.ico")) {
-        return emptyResponse
+        return emptyOKResponse
       }
     }
     return super.shouldInterceptRequest(view, request)
@@ -60,17 +66,21 @@ internal class SR2WebViewClient : WebViewClient() {
   ) {
     this.logger.debug("onPageFinished: {}", url)
 
-    /*
-     * If there's a queue of load handlers for this URL, execute and remove
-     * the first handler in the queue.
-     */
-
-    val handlers = this.onLoadHandlers[url]
-    if (handlers != null) {
-      if (!handlers.isEmpty()) {
-        val handler = handlers.remove()
-        this.logger.debug("executing load handler")
-        handler.invoke()
+    if (this.requestLocation == url) {
+      try {
+        if (this.errors.isEmpty()) {
+          this.logger.debug("onPageFinished: {} succeeded", url)
+          this.future.set(Unit)
+          return
+        } else {
+          this.logger.error("onPageFinished: {} failed with {} errors", url, this.errors.size)
+          this.future.setException(
+            SR2WebViewLoadException("Failed to load $requestLocation", this.errors.toMap())
+          )
+          return
+        }
+      } finally {
+        this.logger.debug("onPageFinished: completed future")
       }
     }
 
@@ -90,6 +100,8 @@ internal class SR2WebViewClient : WebViewClient() {
         error.description
       )
     }
+
+    this.errors[request.url.toString()] = "${error.errorCode} ${error.description}"
     super.onReceivedError(view, request, error)
   }
 
@@ -104,6 +116,8 @@ internal class SR2WebViewClient : WebViewClient() {
       errorResponse.statusCode,
       errorResponse.reasonPhrase
     )
+
+    this.errors[request.url.toString()] = "${errorResponse.statusCode} ${errorResponse.reasonPhrase}"
     super.onReceivedHttpError(view, request, errorResponse)
   }
 
@@ -119,19 +133,8 @@ internal class SR2WebViewClient : WebViewClient() {
       errorCode,
       description
     )
+
+    this.errors[failingUrl] = "$errorCode $description"
     super.onReceivedError(view, errorCode, description, failingUrl)
-  }
-
-  /**
-   * Add a function that will be called when [location] is loaded next.
-   */
-
-  fun addOnLoadHandler(
-    location: String,
-    onLoad: () -> Unit
-  ) {
-    val existingHandlers = this.onLoadHandlers[location] ?: LinkedList()
-    existingHandlers.add(onLoad)
-    this.onLoadHandlers[location] = existingHandlers
   }
 }

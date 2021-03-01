@@ -10,7 +10,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import org.librarysimplified.r2.api.SR2BookChapter
 import org.librarysimplified.r2.views.R
-import org.librarysimplified.r2.views.internal.SR2Adapters.chapterDiffCallback
+import org.librarysimplified.r2.views.internal.SR2DiffUtils.chapterDiffCallback
 import org.librarysimplified.r2.views.internal.SR2TOCChapterAdapter.SR2TOCChapterViewHolder
 
 internal class SR2TOCChapterAdapter(
@@ -51,7 +51,8 @@ internal class SR2TOCChapterAdapter(
       this.resources.getString(
         R.string.tocChapterIndexed,
         chapter.chapterIndex + 1,
-        chapter.title)
+        chapter.title
+      )
   }
 
   fun setChapters(chaptersNow: List<SR2BookChapter>) {

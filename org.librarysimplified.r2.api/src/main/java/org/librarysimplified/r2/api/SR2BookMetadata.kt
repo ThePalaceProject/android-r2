@@ -13,6 +13,12 @@ data class SR2BookMetadata(
   val id: String,
 
   /**
+   * The book title.
+   */
+
+  val title: String,
+
+  /**
    * The chapters of the book in reading order.
    */
 

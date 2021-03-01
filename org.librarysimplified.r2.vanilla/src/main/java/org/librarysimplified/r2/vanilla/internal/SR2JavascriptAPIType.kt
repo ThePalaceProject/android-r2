@@ -1,6 +1,7 @@
 package org.librarysimplified.r2.vanilla.internal
 
 import androidx.annotation.UiThread
+import com.google.common.util.concurrent.ListenableFuture
 
 /**
  * The Javascript API exported by web views.
@@ -13,50 +14,47 @@ internal interface SR2JavascriptAPIType {
    */
 
   @UiThread
-  fun openPageNext()
+  fun openPageNext(): ListenableFuture<String>
 
   /**
    * Open the previous page in the current chapter.
    */
 
   @UiThread
-  fun openPagePrevious()
+  fun openPagePrevious(): ListenableFuture<String>
 
   /**
    * Open the final page in the current chapter.
    */
 
   @UiThread
-  fun openPageLast()
+  fun openPageLast(): ListenableFuture<String>
+
+  /**
+   * Set the font family for the reader.
+   */
 
   @UiThread
-  fun setFontFamily(value: String)
+  fun setFontFamily(value: String): ListenableFuture<String>
+
+  /**
+   * Set the text scale (in the range [0, n], where `n = 1.0` means "100%".
+   */
 
   @UiThread
-  fun setTextSize(value: Int)
+  fun setFontSize(value: Double): ListenableFuture<String>
+
+  /**
+   * Set the reader color scheme.
+   */
 
   @UiThread
-  fun setTextAlign(value: String)
-
-  @UiThread
-  fun setPageMargin(value: Double)
-
-  @UiThread
-  fun setLineHeight(value: Double)
-
-  @UiThread
-  fun setLetterSpacing(value: Double)
-
-  @UiThread
-  fun setWordSpacing(value: Double)
-
-  @UiThread
-  fun setTheme(value: SR2ReaderTheme)
+  fun setTheme(value: SR2ReadiumInternalTheme): ListenableFuture<String>
 
   /**
    * Set the current chapter position. This must be in the range [0, 1].
    */
 
   @UiThread
-  fun setProgression(progress: Double)
+  fun setProgression(progress: Double): ListenableFuture<String>
 }

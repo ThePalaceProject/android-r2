@@ -84,25 +84,10 @@ publishing {
             }
         }
 
-        if (useNYPLNexusPublish) {
-            logger.info("using NYPL Nexus repository for publication")
-
+        if (version.endsWith("-SNAPSHOT")) {
             maven {
-                def releasesRepoUrl = "https://nexus.librarysimplified.org:8443/nexus/content/repositories/releases-no-drm/"
-                def snapshotsRepoUrl = "https://nexus.librarysimplified.org:8443/nexus/content/repositories/snapshots-no-drm/"
-                url = version.endsWith("SNAPSHOT") ? snapshotsRepoUrl : releasesRepoUrl
-                credentials(PasswordCredentials) {
-                    username findProperty("org.librarysimplified.nexus.username")
-                    password findProperty("org.librarysimplified.nexus.password")
-                }
-            }
-        } else {
-            logger.info("using Maven Central repository for publication")
-
-            maven {
-                def releasesRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
-                def snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
-                url = version.endsWith("SNAPSHOT") ? snapshotsRepoUrl : releasesRepoUrl
+                url = "https://oss.sonatype.org/content/repositories/snapshots/"
+                name = "SonatypeSnapshots"
                 credentials(PasswordCredentials) {
                     username mavenCentralUsername
                     password mavenCentralPassword
@@ -112,21 +97,11 @@ publishing {
     }
 }
 
-signing {
-    useGpgCmd()
-    sign publishing.publications.basicJar
-}
+if (!disableSigning) {
+    apply plugin: "signing"
 
-tasks.withType(Sign) { task ->
-    def isSnapshot = version.endsWith("SNAPSHOT")
-
-    // Sign release versions only; not snapshots
-    onlyIf {
-        if (isSnapshot) {
-            logger.warn("$POM_NAME: '$version' is a snapshot version; artifacts will not be signed")
-        } else {
-            logger.info("$POM_NAME: '$version' is a release version; artifacts will be signed")
-        }
-        return !isSnapshot
+    signing {
+        useGpgCmd()
+        sign publishing.publications.basicJar
     }
 }

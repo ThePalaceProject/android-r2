@@ -6,13 +6,17 @@ import org.librarysimplified.r2.api.SR2Bookmark
 import org.librarysimplified.r2.api.SR2Bookmark.Type
 import org.librarysimplified.r2.api.SR2Bookmark.Type.EXPLICIT
 import org.librarysimplified.r2.api.SR2Bookmark.Type.LAST_READ
+import org.librarysimplified.r2.api.SR2ColorScheme
+import org.librarysimplified.r2.api.SR2Font
 import org.librarysimplified.r2.api.SR2Locator.SR2LocatorChapterEnd
 import org.librarysimplified.r2.api.SR2Locator.SR2LocatorPercent
+import org.librarysimplified.r2.api.SR2Theme
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 import java.io.Serializable
+import java.util.Properties
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 
@@ -34,6 +38,10 @@ class DemoDatabase(private val context: Context) {
 
   private val bookmarks: ConcurrentHashMap<String, List<SerializableBookmark>> =
     this.loadMap()
+
+  @Volatile
+  private var theme =
+    this.loadTheme()
 
   data class SerializableBookmark(
     val time: DateTime,
@@ -184,5 +192,56 @@ class DemoDatabase(private val context: Context) {
     } catch (e: Exception) {
       this.logger.error("could not save bookmarks database: ", e)
     }
+  }
+
+  private fun loadTheme(): SR2Theme {
+    return try {
+      this.logger.debug("loading theme")
+
+      val file = File(this.context.filesDir, "theme.dat")
+      val properties = Properties()
+      file.inputStream().use(properties::load)
+
+      return SR2Theme(
+        colorScheme = SR2ColorScheme.valueOf(properties.getProperty("colorScheme")),
+        font = SR2Font.valueOf(properties.getProperty("font")),
+        textSize = properties.getProperty("textSize").toDouble()
+      )
+    } catch (e: Exception) {
+      this.logger.error("could not open theme database: ", e)
+      SR2Theme()
+    }
+  }
+
+  private fun saveTheme(theme: SR2Theme) {
+    try {
+      this.logger.debug("saving theme")
+
+      val fileTmp =
+        File(this.context.filesDir, "theme.dat.tmp")
+      val file =
+        File(this.context.filesDir, "theme.dat")
+
+      val properties = Properties()
+      properties["colorScheme"] = theme.colorScheme.name
+      properties["font"] = theme.font.name
+      properties["textSize"] = theme.textSize.toString()
+
+      fileTmp.outputStream().use { stream ->
+        properties.store(stream, "")
+      }
+      fileTmp.renameTo(file)
+    } catch (e: Exception) {
+      this.logger.error("could not save theme database: ", e)
+    }
+  }
+
+  fun theme(): SR2Theme {
+    return this.theme
+  }
+
+  fun themeSet(theme: SR2Theme) {
+    this.theme = theme
+    this.saveTheme(theme)
   }
 }

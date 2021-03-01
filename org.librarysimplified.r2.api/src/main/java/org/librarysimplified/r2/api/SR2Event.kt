@@ -33,10 +33,15 @@ sealed class SR2Event {
 
   /**
    * The center of the webview was tapped. Implementors may want to show reader
-   * controls as a result of this event.
+   * controls as a result of this event. For convenience, the controller tracks
+   * a boolean value indicating whether or not the UI should be shown, assuming
+   * that the UI starts initially visible and the visibility is toggled on each
+   * center tap.
    */
 
-  class SR2OnCenterTapped : SR2Event()
+  class SR2OnCenterTapped(
+    val uiVisible: Boolean
+  ) : SR2Event()
 
   /**
    * The reading position changed.
@@ -93,6 +98,71 @@ sealed class SR2Event {
      * Bookmarks were loaded into the controller.
      */
 
-    object SR2BookmarksLoaded : SR2BookmarkEvent()
+    object SR2BookmarksLoaded : SR2BookmarkEvent() {
+      override fun toString(): String =
+        "[SR2BookmarksLoaded]"
+    }
+  }
+
+  /**
+   * The reader theme was changed.
+   */
+
+  data class SR2ThemeChanged(
+    val theme: SR2Theme
+  ) : SR2Event()
+
+  /**
+   * The set of events related to commands.
+   */
+
+  sealed class SR2CommandEvent : SR2Event() {
+
+    /**
+     * The command to which the event refers.
+     */
+
+    abstract val command: SR2Command
+
+    /**
+     * The execution of a command started.
+     */
+
+    data class SR2CommandExecutionStarted(
+      override val command: SR2Command
+    ) : SR2CommandEvent()
+
+    /**
+     * A command is executing and is expected to take long enough that the user should probably
+     * be shown a progress bar.
+     */
+
+    data class SR2CommandExecutionRunningLong(
+      override val command: SR2Command
+    ) : SR2CommandEvent()
+
+    /**
+     * The execution of a command finished.
+     */
+
+    sealed class SR2CommandEventCompleted : SR2CommandEvent() {
+
+      /**
+       * The execution of a command succeeded.
+       */
+
+      data class SR2CommandExecutionSucceeded(
+        override val command: SR2Command
+      ) : SR2CommandEventCompleted()
+
+      /**
+       * The execution of a command failed.
+       */
+
+      data class SR2CommandExecutionFailed(
+        override val command: SR2Command,
+        val exception: Exception
+      ) : SR2CommandEventCompleted()
+    }
   }
 }

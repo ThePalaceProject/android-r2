@@ -35,4 +35,7 @@ internal interface SR2JavascriptAPIReceiverType {
 
   @android.webkit.JavascriptInterface
   fun onRightTapped()
+
+  @android.webkit.JavascriptInterface
+  fun getViewportWidth(): Double
 }

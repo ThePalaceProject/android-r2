@@ -2,7 +2,7 @@ package org.librarysimplified.r2.views
 
 import org.librarysimplified.r2.api.SR2ControllerProviderType
 import org.librarysimplified.r2.api.SR2Theme
-import org.readium.r2.shared.publication.asset.FileAsset
+import org.readium.r2.shared.publication.asset.PublicationAsset
 import org.readium.r2.streamer.Streamer
 
 /**
@@ -18,10 +18,10 @@ data class SR2ReaderParameters(
   val streamer: Streamer,
 
   /**
-   * The file containing the book to be opened.
+   * The publication asset containing the book to be opened.
    */
 
-  val bookFile: FileAsset,
+  val bookFile: PublicationAsset,
 
   /**
    * The initial theme used for the reader.

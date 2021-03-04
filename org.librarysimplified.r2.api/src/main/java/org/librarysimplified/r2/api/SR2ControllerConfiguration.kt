@@ -2,7 +2,7 @@ package org.librarysimplified.r2.api
 
 import android.content.Context
 import com.google.common.util.concurrent.ListeningExecutorService
-import org.readium.r2.shared.publication.asset.FileAsset
+import org.readium.r2.shared.publication.asset.PublicationAsset
 import org.readium.r2.streamer.Streamer
 
 /**
@@ -12,10 +12,10 @@ import org.readium.r2.streamer.Streamer
 data class SR2ControllerConfiguration(
 
   /**
-   * A file containing a book.
+   * A publication asset containing a book.
    */
 
-  val bookFile: FileAsset,
+  val bookFile: PublicationAsset,
 
   /**
    * The initial theme used for the reader.

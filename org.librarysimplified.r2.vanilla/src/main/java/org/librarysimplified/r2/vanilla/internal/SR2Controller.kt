@@ -616,6 +616,18 @@ internal class SR2Controller private constructor(
     }
 
     @android.webkit.JavascriptInterface
+    override fun onLeftSwiped() {
+      this.logger.debug("onLeftSwiped")
+      this@SR2Controller.submitCommand(SR2Command.OpenPageNext)
+    }
+
+    @android.webkit.JavascriptInterface
+    override fun onRightSwiped() {
+      this.logger.debug("onRightSwiped")
+      this@SR2Controller.submitCommand(SR2Command.OpenPagePrevious)
+    }
+
+    @android.webkit.JavascriptInterface
     override fun getViewportWidth(): Double {
       return this.webView.width.toDouble()
     }

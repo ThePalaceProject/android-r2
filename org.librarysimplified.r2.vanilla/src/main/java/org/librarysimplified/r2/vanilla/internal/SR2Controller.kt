@@ -39,6 +39,7 @@ import org.readium.r2.streamer.server.Server
 import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.net.ServerSocket
+import java.net.URI
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
@@ -54,6 +55,7 @@ internal class SR2Controller private constructor(
   private val server: Server,
   private val publication: Publication,
   private val epubFileName: String,
+  private val baseUrl: URI,
 ) : SR2ControllerType {
 
   companion object {
@@ -115,24 +117,36 @@ internal class SR2Controller private constructor(
       this.logger.debug("starting server")
       server.start(5_000)
 
-      this.logger.debug("loading epub into server")
-      val epubName = "/${bookFile.name}"
-      this.logger.debug("publication uri: {}", Publication.localBaseUrlOf(epubName, port))
-      server.addEpub(
-        publication = publication,
-        container = null,
-        fileName = epubName,
-        userPropertiesPath = null
-      )
+      try {
+        this.logger.debug("loading epub into server")
+        val epubName = "/${bookFile.name}"
+        val baseUrl = server.addPublication(
+          publication = publication,
+          userPropertiesFile = null
+        )
 
-      this.logger.debug("server ready")
-      return SR2Controller(
-        configuration = configuration,
-        epubFileName = epubName,
-        port = port,
-        publication = publication,
-        server = server
-      )
+        this.logger.debug("publication uri: {}", baseUrl)
+        if (baseUrl == null) {
+          throw IOException("Publication cannot be served")
+        }
+
+        this.logger.debug("server ready")
+        return SR2Controller(
+          configuration = configuration,
+          epubFileName = epubName,
+          baseUrl = baseUrl.toURI(),
+          port = port,
+          publication = publication,
+          server = server
+        )
+      } catch (e: Exception) {
+        try {
+          server.stop()
+        } catch (e: Exception) {
+          this.logger.error("error stopping server: ", e)
+        }
+        throw e
+      }
     }
   }
 
@@ -192,10 +206,8 @@ internal class SR2Controller private constructor(
       "index must be in [0, ${this.publication.readingOrder.size}]; was $index"
     }
 
-    return buildString {
-      this.append(Publication.localBaseUrlOf(this@SR2Controller.epubFileName, this@SR2Controller.port))
-      this.append(this@SR2Controller.publication.readingOrder[index].href)
-    }
+    val href = publication.readingOrder[index].href
+    return String.format("%s%s", this.baseUrl, href)
   }
 
   private fun setCurrentChapter(locator: SR2Locator) {

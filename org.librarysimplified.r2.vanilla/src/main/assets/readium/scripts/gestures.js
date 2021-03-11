@@ -1,66 +1,116 @@
-(function() {
-  window.addEventListener('DOMContentLoaded', function(event) {
-    document.addEventListener('click', onClick, false);
-  });
+"use strict";
 
-  function onClick(event) {
+var singleTouchGesture = false;
+var startX = 0;
+var startY = 0;
+var startTime = Date.now();
+var availWidth = window.screen.availWidth;
+var availHeight = window.screen.availHeight;
 
-    if (!window.getSelection().isCollapsed) {
-      // There's an on-going selection, the tap will dismiss it so we don't forward it.
-      return;
+window.addEventListener("load", function() {
+    window.document.addEventListener("touchstart", handleTouchStart, false);
+    window.document.addEventListener("touchend", handleTouchEnd, false);
+}, false);
+
+/*
+ * When a touch is detected, record the starting coordinates and properties of the event.
+ */
+
+var handleTouchStart = function(event) {
+    startTime = Date.now();
+    console.log("touchStart: " + startTime);
+
+    if (event.target.nodeName.toUpperCase() === 'A') {
+        console.log("Touched a link.");
+        singleTouchGesture = false;
+        return;
     }
 
-    var pixelRatio = window.devicePixelRatio
+    singleTouchGesture = event.touches.length == 1;
+    var touch = event.changedTouches[0];
+    startX = touch.screenX % availWidth;
+    startY = touch.screenY % availHeight;
+};
 
-    // Send the tap data over the JS bridge even if it's been handled within the web view, so that
-    // it can be preserved and used by the toolkit if needed.
-    var shouldPreventDefault = Android.onTap(JSON.stringify({
-      "defaultPrevented": event.defaultPrevented,
-      "screenX": event.screenX * pixelRatio,
-      "screenY": event.screenY * pixelRatio,
-      "clientX": event.clientX * pixelRatio,
-      "clientY": event.clientY * pixelRatio,
-      "targetElement": event.target.outerHTML,
-      "interactiveElement": nearestInteractiveElement(event.target),
-    }));
+/*
+ * Handle taps that occur within the page movement areas (the left and right edges of the screen).
+ */
 
-    if (shouldPreventDefault) {
-      event.stopPropagation();
-      event.preventDefault();
-    }
-  }
+var handlePageMovementTap = function(event, touch) {
+    var position = (touch.screenX % availWidth) / availWidth;
+    console.log("pageMovementTap: " + position);
 
-  // See. https://github.com/JayPanoz/architecture/tree/touch-handling/misc/touch-handling
-  function nearestInteractiveElement(element) {
-    var interactiveTags = [
-      'a',
-      'audio',
-      'button',
-      'canvas',
-      'details',
-      'input',
-      'label',
-      'option',
-      'select',
-      'submit',
-      'textarea',
-      'video',
-    ]
-    if (interactiveTags.indexOf(element.nodeName.toLowerCase()) != -1) {
-      return element.outerHTML;
+    if (position <= 0.2) {
+        console.log("LeftTapped");
+        Android.onLeftTapped();
+    } else if (position >= 0.8) {
+        console.log("RightTapped");
+        Android.onRightTapped();
+    } else {
+        console.log("CenterTapped");
+        Android.onCenterTapped();
     }
 
-    // Checks whether the element is editable by the user.
-    if (element.hasAttribute('contenteditable') && element.getAttribute('contenteditable').toLowerCase() != 'false') {
-      return element.outerHTML;
+    event.stopPropagation();
+    event.preventDefault();
+};
+
+/*
+ * Handle swipes.
+ */
+
+var handleSwipe = function(event) {
+    console.log("swipe");
+
+    var touch =
+      event.changedTouches[0];
+    var direction =
+      ((touch.screenX % availWidth) - startX) / availWidth;
+
+    if (direction > 0) {
+        console.log("swipeRight");
+        Android.onRightSwiped();
+    } else {
+        console.log("swipeLeft");
+        Android.onLeftSwiped();
     }
 
-    // Checks parents recursively because the touch might be for example on an <em> inside a <a>.
-    if (element.parentElement) {
-      return nearestInteractiveElement(element.parentElement);
+    event.stopPropagation();
+    event.preventDefault();
+}
+
+/*
+ * When a touch ends, check if any action has to be made, and contact native code.
+ */
+
+var handleTouchEnd = function(event) {
+    var endTime = Date.now();
+    var timeDelta = endTime - startTime;
+    console.log("touchEnd: timeDelta: " + timeDelta);
+
+    if (!singleTouchGesture) {
+        return;
     }
 
-    return null;
-  }
+    var touch = event.changedTouches[0];
 
-})();
+    var relativeDistanceX =
+      Math.abs(((touch.screenX % availWidth) - startX) / availWidth);
+    var relativeDistanceY =
+      Math.abs(((touch.screenY % availHeight) - startY) / availHeight);
+    var touchDistance =
+      Math.max(relativeDistanceX, relativeDistanceY);
+
+    var swipeFarEnough = relativeDistanceX > 0.25
+    var swipeFastEnough = timeDelta < 250
+    if (swipeFastEnough && swipeFarEnough) {
+        handleSwipe(event);
+        return;
+    }
+
+    var tapAreaSize = 0.01
+    if (touchDistance < tapAreaSize) {
+        handlePageMovementTap(event, touch);
+        return;
+    }
+};

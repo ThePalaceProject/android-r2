@@ -63,7 +63,7 @@ data class SR2BookMetadata(
     currentChapter: SR2BookChapter
   ): SR2BookChapter? {
     check(this.readingOrder.contains(currentChapter)) {
-      "Book metadata must contain the given chapter ${currentChapter}"
+      "Book metadata must contain the given chapter $currentChapter"
     }
 
     return this.readingOrder
@@ -75,7 +75,7 @@ data class SR2BookMetadata(
     currentChapter: SR2BookChapter
   ): SR2BookChapter? {
     check(this.readingOrder.contains(currentChapter)) {
-      "Book metadata must contain the given chapter ${currentChapter}"
+      "Book metadata must contain the given chapter $currentChapter"
     }
 
     return this.readingOrder

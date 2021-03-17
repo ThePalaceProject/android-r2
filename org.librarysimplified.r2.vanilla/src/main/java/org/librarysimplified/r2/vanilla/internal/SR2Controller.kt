@@ -211,7 +211,8 @@ internal class SR2Controller private constructor(
   private fun serverLocationOfChapter(
     chapter: SR2BookChapter
   ): String {
-    return String.format("%s%s", this.baseUrl, chapter.chapterHref)
+    val href = chapter.chapterHref.replace("^/+".toRegex(), "")
+    return String.format("%s/%s", this.baseUrl, href)
   }
 
   private fun setCurrentChapter(locator: SR2Locator) {

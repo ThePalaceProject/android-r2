@@ -11,6 +11,7 @@ import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.Subject
 import kotlinx.coroutines.runBlocking
 import org.joda.time.DateTime
+import org.librarysimplified.r2.api.SR2BookChapter
 import org.librarysimplified.r2.api.SR2BookMetadata
 import org.librarysimplified.r2.api.SR2Bookmark
 import org.librarysimplified.r2.api.SR2Bookmark.Type.LAST_READ
@@ -109,6 +110,10 @@ internal class SR2Controller private constructor(
         throw IOException("Failed to unlock EPUB", publication.protectionError)
       }
 
+      if (publication.readingOrder.isEmpty()) {
+        throw IOException("Publication has no chapters!")
+      }
+
       this.logger.debug("publication title: {}", publication.metadata.title)
       val port = this.fetchUnusedHTTPPort()
       this.logger.debug("server port: {}", port)
@@ -180,8 +185,12 @@ internal class SR2Controller private constructor(
   @GuardedBy("webViewConnectionLock")
   private var webViewConnection: SR2WebViewConnectionType? = null
 
+  override val bookMetadata: SR2BookMetadata =
+    SR2Books.makeMetadata(this.publication)
+
   @Volatile
-  private var currentChapterIndex = 0
+  private var currentChapter: SR2BookChapter =
+    this.bookMetadata.readingOrder.first()
 
   @Volatile
   private var currentChapterProgress = 0.0
@@ -199,22 +208,17 @@ internal class SR2Controller private constructor(
     this.eventSubject.subscribe { event -> this.logger.debug("event: {}", event) }
   }
 
-  private fun locationOfSpineItem(
-    index: Int
+  private fun serverLocationOfChapter(
+    chapter: SR2BookChapter
   ): String {
-    require(index < this.publication.readingOrder.size) {
-      "index must be in [0, ${this.publication.readingOrder.size}]; was $index"
-    }
-
-    val href = publication.readingOrder[index].href
-    return String.format("%s%s", this.baseUrl, href)
+    return String.format("%s%s", this.baseUrl, chapter.chapterHref)
   }
 
   private fun setCurrentChapter(locator: SR2Locator) {
-    require(locator.chapterIndex < this.publication.readingOrder.size) {
-      "Chapter index ${locator.chapterIndex} must be in the range [0, ${this.publication.readingOrder.size})"
-    }
-    this.currentChapterIndex = locator.chapterIndex
+    val chapter = this.bookMetadata.findChapter(locator)
+      ?: throw IllegalStateException("Unable to find a chapter for locator $locator")
+
+    this.currentChapter = chapter
     this.currentChapterProgress = when (locator) {
       is SR2LocatorPercent -> locator.chapterProgress
       is SR2LocatorChapterEnd -> 1.0
@@ -345,8 +349,8 @@ internal class SR2Controller private constructor(
       SR2Bookmark(
         date = DateTime.now(),
         type = SR2Bookmark.Type.EXPLICIT,
-        title = SR2Books.makeChapterTitleOf(this.publication, this.currentChapterIndex),
-        locator = SR2LocatorPercent(this.currentChapterIndex, this.currentChapterProgress),
+        title = this.currentChapter.title,
+        locator = SR2LocatorPercent(this.currentChapter.chapterHref, this.currentChapterProgress),
         bookProgress = this.currentBookProgress
       )
 
@@ -365,8 +369,9 @@ internal class SR2Controller private constructor(
     command: SR2CommandSubmission
   ): ListenableFuture<*> {
     val openFuture =
-      this.openChapterIndex(
-        command, SR2LocatorPercent(this.currentChapterIndex, this.currentChapterProgress)
+      this.openChapterForLocator(
+        command,
+        SR2LocatorPercent(this.currentChapter.chapterHref, this.currentChapterProgress)
       )
 
     /*
@@ -401,13 +406,13 @@ internal class SR2Controller private constructor(
   private fun executeCommandOpenChapterPrevious(
     command: SR2CommandSubmission
   ): ListenableFuture<*> {
-    val prevIndex =
-      SR2Chapters.previousChapter(this.currentChapterIndex, this.bookMetadata.readingOrder)
+    val prevChapter =
+      this.bookMetadata.previousChapter(this.currentChapter)
         ?: return Futures.immediateFuture(Unit)
 
-    return this.openChapterIndex(
+    return this.openChapterForLocator(
       command,
-      SR2LocatorChapterEnd(chapterIndex = prevIndex)
+      SR2LocatorChapterEnd(chapterHref = prevChapter.chapterHref)
     )
   }
 
@@ -418,14 +423,14 @@ internal class SR2Controller private constructor(
   private fun executeCommandOpenChapterNext(
     command: SR2CommandSubmission
   ): ListenableFuture<*> {
-    val nextIndex =
-      SR2Chapters.nextChapter(this.currentChapterIndex, this.bookMetadata.readingOrder)
+    val nextChapter =
+      this.bookMetadata.nextChapter(this.currentChapter)
         ?: return Futures.immediateFuture(Unit)
 
-    return this.openChapterIndex(
+    return this.openChapterForLocator(
       command,
       SR2LocatorPercent(
-        chapterIndex = nextIndex,
+        chapterHref = nextChapter.chapterHref,
         chapterProgress = 0.0
       )
     )
@@ -455,31 +460,39 @@ internal class SR2Controller private constructor(
     command: SR2CommandSubmission,
     apiCommand: SR2Command.OpenChapter
   ): ListenableFuture<*> {
-    return this.openChapterIndex(command, apiCommand.locator)
+    return this.openChapterForLocator(command, apiCommand.locator)
   }
 
   /**
    * Load the chapter for the given locator, and set the reading position appropriately.
    */
 
-  private fun openChapterIndex(
+  private fun openChapterForLocator(
     command: SR2CommandSubmission,
     locator: SR2Locator
   ): ListenableFuture<*> {
     val previousLocator =
-      SR2LocatorPercent(this.currentChapterIndex, this.currentChapterProgress)
+      SR2LocatorPercent(
+        chapterHref = this.currentChapter.chapterHref,
+        chapterProgress = this.currentChapterProgress
+      )
 
     try {
       this.publishCommmandRunningLong(command)
 
-      val location = this.locationOfSpineItem(locator.chapterIndex)
-      this.logger.debug("openChapterIndex: {}", location)
+      val targetChapter =
+        this.bookMetadata.findChapter(locator)
+          ?: throw IllegalStateException("Unable to locate a chapter for locator $locator")
+      val targetLocation =
+        this.serverLocationOfChapter(targetChapter)
+
+      this.logger.debug("openChapterForLocator: {}", targetLocation)
       this.setCurrentChapter(locator)
 
       val connection =
         this.waitForWebViewAvailability()
       val openFuture =
-        connection.openURL(location)
+        connection.openURL(targetLocation)
 
       val themeFuture =
         Futures.transformAsync(
@@ -497,12 +510,12 @@ internal class SR2Controller private constructor(
 
       return moveFuture
     } catch (e: Exception) {
-      this.logger.error("unable to open chapter ${locator.chapterIndex}: ", e)
+      this.logger.error("unable to open chapter ${locator.chapterHref}: ", e)
       this.setCurrentChapter(previousLocator)
       this.eventSubject.onNext(
         SR2Event.SR2Error.SR2ChapterNonexistent(
-          chapterIndex = locator.chapterIndex,
-          message = e.message ?: "Unable to open chapter ${locator.chapterIndex}"
+          chapterHref = locator.chapterHref,
+          message = e.message ?: "Unable to open chapter ${locator.chapterHref}"
         )
       )
       val future = SettableFuture.create<Unit>()
@@ -528,7 +541,7 @@ internal class SR2Controller private constructor(
     }
 
     val chapterCount = this.publication.readingOrder.size
-    val currentIndex = this.currentChapterIndex
+    val currentIndex = this.currentChapter.chapterIndex
     val result = ((currentIndex + 1 * chapterProgress) / chapterCount)
     this.logger.debug("$result = ($currentIndex + 1 * $chapterProgress) / $chapterCount")
     return result
@@ -551,24 +564,19 @@ internal class SR2Controller private constructor(
       currentPage: Int,
       pageCount: Int
     ) {
-      val chapterIndex =
-        this@SR2Controller.currentChapterIndex
-
       val pageZeroBased =
         Math.max(0, currentPage - 1)
       val chapterProgress =
         pageZeroBased.toDouble() / pageCount.toDouble()
       val chapterTitle =
-        SR2Books.makeChapterTitleOf(this@SR2Controller.publication, chapterIndex)
+        this@SR2Controller.currentChapter.title
 
+      val currentChapter =
+        this@SR2Controller.currentChapter
       this@SR2Controller.currentBookProgress =
         this@SR2Controller.getBookProgress(chapterProgress)
       this@SR2Controller.currentChapterProgress =
         chapterProgress
-
-      this.logger.debug(
-        """onReadingPositionChanged: chapterIndex=$chapterIndex, currentPage=$currentPage, pageCount=$pageCount, chapterProgress=$chapterProgress"""
-      )
 
       /*
        * This is pure paranoia; we only update the last-read location if the new position
@@ -579,12 +587,12 @@ internal class SR2Controller private constructor(
        * a pointer to the start of the book, so this check prevents that.
        */
 
-      if (chapterIndex != 0 || chapterProgress > 0.000_001) {
+      if (currentChapter.chapterIndex != 0 || chapterProgress > 0.000_001) {
         this@SR2Controller.queueExecutor.execute {
           this@SR2Controller.updateBookmarkLastRead(
             title = chapterTitle,
             locator = SR2LocatorPercent(
-              chapterIndex = chapterIndex,
+              chapterHref = currentChapter.chapterHref,
               chapterProgress = chapterProgress
             )
           )
@@ -593,7 +601,7 @@ internal class SR2Controller private constructor(
 
       this@SR2Controller.eventSubject.onNext(
         SR2ReadingPositionChanged(
-          chapterIndex = chapterIndex,
+          chapterHref = currentChapter.chapterHref,
           chapterTitle = chapterTitle,
           chapterProgress = chapterProgress,
           currentPage = currentPage,
@@ -694,9 +702,6 @@ internal class SR2Controller private constructor(
     this.eventSubject.onNext(SR2CommandExecutionStarted(command.command))
   }
 
-  override val bookMetadata: SR2BookMetadata =
-    SR2Books.makeMetadata(this.publication)
-
   override val events: Observable<SR2Event> =
     this.eventSubject
 
@@ -708,7 +713,7 @@ internal class SR2Controller private constructor(
 
   override fun positionNow(): SR2Locator {
     return SR2LocatorPercent(
-      this.currentChapterIndex,
+      this.currentChapter.chapterHref,
       this.currentChapterProgress
     )
   }

@@ -79,7 +79,7 @@ internal class SR2TOCChaptersFragment private constructor(
     this.controller.submitCommand(
       SR2Command.OpenChapter(
         SR2LocatorPercent(
-          chapterIndex = chapter.chapterIndex,
+          chapterHref = chapter.chapterHref,
           chapterProgress = 0.0
         )
       )

@@ -23,25 +23,17 @@ internal object SR2Books {
     publication: Publication,
     index: Int
   ): SR2BookChapter {
+    val chapter =
+      publication.readingOrder[index]
+    val title =
+      publication.tableOfContents.firstOrNull { it.href == chapter.href }?.title ?: ""
+    val href =
+      chapter.href
+
     return SR2BookChapter(
       chapterIndex = index,
-      title = this.makeChapterTitleOf(publication, index)
+      chapterHref = href,
+      title = title
     )
-  }
-
-  /**
-   * Return the title of the given chapter.
-   */
-
-  fun makeChapterTitleOf(
-    publication: Publication,
-    index: Int
-  ): String {
-    val chapter = publication.readingOrder[index]
-
-    // The title is actually part of the table of contents; however, there may not be a
-    // one-to-one mapping between chapters and table of contents entries. We do a lookup
-    // based on the chapter href.
-    return publication.tableOfContents.firstOrNull { it.href == chapter.href }?.title ?: ""
   }
 }

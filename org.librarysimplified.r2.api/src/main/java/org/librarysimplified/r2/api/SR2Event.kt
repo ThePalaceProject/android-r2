@@ -17,7 +17,7 @@ sealed class SR2Event {
      */
 
     data class SR2ChapterNonexistent(
-      val chapterIndex: Int,
+      val chapterHref: String,
       val message: String
     ) : SR2Error()
 
@@ -48,7 +48,7 @@ sealed class SR2Event {
    */
 
   data class SR2ReadingPositionChanged(
-    val chapterIndex: Int,
+    val chapterHref: String,
     val chapterTitle: String?,
     val chapterProgress: Double,
     val currentPage: Int,
@@ -69,7 +69,7 @@ sealed class SR2Event {
       get() = (this.bookProgress * 100.0).toInt()
 
     val locator =
-      SR2Locator.SR2LocatorPercent(this.chapterIndex, this.chapterProgress)
+      SR2Locator.SR2LocatorPercent(this.chapterHref, this.chapterProgress)
   }
 
   /**

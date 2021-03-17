@@ -6,10 +6,10 @@ package org.librarysimplified.r2.api
 
 sealed class SR2Locator : Comparable<SR2Locator> {
 
-  abstract val chapterIndex: Int
+  abstract val chapterHref: String
 
   data class SR2LocatorPercent(
-    override val chapterIndex: Int,
+    override val chapterHref: String,
     val chapterProgress: Double
   ) : SR2Locator() {
 
@@ -20,7 +20,7 @@ sealed class SR2Locator : Comparable<SR2Locator> {
     }
 
     override fun compareTo(other: SR2Locator): Int {
-      val indexCmp = this.chapterIndex.compareTo(other.chapterIndex)
+      val indexCmp = this.chapterHref.compareTo(other.chapterHref)
       return if (indexCmp == 0) {
         when (other) {
           is SR2LocatorPercent ->
@@ -35,10 +35,10 @@ sealed class SR2Locator : Comparable<SR2Locator> {
   }
 
   data class SR2LocatorChapterEnd(
-    override val chapterIndex: Int
+    override val chapterHref: String,
   ) : SR2Locator() {
     override fun compareTo(other: SR2Locator): Int {
-      val indexCmp = this.chapterIndex.compareTo(other.chapterIndex)
+      val indexCmp = this.chapterHref.compareTo(other.chapterHref)
       return if (indexCmp == 0) {
         when (other) {
           is SR2LocatorPercent ->

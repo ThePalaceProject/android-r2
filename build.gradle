@@ -93,8 +93,8 @@ ext.versions = [
   mockito_android             : "2.22.0",
   nano_httpd                  : "master-SNAPSHOT",
   nano_httpd_nanolets         : "master-SNAPSHOT",
-  r2_shared                   : "2.0.0-beta.1",
-  r2_streamer                 : "2.0.0-beta.1",
+  r2_shared                   : "29422a6e",
+  r2_streamer                 : "2.0.0-beta.2",
   rxjava2                     : "2.2.21",
   slf4j                       : "1.7.25",
 ]

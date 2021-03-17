@@ -36,6 +36,16 @@ internal interface SR2JavascriptAPIReceiverType {
   @android.webkit.JavascriptInterface
   fun onRightTapped()
 
+  /** The user swiped left. */
+
+  @android.webkit.JavascriptInterface
+  fun onLeftSwiped()
+
+  /** The user swiped right. */
+
+  @android.webkit.JavascriptInterface
+  fun onRightSwiped()
+
   @android.webkit.JavascriptInterface
   fun getViewportWidth(): Double
 }

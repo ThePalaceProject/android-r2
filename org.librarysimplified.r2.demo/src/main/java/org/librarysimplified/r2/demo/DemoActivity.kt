@@ -108,7 +108,7 @@ class DemoActivity : AppCompatActivity() {
       // Navigate to the first chapter or saved reading position.
       val database = DemoApplication.application.database()
       val bookId = reference.controller.bookMetadata.id
-      val lastRead = database.bookmarkFindLastReadLocation(bookId)
+      val lastRead = database.bookmarkFindLastReadLocation(bookId, reference.controller.bookMetadata)
       reference.controller.submitCommand(SR2Command.BookmarksLoad(database.bookmarksFor(bookId)))
       reference.controller.submitCommand(SR2Command.OpenChapter(lastRead.locator))
     } else {

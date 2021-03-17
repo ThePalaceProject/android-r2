@@ -2,6 +2,7 @@ package org.librarysimplified.r2.demo
 
 import android.content.Context
 import org.joda.time.DateTime
+import org.librarysimplified.r2.api.SR2BookMetadata
 import org.librarysimplified.r2.api.SR2Bookmark
 import org.librarysimplified.r2.api.SR2Bookmark.Type
 import org.librarysimplified.r2.api.SR2Bookmark.Type.EXPLICIT
@@ -47,7 +48,7 @@ class DemoDatabase(private val context: Context) {
     val time: DateTime,
     val type: Type,
     val title: String,
-    val chapterIndex: Int,
+    val chapterHref: String,
     val chapterProgress: Double,
     val bookProgress: Double = 0.0
   ) : Serializable
@@ -57,7 +58,8 @@ class DemoDatabase(private val context: Context) {
   }
 
   fun bookmarkFindLastReadLocation(
-    bookId: String
+    bookId: String,
+    bookMetadata: SR2BookMetadata
   ): SR2Bookmark {
     val bookmarks = this.bookmarksFor(bookId)
     return bookmarks.find { bookmark -> bookmark.type == LAST_READ }
@@ -65,7 +67,7 @@ class DemoDatabase(private val context: Context) {
         date = DateTime.now(),
         type = LAST_READ,
         title = "",
-        locator = SR2LocatorPercent(0, 0.0),
+        locator = SR2LocatorPercent(bookMetadata.readingOrder[0].chapterHref, 0.0),
         bookProgress = 0.0
       )
   }
@@ -77,7 +79,7 @@ class DemoDatabase(private val context: Context) {
           date = bookmark.time,
           type = bookmark.type,
           title = bookmark.title,
-          locator = SR2LocatorPercent(bookmark.chapterIndex, bookmark.chapterProgress),
+          locator = SR2LocatorPercent(bookmark.chapterHref, bookmark.chapterProgress),
           bookProgress = bookmark.bookProgress
         )
       }
@@ -131,7 +133,7 @@ class DemoDatabase(private val context: Context) {
           time = bookmark.date,
           type = bookmark.type,
           title = bookmark.title,
-          chapterIndex = bookmark.locator.chapterIndex,
+          chapterHref = bookmark.locator.chapterHref,
           chapterProgress = locator.chapterProgress
         )
       }
@@ -140,7 +142,7 @@ class DemoDatabase(private val context: Context) {
           time = bookmark.date,
           type = bookmark.type,
           title = bookmark.title,
-          chapterIndex = bookmark.locator.chapterIndex,
+          chapterHref = bookmark.locator.chapterHref,
           chapterProgress = 1.0
         )
       }

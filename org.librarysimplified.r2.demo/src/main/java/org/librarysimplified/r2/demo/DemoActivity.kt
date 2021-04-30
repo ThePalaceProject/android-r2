@@ -47,6 +47,8 @@ import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
+import java.security.DigestInputStream
+import java.security.MessageDigest
 
 class DemoActivity : AppCompatActivity() {
 
@@ -61,6 +63,7 @@ class DemoActivity : AppCompatActivity() {
   private var controller: SR2ControllerType? = null
   private var controllerSubscription: Disposable? = null
   private var epubFile: File? = null
+  private var epubId: String? = null
   private var viewSubscription: Disposable? = null
 
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -139,6 +142,7 @@ class DemoActivity : AppCompatActivity() {
       SR2ReaderParameters(
         streamer = streamer,
         bookFile = FileAsset(file),
+        bookId = this.epubId!!,
         theme = database.theme(),
         controllers = SR2Controllers()
       )
@@ -241,7 +245,9 @@ class DemoActivity : AppCompatActivity() {
     if (resultCode == Activity.RESULT_OK) {
       intent?.data?.let { uri ->
         // This copy operation should be done on a worker thread; omitted for brevity.
-        this.epubFile = this.copyToStorage(uri)
+        val data = this.copyToStorage(uri)!!
+        this.epubFile = data.first
+        this.epubId = data.second
       }
     }
   }
@@ -258,7 +264,7 @@ class DemoActivity : AppCompatActivity() {
    * Copy the book to internal storage; returns null if an error occurs.
    */
 
-  private fun copyToStorage(uri: Uri): File? {
+  private fun copyToStorage(uri: Uri): Pair<File, String>? {
     val file = File(this.filesDir, "book.epub")
     var ips: InputStream? = null
     var ops: OutputStream? = null
@@ -267,7 +273,7 @@ class DemoActivity : AppCompatActivity() {
       ips = this.contentResolver.openInputStream(uri)
       ops = file.outputStream()
       ips.copyTo(ops)
-      return file
+      return Pair(file, hashOf(file))
     } catch (e: FileNotFoundException) {
       this.logger.warn("File not found", e)
       this.showError("File not found")
@@ -279,6 +285,24 @@ class DemoActivity : AppCompatActivity() {
       ops?.close()
     }
     return null
+  }
+
+  private fun hashOf(
+    file: File
+  ): String {
+    val digest = MessageDigest.getInstance("SHA-256")
+
+    DigestInputStream(file.inputStream(), digest).use { input ->
+      NullOutputStream().use { output ->
+        input.copyTo(output)
+        return digest.digest().joinToString("") { "%02x".format(it) }
+      }
+    }
+  }
+
+  private class NullOutputStream : OutputStream() {
+    override fun write(b: Int) {
+    }
   }
 
   /**

@@ -7,10 +7,11 @@ import org.readium.r2.shared.publication.Publication
 internal object SR2Books {
 
   fun makeMetadata(
-    publication: Publication
+    publication: Publication,
+    bookId: String
   ): SR2BookMetadata {
     return SR2BookMetadata(
-      id = publication.metadata.identifier!!, // FIXME : identifier is not mandatory in RWPM.
+      id = bookId,
       title = publication.metadata.title,
       readingOrder = this.makeReadingOrder(publication)
     )

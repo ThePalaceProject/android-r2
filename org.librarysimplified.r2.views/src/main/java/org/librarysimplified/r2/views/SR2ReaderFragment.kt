@@ -175,6 +175,7 @@ class SR2ReaderFragment private constructor(
       this.readerModel.createOrGet(
         configuration = SR2ControllerConfiguration(
           bookFile = this.parameters.bookFile,
+          bookId = this.parameters.bookId,
           context = activity,
           ioExecutor = this.readerModel.ioExecutor,
           streamer = this.parameters.streamer,

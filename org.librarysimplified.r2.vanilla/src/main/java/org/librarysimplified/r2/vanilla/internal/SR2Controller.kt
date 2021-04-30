@@ -186,7 +186,10 @@ internal class SR2Controller private constructor(
   private var webViewConnection: SR2WebViewConnectionType? = null
 
   override val bookMetadata: SR2BookMetadata =
-    SR2Books.makeMetadata(this.publication)
+    SR2Books.makeMetadata(
+      publication = this.publication,
+      bookId = this.configuration.bookId
+    )
 
   @Volatile
   private var currentChapter: SR2BookChapter =

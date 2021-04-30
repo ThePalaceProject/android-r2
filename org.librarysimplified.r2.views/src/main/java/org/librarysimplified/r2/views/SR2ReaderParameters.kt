@@ -24,6 +24,13 @@ data class SR2ReaderParameters(
   val bookFile: PublicationAsset,
 
   /**
+   * An identifier used to uniquely identify a publication. Unfortunately, identifier are optional
+   * in EPUB files. For the sake of consistency, we require an identifier to always be provided.
+   */
+
+  val bookId: String,
+
+  /**
    * The initial theme used for the reader.
    */
 

@@ -24,10 +24,9 @@ var readium = (function() {
 
     function onScrollPositionChanged() {
       var scrollX       = window.scrollX;
-      var viewportWidth = Android.getViewportWidth();
       var documentWidth = document.scrollingElement.scrollWidth;
-      var pageCount     = documentWidth / viewportWidth;
-      var pageIndex     = (scrollX / viewportWidth) + 1;
+      var pageCount     = Math.max(1, documentWidth / pageWidth);
+      var pageIndex     = Math.max(1, (scrollX / pageWidth) + 1);
 
       Android.onReadingPositionChanged(pageIndex, pageCount);
     }

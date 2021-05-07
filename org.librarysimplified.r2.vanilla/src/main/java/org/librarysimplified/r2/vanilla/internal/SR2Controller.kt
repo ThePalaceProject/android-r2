@@ -655,6 +655,15 @@ internal class SR2Controller private constructor(
     override fun getViewportWidth(): Double {
       return this.webView.width.toDouble()
     }
+
+    @android.webkit.JavascriptInterface
+    override fun logError(
+      message: String?,
+      file: String?,
+      line: String?
+    ) {
+      this.logger.error("logError: {}:{}: {}", file, line, message)
+    }
   }
 
   private fun submitCommandActual(

@@ -48,4 +48,15 @@ internal interface SR2JavascriptAPIReceiverType {
 
   @android.webkit.JavascriptInterface
   fun getViewportWidth(): Double
+
+  /**
+   * An error was encountered in the JS.
+   */
+
+  @android.webkit.JavascriptInterface
+  fun logError(
+    message: String?,
+    file: String?,
+    line: String?
+  )
 }

@@ -3,7 +3,7 @@ buildscript {
     throw new GradleException("Gradle version 6.7 is required (received $gradle.gradleVersion)")
   }
 
-  ext.kotlin_version = "1.4.20"
+  apply from: file("$rootDir/build_libraries.gradle")
 
   repositories {
     mavenLocal()
@@ -22,8 +22,8 @@ buildscript {
 
 plugins {
   id "com.github.ben-manes.versions" version "0.36.0"
-  id "digital.wup.android-maven-publish" version "3.6.3"
   id "ru.vyarus.animalsniffer" version "1.5.3"
+  id "maven-publish"
 }
 
 ext {
@@ -67,80 +67,9 @@ ext {
   }
 }
 
-ext.versions = [
-  androidx_annotation         : "1.1.0",
-  androidx_app_compat         : "1.2.0-rc01",
-  androidx_constraint_layout  : "1.1.3",
-  androidx_core               : "1.1.0",
-  androidx_fragment_testing   : "1.1.0",
-  androidx_lifecycle          : "2.2.0",
-  androidx_lifecycle_viewmodel: "2.3.0",
-  androidx_multidex           : "2.0.1",
-  androidx_recycler_view      : "1.1.0-beta05",
-  androidx_test_espresso_core : "3.1.0",
-  androidx_test_extensions    : "1.1.1",
-  androidx_test_orchestrator  : "1.1.0",
-  androidx_test_rules         : "1.1.0",
-  androidx_test_runner        : "1.1.0",
-  androidx_view_pager2        : "1.0.0",
-  google_guava                : "23.6.1-android",
-  google_material             : "1.1.0",
-  joda_time                   : "2.10.10",
-  kotlin_coroutines           : "1.3.7",
-  logback_android_classic     : "1.1.1-6",
-  logback_android_core        : "1.1.1-6",
-  logback_classic             : "1.2.3",
-  mockito_android             : "2.22.0",
-  nano_httpd                  : "master-SNAPSHOT",
-  nano_httpd_nanolets         : "master-SNAPSHOT",
-  r2_shared                   : "29422a6e",
-  r2_streamer                 : "2.0.0-beta.2",
-  rxjava2                     : "2.2.21",
-  slf4j                       : "1.7.25",
-]
-
-ext.libraries = [
-  androidx_annotation         : "androidx.annotation:annotation:${versions.androidx_annotation}",
-  androidx_app_compat         : "androidx.appcompat:appcompat:${versions.androidx_app_compat}",
-  androidx_constraint_layout  : "androidx.constraintlayout:constraintlayout:${versions.androidx_constraint_layout}",
-  androidx_core               : "androidx.core:core:${versions.androidx_core}",
-  androidx_fragment_testing   : "androidx.fragment:fragment-testing:${versions.androidx_fragment_testing}",
-  androidx_lifecycle          : "androidx.lifecycle:lifecycle-extensions:${versions.androidx_lifecycle}",
-  androidx_lifecycle_viewmodel: "androidx.lifecycle:lifecycle-viewmodel:${versions.androidx_lifecycle_viewmodel}",
-  androidx_multidex           : "androidx.multidex:multidex:${versions.androidx_multidex}",
-  androidx_recycler_view      : "androidx.recyclerview:recyclerview:${versions.androidx_recycler_view}",
-  androidx_test_espresso_core : "androidx.test.espresso:espresso-core:${versions.androidx_test_espresso_core}",
-  androidx_test_extensions    : "androidx.test.ext:junit:${versions.androidx_test_extensions}",
-  androidx_test_orchestrator  : "androidx.test:orchestrator:${versions.androidx_test_orchestrator}",
-  androidx_test_rules         : "androidx.test:rules:${versions.androidx_test_rules}",
-  androidx_test_runner        : "androidx.test:runner:${versions.androidx_test_runner}",
-  androidx_view_pager2        : "androidx.viewpager2:viewpager2:${versions.androidx_view_pager2}",
-  google_guava                : "com.google.guava:guava:${versions.google_guava}",
-  google_material             : "com.google.android.material:material:${versions.google_material}",
-  joda_time                   : "joda-time:joda-time:${versions.joda_time}",
-  kotlin_stdlib               : "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version",
-  kotlin_coroutines           : "org.jetbrains.kotlinx:kotlinx-coroutines-core:${versions.kotlin_coroutines}",
-  logback_android_classic     : "com.github.tony19:logback-android-classic:${versions.logback_android_classic}",
-  logback_android_core        : "com.github.tony19:logback-android-core:${versions.logback_android_core}",
-  logback_classic             : "ch.qos.logback:logback-classic:${versions.logback_classic}",
-  mockito_android             : "org.mockito:mockito-android:${versions.mockito_android}",
-  nano_httpd                  : "com.github.edrlab.nanohttpd:nanohttpd:${versions.nano_httpd}",
-  nano_httpd_nanolets         : "com.github.edrlab.nanohttpd:nanohttpd-nanolets:${versions.nano_httpd_nanolets}",
-  r2_shared                   : "com.github.readium:r2-shared-kotlin:${versions.r2_shared}",
-  r2_streamer                 : "com.github.readium:r2-streamer-kotlin:${versions.r2_streamer}",
-  rxjava2                     : "io.reactivex.rxjava2:rxjava:${versions.rxjava2}",
-  slf4j                       : "org.slf4j:slf4j-api:${versions.slf4j}",
-]
-
 allprojects {
   group = project.ext["GROUP"]
   version = project.ext["VERSION_NAME"]
-}
-
-// Add ktlint tasks to all subprojects
-
-subprojects { project ->
-  apply from: file("$rootDir/ktlint.gradle")
 }
 
 subprojects { project ->
@@ -233,13 +162,25 @@ Automatic-Module-Name: ${POM_AUTOMATIC_MODULE_NAME}
         "Unrecognized packaging type ${POM_PACKAGING} for ${project}")
   }
 
-  task javadocsJar(type: Jar) {
-    classifier = "javadoc"
-  }
+  /*
+   * Configure publishing for the various project types.
+   */
 
-  task sourcesJar(type: Jar) {
-    classifier = "sources"
-    from "src/main/java", "src/main/resources"
+  switch (POM_PACKAGING) {
+    case "jar":
+      apply from: file("$rootDir/build_publishing.gradle")
+      break
+
+    case "apk":
+      break
+
+    case "aar":
+      apply from: file("$rootDir/build_publishing.gradle")
+      break
+
+    default:
+      throw new IllegalStateException(
+        "Unrecognized packaging type ${POM_PACKAGING} for ${project}")
   }
 
   repositories {
@@ -262,23 +203,15 @@ Automatic-Module-Name: ${POM_AUTOMATIC_MODULE_NAME}
   }
 }
 
-// Configure publishing for appropriate projects
+/*
+ * Add ktlint tasks.
+ */
 
-subprojects { project ->
-  pluginManager.withPlugin("java") {
-    println("Configuring publishing for ${project} (${POM_PACKAGING})")
-    apply from: file("$rootDir/publishing.gradle")
-  }
-  pluginManager.withPlugin("com.android.library") {
-    println("Configuring publishing for ${project} (${POM_PACKAGING})")
-    apply from: file("$rootDir/publishing.gradle")
-  }
+apply from: file("$rootDir/build_ktlint.gradle")
+
+subprojects {
+  assemble.dependsOn ktlint
 }
-
-// Add ktlint tasks to root project. This executes faster than configuring
-// the tasks for each subproject individually.
-
-apply from: file("$rootDir/ktlint.gradle")
 
 /**
  * An empty task called by CI. We don't do semantic versioning analysis here yet.

@@ -7,6 +7,8 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import com.google.common.util.concurrent.SettableFuture
+import org.librarysimplified.r2.api.SR2Command
+import org.librarysimplified.r2.api.SR2ControllerCommandQueueType
 import org.slf4j.LoggerFactory
 import java.util.concurrent.ConcurrentHashMap
 
@@ -18,7 +20,8 @@ import java.util.concurrent.ConcurrentHashMap
 
 internal class SR2WebViewClient(
   private val requestLocation: String,
-  private val future: SettableFuture<Unit>
+  private val future: SettableFuture<Unit>,
+  private val commandQueue: SR2ControllerCommandQueueType
 ) : WebViewClient() {
 
   companion object {
@@ -37,6 +40,24 @@ internal class SR2WebViewClient(
     LoggerFactory.getLogger(SR2WebViewClient::class.java)
   private val errors =
     ConcurrentHashMap<String, String>()
+
+  override fun shouldOverrideUrlLoading(
+    view: WebView,
+    url: String
+  ): Boolean {
+    this.logger.debug("shouldOverrideUrlLoading: {}", url)
+    this.commandQueue.submitCommand(SR2Command.OpenLink(url))
+    return true
+  }
+
+  override fun shouldOverrideUrlLoading(
+    view: WebView,
+    request: WebResourceRequest
+  ): Boolean {
+    this.logger.debug("shouldOverrideUrlLoading: {}", request.url)
+    this.commandQueue.submitCommand(SR2Command.OpenLink(request.url.toString()))
+    return true
+  }
 
   override fun shouldInterceptRequest(
     view: WebView?,

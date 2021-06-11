@@ -105,6 +105,14 @@ sealed class SR2Event {
   }
 
   /**
+   * The user attempted to open a link that should be opened in an external web browser.
+   */
+
+  data class SR2ExternalLinkSelected(
+    val link: String
+  ) : SR2Event()
+
+  /**
    * The reader theme was changed.
    */
 

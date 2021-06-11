@@ -21,7 +21,8 @@ internal class SR2WebViewConnection(
   private val jsAPI: SR2JavascriptAPI,
   private val webView: WebView,
   private val requestQueue: ExecutorService,
-  private val uiExecutor: (f: () -> Unit) -> Unit
+  private val uiExecutor: (f: () -> Unit) -> Unit,
+  private val commandQueue: SR2ControllerCommandQueueType
 ) : SR2WebViewConnectionType {
 
   private val logger =
@@ -61,6 +62,7 @@ internal class SR2WebViewConnection(
 
       return SR2WebViewConnection(
         jsAPI = SR2JavascriptAPI(webView, commandQueue),
+        commandQueue = commandQueue,
         webView = webView,
         requestQueue = requestQueue,
         uiExecutor = uiExecutor
@@ -86,7 +88,7 @@ internal class SR2WebViewConnection(
     this.requestQueue.execute {
       this.logger.debug("[{}]: openURL {}", id, location)
       this.uiExecutor.invoke {
-        this.webView.webViewClient = SR2WebViewClient(location, future)
+        this.webView.webViewClient = SR2WebViewClient(location, future, this.commandQueue)
         this.webView.loadUrl(location)
       }
       this.waitOrFail(id, future)

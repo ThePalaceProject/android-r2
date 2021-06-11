@@ -26,6 +26,7 @@ import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandEventComp
 import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandEventCompleted.SR2CommandExecutionSucceeded
 import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandExecutionRunningLong
 import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandExecutionStarted
+import org.librarysimplified.r2.api.SR2Event.SR2ExternalLinkSelected
 import org.librarysimplified.r2.api.SR2Event.SR2OnCenterTapped
 import org.librarysimplified.r2.api.SR2Event.SR2ReadingPositionChanged
 import org.librarysimplified.r2.api.SR2Locator
@@ -284,6 +285,8 @@ internal class SR2Controller private constructor(
         this.executeCommandBookmarkDelete(apiCommand)
       is SR2Command.ThemeSet ->
         this.executeCommandThemeSet(command, apiCommand)
+      is SR2Command.OpenLink ->
+        this.executeCommandOpenLink(apiCommand)
     }
   }
 
@@ -465,6 +468,44 @@ internal class SR2Controller private constructor(
     apiCommand: SR2Command.OpenChapter
   ): ListenableFuture<*> {
     return this.openChapterForLocator(command, apiCommand.locator)
+  }
+
+  /**
+   * Execute the [SR2Command.OpenLink] command.
+   */
+
+  private fun executeCommandOpenLink(
+    apiCommand: SR2Command.OpenLink
+  ): ListenableFuture<*> {
+    try {
+
+      /*
+       * Determine if the link is an internal EPUB link. If it is, translate it to an "open chapter"
+       * command. This may not be completely precise if the link contains an optional '#' fragment.
+       */
+
+      val link = apiCommand.link
+      val baseText = this.baseUrl.toString()
+      if (apiCommand.link.startsWith(baseText)) {
+        val target = link.removePrefix(baseText)
+        this.submitCommand(SR2Command.OpenChapter(SR2LocatorPercent(target, 0.0)))
+        return Futures.immediateFuture(Unit)
+      }
+
+      this.eventSubject.onNext(SR2ExternalLinkSelected(apiCommand.link))
+      return Futures.immediateFuture(Unit)
+    } catch (e: Exception) {
+      this.logger.error("unable to open link ${apiCommand.link}: ", e)
+      this.eventSubject.onNext(
+        SR2Event.SR2Error.SR2ChapterNonexistent(
+          chapterHref = apiCommand.link,
+          message = e.message ?: "Unable to open chapter ${apiCommand.link}"
+        )
+      )
+      val future = SettableFuture.create<Unit>()
+      future.setException(e)
+      return future
+    }
   }
 
   /**

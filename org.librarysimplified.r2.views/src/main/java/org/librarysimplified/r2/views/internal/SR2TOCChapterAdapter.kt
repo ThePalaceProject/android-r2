@@ -23,6 +23,8 @@ internal class SR2TOCChapterAdapter(
   ) : RecyclerView.ViewHolder(rootView) {
     val chapterIcon: ImageView =
       rootView.findViewById(R.id.chapterIcon)
+    val chapterIndexText: TextView =
+      rootView.findViewById(R.id.chapterIndex)
     val chapterTitleText: TextView =
       rootView.findViewById(R.id.chapterTitle)
   }
@@ -47,12 +49,11 @@ internal class SR2TOCChapterAdapter(
       holder.rootView.setOnClickListener(null)
       this.onChapterSelected.invoke(chapter)
     }
-    holder.chapterTitleText.text =
-      this.resources.getString(
-        R.string.tocChapterIndexed,
-        chapter.chapterIndex + 1,
-        chapter.title
-      )
+    val chapterFrom1 = chapter.chapterIndex + 1
+    holder.chapterIndexText.text = "$chapterFrom1."
+    holder.chapterIndexText.contentDescription =
+      this.resources.getString(R.string.tocAccessChapter, chapterFrom1, chapter.title)
+    holder.chapterTitleText.text = chapter.title
   }
 
   fun setChapters(chaptersNow: List<SR2BookChapter>) {

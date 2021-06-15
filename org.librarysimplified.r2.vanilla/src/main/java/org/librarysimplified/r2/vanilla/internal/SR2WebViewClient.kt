@@ -25,15 +25,10 @@ internal class SR2WebViewClient(
 ) : WebViewClient() {
 
   companion object {
-    val emptyOKResponse =
-      WebResourceResponse(
-        "text/plain",
-        "utf-8",
-        200,
-        "OK",
-        null,
-        null
-      )
+    private val faviconData: ByteArray =
+      SR2WebViewClient::class.java.getResourceAsStream("/org/librarysimplified/r2/vanilla/favicon.ico")
+        ?.readBytes()
+        ?: throw IllegalStateException("Missing favicon resource")
   }
 
   private val logger =
@@ -67,7 +62,14 @@ internal class SR2WebViewClient(
       val url = request.url?.toString() ?: ""
 
       if (url.endsWith("favicon.ico")) {
-        return emptyOKResponse
+        return WebResourceResponse(
+          "image/vnd.microsoft.icon",
+          null,
+          200,
+          "OK",
+          null,
+          faviconData.inputStream()
+        )
       }
     }
     return super.shouldInterceptRequest(view, request)

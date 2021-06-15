@@ -12,6 +12,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 /**
  * A connection to a web view.
@@ -109,8 +110,11 @@ internal class SR2WebViewConnection(
       this.logger.debug("[{}]: waiting for request to complete", id)
       future.get(1L, TimeUnit.MINUTES)
       this.logger.debug("[{}]: request completed", id)
-    } catch (e: Exception) {
+    } catch (e: TimeoutException) {
       this.logger.error("[{}]: timed out waiting for the web view to complete: ", id, e)
+      future.setException(e)
+    } catch (e: Exception) {
+      this.logger.error("[{}]: future failed: ", id, e)
       future.setException(e)
     }
   }

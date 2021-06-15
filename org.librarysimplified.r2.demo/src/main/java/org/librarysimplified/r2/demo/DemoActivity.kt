@@ -60,7 +60,8 @@ class DemoActivity : AppCompatActivity() {
     const val PICK_DOCUMENT = 1001
   }
 
-  private val logger = LoggerFactory.getLogger(DemoActivity::class.java)
+  private val logger =
+    LoggerFactory.getLogger(DemoActivity::class.java)
 
   private lateinit var readerFragmentFactory: SR2ReaderFragmentFactory
   private lateinit var readerParameters: SR2ReaderParameters
@@ -93,9 +94,9 @@ class DemoActivity : AppCompatActivity() {
     }
   }
 
-  override fun onResume() {
-    super.onResume()
-    this.epubFile?.let { this.startReader(it) }
+  override fun onStart() {
+    super.onStart()
+    this.epubFile?.let(this::startReader)
   }
 
   override fun onStop() {

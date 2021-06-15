@@ -7,6 +7,8 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import com.google.common.util.concurrent.SettableFuture
+import org.librarysimplified.r2.api.SR2Command
+import org.librarysimplified.r2.api.SR2ControllerCommandQueueType
 import org.slf4j.LoggerFactory
 import java.util.concurrent.ConcurrentHashMap
 
@@ -18,25 +20,39 @@ import java.util.concurrent.ConcurrentHashMap
 
 internal class SR2WebViewClient(
   private val requestLocation: String,
-  private val future: SettableFuture<Unit>
+  private val future: SettableFuture<Unit>,
+  private val commandQueue: SR2ControllerCommandQueueType
 ) : WebViewClient() {
 
   companion object {
-    val emptyOKResponse =
-      WebResourceResponse(
-        "text/plain",
-        "utf-8",
-        200,
-        "OK",
-        null,
-        null
-      )
+    private val faviconData: ByteArray =
+      SR2WebViewClient::class.java.getResourceAsStream("/org/librarysimplified/r2/vanilla/favicon.ico")
+        ?.readBytes()
+        ?: throw IllegalStateException("Missing favicon resource")
   }
 
   private val logger =
     LoggerFactory.getLogger(SR2WebViewClient::class.java)
   private val errors =
     ConcurrentHashMap<String, String>()
+
+  override fun shouldOverrideUrlLoading(
+    view: WebView,
+    url: String
+  ): Boolean {
+    this.logger.debug("shouldOverrideUrlLoading: {}", url)
+    this.commandQueue.submitCommand(SR2Command.OpenLink(url))
+    return true
+  }
+
+  override fun shouldOverrideUrlLoading(
+    view: WebView,
+    request: WebResourceRequest
+  ): Boolean {
+    this.logger.debug("shouldOverrideUrlLoading: {}", request.url)
+    this.commandQueue.submitCommand(SR2Command.OpenLink(request.url.toString()))
+    return true
+  }
 
   override fun shouldInterceptRequest(
     view: WebView?,
@@ -46,7 +62,14 @@ internal class SR2WebViewClient(
       val url = request.url?.toString() ?: ""
 
       if (url.endsWith("favicon.ico")) {
-        return emptyOKResponse
+        return WebResourceResponse(
+          "image/vnd.microsoft.icon",
+          null,
+          200,
+          "OK",
+          null,
+          faviconData.inputStream()
+        )
       }
     }
     return super.shouldInterceptRequest(view, request)

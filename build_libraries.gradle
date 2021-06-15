@@ -28,7 +28,9 @@ ext.versions = [
   nano_httpd_nanolets         : "master-SNAPSHOT",
   r2_shared                   : "29422a6e",
   r2_streamer                 : "2.0.0-beta.2",
+  rxandroid                   : '2.1.1',
   rxjava2                     : "2.2.21",
+  rxjavaextensions            : '0.20.10',
   slf4j                       : "1.7.25",
 ]
 
@@ -51,8 +53,8 @@ ext.libraries = [
   google_guava                : "com.google.guava:guava:${versions.google_guava}",
   google_material             : "com.google.android.material:material:${versions.google_material}",
   joda_time                   : "joda-time:joda-time:${versions.joda_time}",
-  kotlin_stdlib               : "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version",
   kotlin_coroutines           : "org.jetbrains.kotlinx:kotlinx-coroutines-core:${versions.kotlin_coroutines}",
+  kotlin_stdlib               : "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version",
   logback_android_classic     : "com.github.tony19:logback-android-classic:${versions.logback_android_classic}",
   logback_android_core        : "com.github.tony19:logback-android-core:${versions.logback_android_core}",
   logback_classic             : "ch.qos.logback:logback-classic:${versions.logback_classic}",
@@ -61,6 +63,8 @@ ext.libraries = [
   nano_httpd_nanolets         : "com.github.edrlab.nanohttpd:nanohttpd-nanolets:${versions.nano_httpd_nanolets}",
   r2_shared                   : "com.github.readium:r2-shared-kotlin:${versions.r2_shared}",
   r2_streamer                 : "com.github.readium:r2-streamer-kotlin:${versions.r2_streamer}",
+  rxandroid2                  : "io.reactivex.rxjava2:rxandroid:${versions.rxandroid}",
   rxjava2                     : "io.reactivex.rxjava2:rxjava:${versions.rxjava2}",
+  rxjava2extensions           : "com.github.akarnokd:rxjava2-extensions:${versions.rxjavaextensions}",
   slf4j                       : "org.slf4j:slf4j-api:${versions.slf4j}",
 ]

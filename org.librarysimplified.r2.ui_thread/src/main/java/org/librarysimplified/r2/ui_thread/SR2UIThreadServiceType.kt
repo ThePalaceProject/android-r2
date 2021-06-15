@@ -70,21 +70,4 @@ interface SR2UIThreadServiceType {
     val h = Handler(looper)
     h.postDelayed(r, ms)
   }
-
-  /**
-   * Run the given function on the UI thread.
-   *
-   * @param f The function
-   */
-
-  fun runOnUIThreadDelayed(
-    f: () -> Unit,
-    ms: Long
-  ) =
-    this.runOnUIThreadDelayed(
-      r = Runnable {
-        f.invoke()
-      },
-      ms = ms
-    )
 }

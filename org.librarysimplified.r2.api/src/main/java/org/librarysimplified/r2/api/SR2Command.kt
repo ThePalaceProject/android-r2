@@ -76,6 +76,16 @@ sealed class SR2Command {
   ) : SR2Command()
 
   /**
+   * Open an arbitrary link. This will either result a translation to the [OpenChapter]
+   * command, or it will result in the controller publishing events indicating either
+   * an error, or that the link needs to be opened in an external web view.
+   */
+
+  data class OpenLink(
+    val link: String
+  ) : SR2Command()
+
+  /**
    * Load a set of bookmarks into the controller. This merely has the effect of making
    * the bookmarks available to the table of contents; it does not trigger any changes
    * in navigation.

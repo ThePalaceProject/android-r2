@@ -24,6 +24,10 @@ import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandExecution
 import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandExecutionStarted
 import org.librarysimplified.r2.api.SR2Event.SR2Error.SR2ChapterNonexistent
 import org.librarysimplified.r2.api.SR2Event.SR2Error.SR2WebViewInaccessible
+import org.librarysimplified.r2.api.SR2Event.SR2ExternalLinkSelected
+import org.librarysimplified.r2.api.SR2Event.SR2OnCenterTapped
+import org.librarysimplified.r2.api.SR2Event.SR2ReadingPositionChanged
+import org.librarysimplified.r2.api.SR2Event.SR2ThemeChanged
 import org.librarysimplified.r2.ui_thread.SR2UIThread
 import org.librarysimplified.r2.vanilla.SR2Controllers
 import org.librarysimplified.r2.views.SR2ControllerReference
@@ -105,7 +109,7 @@ class DemoActivity : AppCompatActivity() {
 
     // Listen for messages from the controller.
     this.controllerSubscription =
-      reference.controller.events.subscribe { event -> this.onControllerEvent(event) }
+      reference.controller.events.subscribe(this::onControllerEvent)
 
     if (reference.isFirstStartup) {
       // Navigate to the first chapter or saved reading position.
@@ -167,15 +171,13 @@ class DemoActivity : AppCompatActivity() {
    */
 
   private fun onViewEvent(event: SR2ReaderViewEvent) {
+    SR2UIThread.checkIsUIThread()
+
     return when (event) {
       SR2ReaderViewNavigationClose ->
-        SR2UIThread.runOnUIThread {
-          this.supportFragmentManager.popBackStack()
-        }
-
+        this.supportFragmentManager.popBackStack()
       SR2ReaderViewNavigationOpenTOC ->
-        SR2UIThread.runOnUIThread(this@DemoActivity::openTOC)
-
+        this.openTOC()
       is SR2ControllerBecameAvailable ->
         this.onControllerBecameAvailable(event.reference)
       is SR2BookLoadingFailed ->
@@ -184,13 +186,11 @@ class DemoActivity : AppCompatActivity() {
   }
 
   private fun onBookLoadingFailed(exception: Throwable) {
-    SR2UIThread.runOnUIThread {
-      AlertDialog.Builder(this)
-        .setMessage(exception.message)
-        .setOnDismissListener { this.finish() }
-        .create()
-        .show()
-    }
+    AlertDialog.Builder(this)
+      .setMessage(exception.message)
+      .setOnDismissListener { this.finish() }
+      .create()
+      .show()
   }
 
   private fun openTOC() {
@@ -216,16 +216,17 @@ class DemoActivity : AppCompatActivity() {
         database.bookmarkDelete(this.controller!!.bookMetadata.id, event.bookmark)
       }
 
-      is SR2Event.SR2ThemeChanged -> {
+      is SR2ThemeChanged -> {
         val database = DemoApplication.application.database()
         database.themeSet(event.theme)
       }
 
-      is SR2Event.SR2OnCenterTapped,
-      is SR2Event.SR2ReadingPositionChanged,
+      is SR2OnCenterTapped,
+      is SR2ReadingPositionChanged,
       SR2BookmarksLoaded,
       is SR2ChapterNonexistent,
       is SR2WebViewInaccessible,
+      is SR2ExternalLinkSelected,
       is SR2CommandExecutionStarted,
       is SR2CommandExecutionRunningLong,
       is SR2CommandExecutionSucceeded,

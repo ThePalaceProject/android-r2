@@ -10,6 +10,8 @@ dependencies {
   implementation libraries.r2_shared
   implementation libraries.r2_streamer
   implementation libraries.slf4j
+  implementation libraries.rxjava2extensions
+  implementation libraries.rxandroid2
 
   api project(":org.librarysimplified.r2.api")
   api project(":org.librarysimplified.r2.ui_thread")

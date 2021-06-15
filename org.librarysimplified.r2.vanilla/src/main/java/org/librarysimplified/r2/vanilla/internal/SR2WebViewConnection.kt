@@ -12,6 +12,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 /**
  * A connection to a web view.
@@ -21,7 +22,8 @@ internal class SR2WebViewConnection(
   private val jsAPI: SR2JavascriptAPI,
   private val webView: WebView,
   private val requestQueue: ExecutorService,
-  private val uiExecutor: (f: () -> Unit) -> Unit
+  private val uiExecutor: (f: () -> Unit) -> Unit,
+  private val commandQueue: SR2ControllerCommandQueueType
 ) : SR2WebViewConnectionType {
 
   private val logger =
@@ -61,6 +63,7 @@ internal class SR2WebViewConnection(
 
       return SR2WebViewConnection(
         jsAPI = SR2JavascriptAPI(webView, commandQueue),
+        commandQueue = commandQueue,
         webView = webView,
         requestQueue = requestQueue,
         uiExecutor = uiExecutor
@@ -86,7 +89,7 @@ internal class SR2WebViewConnection(
     this.requestQueue.execute {
       this.logger.debug("[{}]: openURL {}", id, location)
       this.uiExecutor.invoke {
-        this.webView.webViewClient = SR2WebViewClient(location, future)
+        this.webView.webViewClient = SR2WebViewClient(location, future, this.commandQueue)
         this.webView.loadUrl(location)
       }
       this.waitOrFail(id, future)
@@ -107,8 +110,11 @@ internal class SR2WebViewConnection(
       this.logger.debug("[{}]: waiting for request to complete", id)
       future.get(1L, TimeUnit.MINUTES)
       this.logger.debug("[{}]: request completed", id)
-    } catch (e: Exception) {
+    } catch (e: TimeoutException) {
       this.logger.error("[{}]: timed out waiting for the web view to complete: ", id, e)
+      future.setException(e)
+    } catch (e: Exception) {
+      this.logger.error("[{}]: future failed: ", id, e)
       future.setException(e)
     }
   }

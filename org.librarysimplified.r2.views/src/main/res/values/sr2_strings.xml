@@ -21,8 +21,8 @@
   <string name="tocBookmarkDelete">Delete</string>
   <string name="tocBookmarkDeleteMessage">Are you sure you want to delete this bookmark?</string>
   <string name="tocBookmarks">Bookmarks</string>
-  <string name="tocChapterIndexed">%1$d. %2$s</string>
   <string name="tocTitle">Table Of Contents</string>
+  <string name="tocAccessChapter">Open Chapter %1$d: %2$s</string>
 
   <string name="settingsAccessibilitySetSans">Set book font to sans-serif.</string>
   <string name="settingsAccessibilitySetSerif">Set book font to serif.</string>

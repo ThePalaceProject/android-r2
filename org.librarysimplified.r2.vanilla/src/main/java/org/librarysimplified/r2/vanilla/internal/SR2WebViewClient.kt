@@ -10,6 +10,7 @@ import com.google.common.util.concurrent.SettableFuture
 import org.librarysimplified.r2.api.SR2Command
 import org.librarysimplified.r2.api.SR2ControllerCommandQueueType
 import org.slf4j.LoggerFactory
+import java.net.URLDecoder
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -89,7 +90,7 @@ internal class SR2WebViewClient(
   ) {
     this.logger.debug("onPageFinished: {}", url)
 
-    if (this.requestLocation == url) {
+    if (this.isStartingURL(url)) {
       try {
         if (this.errors.isEmpty()) {
           this.logger.debug("onPageFinished: {} succeeded", url)
@@ -108,6 +109,24 @@ internal class SR2WebViewClient(
     }
 
     super.onPageFinished(view, url)
+  }
+
+  /**
+   * Check to see if the given URL matches the initial request location. We first do a
+   * straightforward comparison, and if the comparison fails, we then do a comparison
+   * with URL-decoded contents. Most of the time, the first comparison will succeed, but
+   * the URL-decoded comparison may be required for URLs that contain spaces. Some EPUB
+   * files contain filenames with spaces, despite the recommendations of both the epubcheck
+   * tool and the EPUB standard.
+   */
+
+  private fun isStartingURL(url: String): Boolean {
+    if (url == this.requestLocation) {
+      return true
+    }
+
+    val decoded = URLDecoder.decode(url, "UTF-8")
+    return decoded == this.requestLocation
   }
 
   override fun onReceivedError(

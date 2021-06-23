@@ -1,6 +1,7 @@
 package org.librarysimplified.r2.views
 
 import org.librarysimplified.r2.api.SR2ControllerProviderType
+import org.librarysimplified.r2.api.SR2ScrollingMode
 import org.librarysimplified.r2.api.SR2Theme
 import org.readium.r2.shared.publication.asset.PublicationAsset
 import org.readium.r2.streamer.Streamer
@@ -40,5 +41,11 @@ data class SR2ReaderParameters(
    * A provider of controllers.
    */
 
-  val controllers: SR2ControllerProviderType
+  val controllers: SR2ControllerProviderType,
+
+  /**
+   * The book scrolling mode.
+   */
+
+  val scrollingMode: SR2ScrollingMode
 )

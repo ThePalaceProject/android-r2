@@ -52,5 +52,11 @@ data class SR2ControllerConfiguration(
    * A function that executes `f` on the Android UI thread.
    */
 
-  val uiExecutor: (f: () -> Unit) -> Unit
+  val uiExecutor: (f: () -> Unit) -> Unit,
+
+  /**
+   * The book scrolling mode.
+   */
+
+  val scrollingMode: SR2ScrollingMode
 )

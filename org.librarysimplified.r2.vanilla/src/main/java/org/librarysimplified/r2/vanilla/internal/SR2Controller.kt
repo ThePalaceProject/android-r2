@@ -548,9 +548,16 @@ internal class SR2Controller private constructor(
           MoreExecutors.directExecutor()
         )
 
-      val moveFuture =
+      val scrollModeFuture =
         Futures.transformAsync(
           themeFuture,
+          AsyncFunction { connection.executeJS { js -> js.setScrollMode(this.configuration.scrollingMode) } },
+          MoreExecutors.directExecutor()
+        )
+
+      val moveFuture =
+        Futures.transformAsync(
+          scrollModeFuture,
           AsyncFunction { this.executeLocatorSet(connection, locator) },
           MoreExecutors.directExecutor()
         )
@@ -787,7 +794,8 @@ internal class SR2Controller private constructor(
         webView = webView,
         jsReceiver = this.JavascriptAPIReceiver(webView),
         commandQueue = this,
-        uiExecutor = this.configuration.uiExecutor
+        uiExecutor = this.configuration.uiExecutor,
+        scrollingMode = this.configuration.scrollingMode
       )
 
     synchronized(this.webViewConnectionLock) {

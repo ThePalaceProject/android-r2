@@ -22,7 +22,22 @@ var readium = (function() {
 
     var pageWidth = 1;
 
+    /*
+     * A function executed when the scroll position changes. This is used to calculate
+     * page numbers, and will result in the last-read position being updated by the native
+     * code.
+     */
+
     function onScrollPositionChanged() {
+      if (isScrollModeEnabled()) {
+        var scrollY  = window.scrollY
+        var height   = document.scrollingElement.scrollHeight;
+        var progress = scrollY / height;
+
+        Android.onReadingPositionChanged(progress, 1, 1);
+        return;
+      }
+
       var scrollX       = window.scrollX;
       var documentWidth = document.scrollingElement.scrollWidth;
       var progress      = scrollX / documentWidth;
@@ -36,9 +51,34 @@ var readium = (function() {
       Android.onReadingPositionChanged(progress, pageIndex, pageCount);
     }
 
-    // Notify native code when the user scrolls.
+    /*
+     * A simple throttle used to prevent scroll events from being published too frequently.
+     */
+
+    var scrollThrottleTimeout = false;
+    var scrollThrottle = (callback, time) => {
+        if (scrollThrottleTimeout) {
+            return;
+        }
+
+        scrollThrottleTimeout = true;
+        setTimeout(() => {
+            callback();
+            scrollThrottleTimeout = false;
+        }, time);
+    }
+
+    /*
+     * Notify native code when the user scrolls. This is throttled in scrolling mode to prevent
+     * updates from occurring too frequently, should the user fling the text somehow.
+     */
+
     window.addEventListener("scroll", function() {
-        onScrollPositionChanged();
+        if (isScrollModeEnabled()) {
+          scrollThrottle(onScrollPositionChanged, 1000);
+        } else {
+          onScrollPositionChanged();
+        }
     })
 
     function onViewportWidthChanged() {

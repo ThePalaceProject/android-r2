@@ -2,6 +2,7 @@ package org.librarysimplified.r2.vanilla.internal
 
 import androidx.annotation.UiThread
 import com.google.common.util.concurrent.ListenableFuture
+import org.librarysimplified.r2.api.SR2ScrollingMode
 
 /**
  * The Javascript API exported by web views.
@@ -64,4 +65,11 @@ internal interface SR2JavascriptAPIType {
 
   @UiThread
   fun broadcastReadingPosition(): ListenableFuture<*>
+
+  /**
+   * Set the scrolling mode.
+   */
+
+  @UiThread
+  fun setScrollMode(mode: SR2ScrollingMode): ListenableFuture<*>
 }

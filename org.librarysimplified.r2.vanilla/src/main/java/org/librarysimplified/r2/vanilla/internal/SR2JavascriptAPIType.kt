@@ -57,4 +57,11 @@ internal interface SR2JavascriptAPIType {
 
   @UiThread
   fun setProgression(progress: Double): ListenableFuture<String>
+
+  /**
+   * Broadcast the current reading position.
+   */
+
+  @UiThread
+  fun broadcastReadingPosition(): ListenableFuture<*>
 }

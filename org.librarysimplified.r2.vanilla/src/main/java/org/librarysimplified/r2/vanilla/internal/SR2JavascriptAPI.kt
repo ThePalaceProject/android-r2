@@ -140,6 +140,11 @@ internal class SR2JavascriptAPI(
   }
 
   @UiThread
+  override fun broadcastReadingPosition(): ListenableFuture<*> {
+    return this.executeJavascript("readium.broadcastReadingPosition();")
+  }
+
+  @UiThread
   fun setUserProperty(
     name: String,
     value: String

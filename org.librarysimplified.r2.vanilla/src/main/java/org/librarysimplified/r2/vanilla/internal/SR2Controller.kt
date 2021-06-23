@@ -314,8 +314,10 @@ internal class SR2Controller private constructor(
       viewConnection.executeJS { js -> js.setTheme(SR2ReadiumInternalTheme.from(theme.colorScheme)) }
     val f2 =
       viewConnection.executeJS { js -> js.setFontSize(theme.textSize) }
+    val f3 =
+      viewConnection.executeJS { js -> js.broadcastReadingPosition() }
 
-    val allFutures = Futures.allAsList(f0, f1, f2)
+    val allFutures = Futures.allAsList(f0, f1, f2, f3)
     val setFuture = SettableFuture.create<Unit>()
     allFutures.addListener(
       {

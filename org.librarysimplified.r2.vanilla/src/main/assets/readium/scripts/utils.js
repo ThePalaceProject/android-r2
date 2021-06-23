@@ -36,6 +36,11 @@ var readium = (function() {
       Android.onReadingPositionChanged(progress, pageIndex, pageCount);
     }
 
+    // Notify native code when the user scrolls.
+    window.addEventListener("scroll", function() {
+        onScrollPositionChanged();
+    })
+
     function onViewportWidthChanged() {
         // We can't rely on window.innerWidth for the pageWidth on Android, because if the
         // device pixel ratio is not an integer, we get rounding issues offsetting the pages.
@@ -68,7 +73,6 @@ var readium = (function() {
 
     // Position must be in the range [0 - 1], 0-100%.
     function scrollToPosition(position) {
-//        Android.log("scrollToPosition " + position);
         if ((position < 0) || (position > 1)) {
             throw "scrollToPosition() must be given a position from 0.0 to  1.0";
         }
@@ -76,30 +80,24 @@ var readium = (function() {
         if (isScrollModeEnabled()) {
             var offset = document.scrollingElement.scrollHeight * position;
             document.scrollingElement.scrollTop = offset;
-            // window.scrollTo(0, offset);
         } else {
             var documentWidth = document.scrollingElement.scrollWidth;
             var factor = isRTL() ? -1 : 1;
             var offset = documentWidth * position * factor;
             document.scrollingElement.scrollLeft = snapOffset(offset);
         }
-
-        onScrollPositionChanged();
     }
 
     function scrollToStart() {
-//        Android.log("scrollToStart");
         if (!isScrollModeEnabled()) {
             document.scrollingElement.scrollLeft = 0;
         } else {
             document.scrollingElement.scrollTop = 0;
             window.scrollTo(0, 0);
         }
-        onScrollPositionChanged();
     }
 
     function scrollToEnd() {
-//        Android.log("scrollToEnd");
         if (!isScrollModeEnabled()) {
             var factor = isRTL() ? -1 : 1;
             document.scrollingElement.scrollLeft = snapOffset(document.scrollingElement.scrollWidth * factor);
@@ -107,7 +105,6 @@ var readium = (function() {
             document.scrollingElement.scrollTop = document.body.scrollHeight;
             window.scrollTo(0, document.body.scrollHeight);
         }
-        onScrollPositionChanged();
     }
 
     // Returns false if the page is already at the left-most scroll offset.
@@ -129,7 +126,6 @@ var readium = (function() {
     // Scrolls to the given left offset.
     // Returns false if the page scroll position is already close enough to the given offset.
     function scrollToOffset(offset) {
-//        Android.log("scrollToOffset " + offset);
         if (isScrollModeEnabled()) {
             throw "Called scrollToOffset() with scroll mode enabled. This can only be used in paginated mode.";
         }
@@ -138,7 +134,6 @@ var readium = (function() {
         document.scrollingElement.scrollLeft = snapOffset(offset);
         // In some case the scrollX cannot reach the position respecting to innerWidth
         var diff = Math.abs(currentOffset - offset) / pageWidth;
-        onScrollPositionChanged();
         return (diff > 0.01);
     }
 
@@ -150,7 +145,6 @@ var readium = (function() {
 
     // Snaps the current offset to the page width.
     function snapCurrentOffset() {
-//        Android.log("snapCurrentOffset");
         if (isScrollModeEnabled()) {
             return;
         }
@@ -186,7 +180,8 @@ var readium = (function() {
         'scrollToStart': scrollToStart,
         'scrollToEnd': scrollToEnd,
         'setProperty': setProperty,
-        'removeProperty': removeProperty
+        'removeProperty': removeProperty,
+        'broadcastReadingPosition': onScrollPositionChanged
     };
 
 })();

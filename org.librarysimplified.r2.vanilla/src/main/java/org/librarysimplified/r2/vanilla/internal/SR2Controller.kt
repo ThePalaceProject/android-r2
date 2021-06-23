@@ -606,13 +606,10 @@ internal class SR2Controller private constructor(
 
     @android.webkit.JavascriptInterface
     override fun onReadingPositionChanged(
+      chapterProgress: Double,
       currentPage: Int,
       pageCount: Int
     ) {
-      val pageZeroBased =
-        Math.max(0, currentPage - 1)
-      val chapterProgress =
-        pageZeroBased.toDouble() / pageCount.toDouble()
       val chapterTitle =
         this@SR2Controller.currentChapter.title
 

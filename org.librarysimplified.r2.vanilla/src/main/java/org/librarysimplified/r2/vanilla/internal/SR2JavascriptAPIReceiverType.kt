@@ -9,12 +9,17 @@ internal interface SR2JavascriptAPIReceiverType {
   /**
    * The reading position has changed.
    *
+   * @param chapterProgress The chapter progress in the range `[0, 1]`.
    * @param currentPage The page position within the chapter.
    * @param pageCount Total pages within the chapter with the current styling.
    */
 
   @android.webkit.JavascriptInterface
-  fun onReadingPositionChanged(currentPage: Int, pageCount: Int)
+  fun onReadingPositionChanged(
+    chapterProgress: Double,
+    currentPage: Int,
+    pageCount: Int
+  )
 
   /** The center of the screen was tapped. */
 

@@ -34,16 +34,18 @@ import org.librarysimplified.r2.api.SR2Event.SR2OnCenterTapped
 import org.librarysimplified.r2.api.SR2Event.SR2ReadingPositionChanged
 import org.librarysimplified.r2.api.SR2Event.SR2ThemeChanged
 import org.librarysimplified.r2.api.SR2Locator
+import org.librarysimplified.r2.api.SR2ScrollingMode.SCROLLING_MODE_CONTINUOUS
+import org.librarysimplified.r2.api.SR2ScrollingMode.SCROLLING_MODE_PAGINATED
 import org.librarysimplified.r2.api.SR2Theme
 import org.librarysimplified.r2.ui_thread.SR2UIThread
-import org.librarysimplified.r2.views.internal.SR2ViewModelBookEvent.SR2ViewModelBookOpened
-import org.librarysimplified.r2.views.internal.SR2ViewModelBookEvent.SR2ViewModelBookOpenFailed
 import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewBookEvent.SR2BookLoadingFailed
 import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewControllerEvent.SR2ControllerBecameAvailable
 import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewNavigationEvent.SR2ReaderViewNavigationOpenTOC
 import org.librarysimplified.r2.views.internal.SR2BrightnessService
-import org.librarysimplified.r2.views.internal.SR2ViewModelBookEvent
 import org.librarysimplified.r2.views.internal.SR2SettingsDialog
+import org.librarysimplified.r2.views.internal.SR2ViewModelBookEvent
+import org.librarysimplified.r2.views.internal.SR2ViewModelBookEvent.SR2ViewModelBookOpenFailed
+import org.librarysimplified.r2.views.internal.SR2ViewModelBookEvent.SR2ViewModelBookOpened
 import org.slf4j.LoggerFactory
 
 class SR2ReaderFragment private constructor(
@@ -114,6 +116,19 @@ class SR2ReaderFragment private constructor(
       .setOnMenuItemClickListener { this.onReaderMenuTOCSelected() }
     this.toolbar.menu.findItem(R.id.readerMenuAddBookmark)
       .setOnMenuItemClickListener { this.onReaderMenuAddBookmarkSelected() }
+
+    /*
+     * We don't show page numbers in continuous scroll mode.
+     */
+
+    when (this.parameters.scrollingMode) {
+      SCROLLING_MODE_PAGINATED -> {
+        // The defaults are fine
+      }
+      SCROLLING_MODE_CONTINUOUS -> {
+        this.positionPageView.visibility = View.INVISIBLE
+      }
+    }
 
     this.configureForTheme(this.controller?.themeNow() ?: this.parameters.theme)
     this.viewsShowLoading()
@@ -197,7 +212,8 @@ class SR2ReaderFragment private constructor(
         ioExecutor = this.readerModel.ioExecutor,
         streamer = this.parameters.streamer,
         theme = this.parameters.theme,
-        uiExecutor = SR2UIThread::runOnUIThread
+        uiExecutor = SR2UIThread::runOnUIThread,
+        scrollingMode = this.parameters.scrollingMode
       )
     )
 

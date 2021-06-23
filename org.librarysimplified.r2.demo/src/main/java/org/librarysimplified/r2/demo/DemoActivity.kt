@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.Toast
 import androidx.annotation.UiThread
 import androidx.appcompat.app.AlertDialog
@@ -28,6 +29,7 @@ import org.librarysimplified.r2.api.SR2Event.SR2ExternalLinkSelected
 import org.librarysimplified.r2.api.SR2Event.SR2OnCenterTapped
 import org.librarysimplified.r2.api.SR2Event.SR2ReadingPositionChanged
 import org.librarysimplified.r2.api.SR2Event.SR2ThemeChanged
+import org.librarysimplified.r2.api.SR2ScrollingMode
 import org.librarysimplified.r2.ui_thread.SR2UIThread
 import org.librarysimplified.r2.vanilla.SR2Controllers
 import org.librarysimplified.r2.views.SR2ControllerReference
@@ -70,6 +72,7 @@ class DemoActivity : AppCompatActivity() {
   private var epubFile: File? = null
   private var epubId: String? = null
   private var viewSubscription: Disposable? = null
+  private lateinit var scrollMode: CheckBox
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -79,6 +82,7 @@ class DemoActivity : AppCompatActivity() {
 
       val browseButton = this.findViewById<Button>(R.id.browse_button)!!
       browseButton.setOnClickListener { this.startDocumentPickerForResult() }
+      this.scrollMode = this.findViewById<CheckBox>(R.id.scrollMode)!!
     }
   }
 
@@ -149,7 +153,12 @@ class DemoActivity : AppCompatActivity() {
         bookFile = FileAsset(file),
         bookId = this.epubId!!,
         theme = database.theme(),
-        controllers = SR2Controllers()
+        controllers = SR2Controllers(),
+        scrollingMode = if (this.scrollMode.isChecked) {
+          SR2ScrollingMode.SCROLLING_MODE_CONTINUOUS
+        } else {
+          SR2ScrollingMode.SCROLLING_MODE_PAGINATED
+        }
       )
 
     this.readerFragmentFactory =

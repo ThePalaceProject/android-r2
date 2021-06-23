@@ -314,8 +314,10 @@ internal class SR2Controller private constructor(
       viewConnection.executeJS { js -> js.setTheme(SR2ReadiumInternalTheme.from(theme.colorScheme)) }
     val f2 =
       viewConnection.executeJS { js -> js.setFontSize(theme.textSize) }
+    val f3 =
+      viewConnection.executeJS { js -> js.broadcastReadingPosition() }
 
-    val allFutures = Futures.allAsList(f0, f1, f2)
+    val allFutures = Futures.allAsList(f0, f1, f2, f3)
     val setFuture = SettableFuture.create<Unit>()
     allFutures.addListener(
       {
@@ -546,9 +548,16 @@ internal class SR2Controller private constructor(
           MoreExecutors.directExecutor()
         )
 
-      val moveFuture =
+      val scrollModeFuture =
         Futures.transformAsync(
           themeFuture,
+          AsyncFunction { connection.executeJS { js -> js.setScrollMode(this.configuration.scrollingMode) } },
+          MoreExecutors.directExecutor()
+        )
+
+      val moveFuture =
+        Futures.transformAsync(
+          scrollModeFuture,
           AsyncFunction { this.executeLocatorSet(connection, locator) },
           MoreExecutors.directExecutor()
         )
@@ -606,13 +615,10 @@ internal class SR2Controller private constructor(
 
     @android.webkit.JavascriptInterface
     override fun onReadingPositionChanged(
+      chapterProgress: Double,
       currentPage: Int,
       pageCount: Int
     ) {
-      val pageZeroBased =
-        Math.max(0, currentPage - 1)
-      val chapterProgress =
-        pageZeroBased.toDouble() / pageCount.toDouble()
       val chapterTitle =
         this@SR2Controller.currentChapter.title
 
@@ -788,7 +794,8 @@ internal class SR2Controller private constructor(
         webView = webView,
         jsReceiver = this.JavascriptAPIReceiver(webView),
         commandQueue = this,
-        uiExecutor = this.configuration.uiExecutor
+        uiExecutor = this.configuration.uiExecutor,
+        scrollingMode = this.configuration.scrollingMode
       )
 
     synchronized(this.webViewConnectionLock) {

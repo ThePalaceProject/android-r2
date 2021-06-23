@@ -6,6 +6,9 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import com.google.common.util.concurrent.SettableFuture
 import org.librarysimplified.r2.api.SR2ControllerCommandQueueType
+import org.librarysimplified.r2.api.SR2ScrollingMode
+import org.librarysimplified.r2.api.SR2ScrollingMode.SCROLLING_MODE_CONTINUOUS
+import org.librarysimplified.r2.api.SR2ScrollingMode.SCROLLING_MODE_PAGINATED
 import org.slf4j.LoggerFactory
 import java.util.UUID
 import java.util.concurrent.ExecutorService
@@ -35,7 +38,8 @@ internal class SR2WebViewConnection(
       webView: WebView,
       jsReceiver: SR2JavascriptAPIReceiverType,
       uiExecutor: (f: () -> Unit) -> Unit,
-      commandQueue: SR2ControllerCommandQueueType
+      commandQueue: SR2ControllerCommandQueueType,
+      scrollingMode: SR2ScrollingMode
     ): SR2WebViewConnectionType {
 
       val threadFactory = ThreadFactory { runnable ->
@@ -48,25 +52,31 @@ internal class SR2WebViewConnection(
       val webChromeClient = SR2WebChromeClient()
       webView.webChromeClient = webChromeClient
       webView.settings.javaScriptEnabled = true
-      webView.isVerticalScrollBarEnabled = false
-      webView.isHorizontalScrollBarEnabled = false
 
-      /*
-       * Disable manual scrolling on the web view. Scrolling is controlled via the javascript API.
-       */
+      when (scrollingMode) {
+        SCROLLING_MODE_PAGINATED -> {
+          /*
+           * Disable manual scrolling on the web view. Scrolling is controlled via the javascript API.
+           */
 
-      webView.setOnTouchListener { v, event ->
-        event.action == MotionEvent.ACTION_MOVE
+          webView.setOnTouchListener { v, event -> event.action == MotionEvent.ACTION_MOVE }
+          webView.isVerticalScrollBarEnabled = false
+          webView.isHorizontalScrollBarEnabled = false
+        }
+        SCROLLING_MODE_CONTINUOUS -> {
+          webView.isVerticalScrollBarEnabled = true
+          webView.isHorizontalScrollBarEnabled = false
+        }
       }
 
       webView.addJavascriptInterface(jsReceiver, "Android")
 
       return SR2WebViewConnection(
         jsAPI = SR2JavascriptAPI(webView, commandQueue),
-        commandQueue = commandQueue,
         webView = webView,
         requestQueue = requestQueue,
-        uiExecutor = uiExecutor
+        uiExecutor = uiExecutor,
+        commandQueue = commandQueue
       )
     }
   }

@@ -23,7 +23,14 @@
       android:id="@+id/browse_button"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
-      android:layout_marginTop="8dp"
+      android:layout_marginTop="16dp"
       android:text="@string/btn_browse_files" />
+
+    <CheckBox
+      android:id="@+id/scrollMode"
+      android:layout_marginTop="16dp"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:text="Scrolling mode" />
   </LinearLayout>
 </FrameLayout>

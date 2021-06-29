@@ -34,6 +34,8 @@ import org.librarysimplified.r2.api.SR2Locator.SR2LocatorChapterEnd
 import org.librarysimplified.r2.api.SR2Locator.SR2LocatorPercent
 import org.librarysimplified.r2.api.SR2Theme
 import org.readium.r2.shared.publication.Publication
+import org.readium.r2.shared.publication.epub.EpubLayout
+import org.readium.r2.shared.publication.presentation.presentation
 import org.readium.r2.shared.publication.services.isRestricted
 import org.readium.r2.shared.publication.services.protectionError
 import org.readium.r2.shared.util.getOrElse
@@ -650,16 +652,41 @@ internal class SR2Controller private constructor(
         }
       }
 
-      this@SR2Controller.eventSubject.onNext(
-        SR2ReadingPositionChanged(
-          chapterHref = currentChapter.chapterHref,
-          chapterTitle = chapterTitle,
-          chapterProgress = chapterProgress,
-          currentPage = currentPage,
-          pageCount = pageCount,
-          bookProgress = this@SR2Controller.currentBookProgress
-        )
-      )
+      return when (this@SR2Controller.publication.metadata.presentation.layout) {
+        EpubLayout.FIXED -> {
+
+          /*
+           * For fixed-layout EPUB files, we'll have one page per chapter, and the chapters
+           * themselves are supposed to represent "pages". Therefore, we publish page number
+           * indicators that are actually the chapter indices and counts instead.
+           */
+
+          this@SR2Controller.eventSubject.onNext(
+            SR2ReadingPositionChanged(
+              chapterHref = currentChapter.chapterHref,
+              chapterTitle = chapterTitle,
+              chapterProgress = chapterProgress,
+              currentPage = Math.max(1, currentChapter.chapterIndex + 1),
+              pageCount = this@SR2Controller.bookMetadata.readingOrder.size,
+              bookProgress = this@SR2Controller.currentBookProgress
+            )
+          )
+        }
+
+        EpubLayout.REFLOWABLE,
+        null -> {
+          this@SR2Controller.eventSubject.onNext(
+            SR2ReadingPositionChanged(
+              chapterHref = currentChapter.chapterHref,
+              chapterTitle = chapterTitle,
+              chapterProgress = chapterProgress,
+              currentPage = currentPage,
+              pageCount = pageCount,
+              bookProgress = this@SR2Controller.currentBookProgress
+            )
+          )
+        }
+      }
     }
 
     @android.webkit.JavascriptInterface

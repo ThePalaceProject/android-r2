@@ -7,4 +7,10 @@ package org.librarysimplified.r2.api
 data class SR2TOCEntry(
   val node: SR2NavigationNode.SR2NavigationTOCNode,
   val depth: Int
-)
+) {
+  init {
+    check(depth >= 0) {
+      "Depth $depth must be non-negative"
+    }
+  }
+}

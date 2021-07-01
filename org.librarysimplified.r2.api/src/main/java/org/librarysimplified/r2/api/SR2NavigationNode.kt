@@ -1,8 +1,5 @@
 package org.librarysimplified.r2.api
 
-import java.net.URI
-import java.net.URISyntaxException
-
 /**
  * A navigation node.
  */
@@ -14,13 +11,9 @@ sealed class SR2NavigationNode {
    */
 
   fun matches(locator: SR2Locator): Boolean {
-    return try {
-      val nodeURI = URI(this.navigationPoint.locator.chapterHref)
-      val wantURI = URI(locator.chapterHref)
-      nodeURI.path == wantURI.path
-    } catch (e: URISyntaxException) {
-      false
-    }
+    val nodeURI = this.navigationPoint.locator.chapterHref
+    val wantURI = locator.chapterHref
+    return nodeURI == wantURI
   }
 
   abstract val navigationPoint: SR2NavigationPoint

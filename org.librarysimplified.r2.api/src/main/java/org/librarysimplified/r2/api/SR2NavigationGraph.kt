@@ -48,8 +48,11 @@ data class SR2NavigationGraph(
    * The node pointing at the start of the book.
    */
 
-  fun start(): SR2NavigationNode {
-    return this.readingOrder.first()
+  fun start(): SR2NavigationTarget {
+    return SR2NavigationTarget(
+      node = this.readingOrder.first(),
+      extraFragment = null
+    )
   }
 
   /**
@@ -57,7 +60,7 @@ data class SR2NavigationGraph(
    * of the reading order to do so.
    */
 
-  fun findNavigationReadingOrderNode(locator: SR2Locator): SR2NavigationReadingOrderNode? {
+  fun findNavigationReadingOrderNodeExact(locator: SR2Locator): SR2NavigationReadingOrderNode? {
     for (node in this.readingOrder) {
       if (node.matches(locator)) {
         return node
@@ -71,7 +74,7 @@ data class SR2NavigationGraph(
    * of the table of contents to do so.
    */
 
-  fun findNavigationTOCNode(locator: SR2Locator): SR2NavigationTOCNode? {
+  fun findNavigationTOCNodeExact(locator: SR2Locator): SR2NavigationTOCNode? {
     for (entry in this.tableOfContentsFlat) {
       if (entry.node.matches(locator)) {
         return entry.node
@@ -85,7 +88,7 @@ data class SR2NavigationGraph(
    * of the resources to do so.
    */
 
-  fun findResourcesNode(locator: SR2Locator): SR2NavigationResourceNode? {
+  fun findResourcesNodeExact(locator: SR2Locator): SR2NavigationResourceNode? {
     for (entry in this.resources) {
       if (entry.matches(locator)) {
         return entry
@@ -98,10 +101,43 @@ data class SR2NavigationGraph(
    * Find a relevant navigation node for the given locator.
    */
 
-  fun findNavigationNode(locator: SR2Locator): SR2NavigationNode? {
-    return this.findNavigationReadingOrderNode(locator)
-      ?: this.findNavigationTOCNode(locator)
-      ?: this.findResourcesNode(locator)
+  fun findNavigationNode(locator: SR2Locator): SR2NavigationTarget? {
+    val exact =
+      this.findNavigationReadingOrderNodeExact(locator)
+        ?: this.findNavigationTOCNodeExact(locator)
+        ?: this.findResourcesNodeExact(locator)
+
+    if (exact != null) {
+      return SR2NavigationTarget(
+        node = exact,
+        extraFragment = null
+      )
+    }
+
+    /*
+     * If there wasn't a resource that matched the locator exactly, then try the search
+     * again but without the fragment (if there is one). Record the fragment as an extra.
+     */
+
+    val fragment = locator.chapterHref.substringAfter('#', "")
+    return if (fragment.isNotBlank()) {
+      val withoutFragment =
+        when (locator) {
+          is SR2Locator.SR2LocatorChapterEnd ->
+            locator.copy(chapterHref = locator.chapterHref.substringBefore('#'))
+          is SR2Locator.SR2LocatorPercent ->
+            locator.copy(chapterHref = locator.chapterHref.substringBefore('#'))
+        }
+
+      (
+        this.findNavigationReadingOrderNodeExact(withoutFragment)
+          ?: findNavigationTOCNodeExact(withoutFragment)
+          ?: findResourcesNodeExact(withoutFragment)
+        )
+        ?.let { node -> SR2NavigationTarget(node, fragment) }
+    } else {
+      null
+    }
   }
 
   /**

@@ -159,6 +159,11 @@ internal class SR2JavascriptAPI(
   }
 
   @UiThread
+  override fun scrollToId(id: String): ListenableFuture<*> {
+    return this.executeJavascript("readium.scrollToId(\"$id\");")
+  }
+
+  @UiThread
   fun setUserProperty(
     name: String,
     value: String

@@ -20,6 +20,7 @@ var readium = (function() {
     }, false);
 
     var pageWidth = 1;
+    var scrollPositionRecursing = false;
 
     /*
      * Return the number of pages in paginated mode, or 1 for scrolling mode.
@@ -88,13 +89,21 @@ var readium = (function() {
         return;
       }
 
+      if (scrollPositionRecursing) {
+        console.log("scrollPositionRecursing")
+        return;
+      }
+
+      scrollPositionRecursing = true
       var scrollX       = window.scrollX;
       var documentWidth = document.scrollingElement.scrollWidth;
       var progress      = scrollX / documentWidth;
-      var pageCount     = getCurrentPageCount();
-      var pageIndex     = getCurrentPageIndex();
+      scrollToPosition(progress);
 
+      var pageCount = getCurrentPageCount();
+      var pageIndex = getCurrentPageIndex();
       Android.onReadingPositionChanged(progress, pageIndex, pageCount);
+      scrollPositionRecursing = false
     }
 
     /*
@@ -146,21 +155,24 @@ var readium = (function() {
         return document.body.dir.toLowerCase() == 'rtl';
     }
 
-    // Scroll to the given TagId in document and snap.
+    // Scroll to the element with the given tag ID
     function scrollToId(id) {
         var element = document.getElementById(id);
         if (!element) {
+            console.log("no element with id " + id)
             return;
         }
-
+        console.log("scrolling to element " + element + " with id " + id)
         element.scrollIntoView({inline: "center"});
-        snapCurrentOffset()
+        console.log("position before snap: " + document.scrollingElement.scrollLeft)
+        snapCurrentOffset();
+        console.log("position after snap:  " + document.scrollingElement.scrollLeft)
     }
 
     // Position must be in the range [0 - 1], 0-100%.
     function scrollToPosition(position) {
         if ((position < 0) || (position > 1)) {
-            throw "scrollToPosition() must be given a position from 0.0 to  1.0";
+            throw "scrollToPosition() must be given a position from 0.0 to 1.0";
         }
 
         if (isScrollModeEnabled()) {
@@ -170,7 +182,8 @@ var readium = (function() {
             var documentWidth = document.scrollingElement.scrollWidth;
             var factor = isRTL() ? -1 : 1;
             var offset = documentWidth * position * factor;
-            document.scrollingElement.scrollLeft = snapOffset(offset);
+            var offsetSnapped = snapOffset(offset);
+            document.scrollingElement.scrollLeft = offsetSnapped;
         }
     }
 
@@ -237,22 +250,17 @@ var readium = (function() {
         return (diff > 0.01);
     }
 
-    // Snap the offset to the screen width (page width).
+    // Snap the offset to the nearest multiple of the page width.
     function snapOffset(offset) {
-        var value = offset + (isRTL() ? -1 : 1);
-        return value - (value % pageWidth);
+        return pageWidth * Math.round(offset / pageWidth)
     }
 
-    // Snaps the current offset to the page width.
+    // Snaps the current offset to the nearest multiple of the page width.
     function snapCurrentOffset() {
         if (isScrollModeEnabled()) {
             return;
         }
-        var currentOffset = window.scrollX;
-        // Adds half a page to make sure we don't snap to the previous page.
-        var factor = isRTL() ? -1 : 1;
-        var delta = factor * (pageWidth / 2);
-        document.scrollingElement.scrollLeft = snapOffset(currentOffset + delta);
+        document.scrollingElement.scrollLeft = snapOffset(window.scrollX);
     }
 
     /// User Settings.

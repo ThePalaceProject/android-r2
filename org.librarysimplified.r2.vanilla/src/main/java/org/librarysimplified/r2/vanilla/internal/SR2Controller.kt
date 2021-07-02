@@ -7,6 +7,7 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import com.google.common.util.concurrent.SettableFuture
 import io.reactivex.Observable
+import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.Subject
 import kotlinx.coroutines.runBlocking
@@ -159,6 +160,8 @@ internal class SR2Controller private constructor(
     }
   }
 
+  private val subscriptions =
+    CompositeDisposable()
   private val logger =
     LoggerFactory.getLogger(SR2Controller::class.java)
 
@@ -212,7 +215,14 @@ internal class SR2Controller private constructor(
   private var uiVisible: Boolean = true
 
   init {
-    this.eventSubject.subscribe { event -> this.logger.debug("event: {}", event) }
+    this.subscriptions.add(
+      this.eventSubject.subscribe { event -> this.logger.debug("event: {}", event) }
+    )
+    this.subscriptions.add(
+      this.eventSubject.ofType(SR2ReadingPositionChanged::class.java)
+        .distinct()
+        .subscribe(this::updateBookmarkLastRead)
+    )
   }
 
   private fun serverLocationOfTarget(
@@ -235,21 +245,35 @@ internal class SR2Controller private constructor(
   }
 
   private fun updateBookmarkLastRead(
-    title: String,
-    locator: SR2Locator
+    position: SR2ReadingPositionChanged
   ) {
-    val newBookmark = SR2Bookmark(
-      date = DateTime.now(),
-      type = LAST_READ,
-      title = title,
-      locator = locator,
-      bookProgress = this.currentBookProgress
-    )
-    val newBookmarks = this.bookmarks.toMutableList()
-    newBookmarks.removeAll { bookmark -> bookmark.type == LAST_READ }
-    newBookmarks.add(newBookmark)
-    this.bookmarks = newBookmarks.toList()
-    this.eventSubject.onNext(SR2BookmarkCreated(newBookmark))
+
+    /*
+     * This is pure paranoia; we only update the last-read location if the new position
+     * doesn't appear to point to the very start of the book. This is to defend against
+     * any future bugs that might cause a "reading position change" event to be published
+     * before the user's _real_ last-read position has been restored using a command or
+     * bookmark. If this happened, we'd accidentally overwrite the user's reading position with
+     * a pointer to the start of the book, so this check prevents that.
+     */
+
+    val currentIndex = inferredNodeIndexOf(this.currentTarget)
+    if (currentIndex != 0 || position.chapterProgress > 0.000_001) {
+      this.queueExecutor.execute {
+        val newBookmark = SR2Bookmark(
+          date = DateTime.now(),
+          type = LAST_READ,
+          title = position.chapterTitle ?: "",
+          locator = position.locator,
+          bookProgress = this.currentBookProgress
+        )
+        val newBookmarks = this.bookmarks.toMutableList()
+        newBookmarks.removeAll { bookmark -> bookmark.type == LAST_READ }
+        newBookmarks.add(newBookmark)
+        this.bookmarks = newBookmarks.toList()
+        this.eventSubject.onNext(SR2BookmarkCreated(newBookmark))
+      }
+    }
   }
 
   private fun executeInternalCommand(
@@ -303,7 +327,7 @@ internal class SR2Controller private constructor(
     apiCommand: SR2Command.ThemeSet
   ): ListenableFuture<*> {
     this.publishCommmandRunningLong(command)
-    return this.executeThemeSet(waitForWebViewAvailability(), apiCommand.theme)
+    return this.executeThemeSet(this.waitForWebViewAvailability(), apiCommand.theme)
   }
 
   private fun executeThemeSet(
@@ -334,7 +358,7 @@ internal class SR2Controller private constructor(
   }
 
   private fun executeCommandThemeRefresh(): ListenableFuture<*> {
-    return this.executeThemeSet(waitForWebViewAvailability(), this.themeMostRecent)
+    return this.executeThemeSet(this.waitForWebViewAvailability(), this.themeMostRecent)
   }
 
   /**
@@ -381,23 +405,12 @@ internal class SR2Controller private constructor(
   private fun executeCommandRefresh(
     command: SR2CommandSubmission
   ): ListenableFuture<*> {
-    val openFuture =
-      this.openNodeForLocator(
-        command,
-        SR2LocatorPercent(
-          chapterHref = this.currentTarget.node.navigationPoint.locator.chapterHref,
-          chapterProgress = this.currentTargetProgress
-        )
+    return this.openNodeForLocator(
+      command,
+      SR2LocatorPercent(
+        chapterHref = this.currentTarget.node.navigationPoint.locator.chapterHref,
+        chapterProgress = this.currentTargetProgress
       )
-
-    /*
-     * If there was previously a theme set, then refresh the theme.
-     */
-
-    return Futures.transformAsync(
-      openFuture,
-      AsyncFunction { this.executeCommandThemeRefresh() },
-      MoreExecutors.directExecutor()
     )
   }
 
@@ -527,7 +540,7 @@ internal class SR2Controller private constructor(
   ): ListenableFuture<*> {
     val previousNode = this.currentTarget
 
-    try {
+    return try {
       this.publishCommmandRunningLong(command)
 
       val target =
@@ -564,7 +577,20 @@ internal class SR2Controller private constructor(
           MoreExecutors.directExecutor()
         )
 
-      return moveFuture
+      /*
+       * If there's a fragment, attempt to scroll to it.
+       */
+
+      when (val fragment = locator.chapterHref.substringAfter('#', "")) {
+        "" ->
+          moveFuture
+        else ->
+          Futures.transformAsync(
+            moveFuture,
+            AsyncFunction { connection.executeJS { js -> js.scrollToId(fragment) } },
+            MoreExecutors.directExecutor()
+          )
+      }
     } catch (e: Exception) {
       this.logger.error("unable to open chapter ${locator.chapterHref}: ", e)
       this.setCurrentNode(previousNode)
@@ -585,8 +611,9 @@ internal class SR2Controller private constructor(
     locator: SR2Locator
   ): ListenableFuture<*> =
     when (locator) {
-      is SR2LocatorPercent ->
+      is SR2LocatorPercent -> {
         connection.executeJS { js -> js.setProgression(locator.chapterProgress) }
+      }
       is SR2LocatorChapterEnd ->
         connection.executeJS { js -> js.openPageLast() }
     }
@@ -597,11 +624,7 @@ internal class SR2Controller private constructor(
     }
 
     val chapterCount = this.publication.readingOrder.size
-    val currentIndex = when (val node = this.currentTarget.node) {
-      is SR2NavigationNode.SR2NavigationReadingOrderNode -> node.index
-      is SR2NavigationNode.SR2NavigationResourceNode -> 1
-      is SR2NavigationNode.SR2NavigationTOCNode -> 1
-    }
+    val currentIndex = this.inferredNodeIndexOf(this.currentTarget)
 
     val result = ((currentIndex + 1 * chapterProgress) / chapterCount)
     this.logger.debug("$result = ($currentIndex + 1 * $chapterProgress) / $chapterCount")
@@ -636,32 +659,8 @@ internal class SR2Controller private constructor(
       this@SR2Controller.currentTargetProgress =
         chapterProgress
 
-      val currentIndex = when (val node = currentTarget.node) {
-        is SR2NavigationNode.SR2NavigationReadingOrderNode -> node.index
-        is SR2NavigationNode.SR2NavigationResourceNode -> 1
-        is SR2NavigationNode.SR2NavigationTOCNode -> 1
-      }
-
-      /*
-       * This is pure paranoia; we only update the last-read location if the new position
-       * doesn't appear to point to the very start of the book. This is to defend against
-       * any future bugs that might cause a "reading position change" event to be published
-       * before the user's _real_ last-read position has been restored using a command or
-       * bookmark. If this happened, we'd accidentally overwrite the user's reading position with
-       * a pointer to the start of the book, so this check prevents that.
-       */
-
-      if (currentIndex != 0 || chapterProgress > 0.000_001) {
-        this@SR2Controller.queueExecutor.execute {
-          this@SR2Controller.updateBookmarkLastRead(
-            title = chapterTitle,
-            locator = SR2LocatorPercent(
-              chapterHref = currentTarget.node.navigationPoint.locator.chapterHref,
-              chapterProgress = chapterProgress
-            )
-          )
-        }
-      }
+      val currentIndex =
+        this@SR2Controller.inferredNodeIndexOf(currentTarget)
 
       return when (this@SR2Controller.publication.metadata.presentation.layout) {
         EpubLayout.FIXED -> {
@@ -749,6 +748,15 @@ internal class SR2Controller private constructor(
     ) {
       this.logger.error("logError: {}:{}: {}", file, line, message)
     }
+  }
+
+  private fun inferredNodeIndexOf(currentTarget: SR2NavigationTarget): Int {
+    val currentIndex = when (val node = currentTarget.node) {
+      is SR2NavigationNode.SR2NavigationReadingOrderNode -> node.index
+      is SR2NavigationNode.SR2NavigationResourceNode -> 1
+      is SR2NavigationNode.SR2NavigationTOCNode -> 1
+    }
+    return currentIndex
   }
 
   private fun submitCommandActual(
@@ -907,6 +915,11 @@ internal class SR2Controller private constructor(
         this.eventSubject.onComplete()
       } catch (e: Exception) {
         this.logger.error("could not complete event stream: ", e)
+      }
+
+      try {
+      } catch (e: Exception) {
+        this.logger.error("could not unsubscribe: ", e)
       }
     }
   }

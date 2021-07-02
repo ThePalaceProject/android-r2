@@ -20,7 +20,6 @@ var readium = (function() {
     }, false);
 
     var pageWidth = 1;
-    var scrollPositionRecursing = false;
 
     /*
      * Return the number of pages in paginated mode, or 1 for scrolling mode.
@@ -89,12 +88,6 @@ var readium = (function() {
         return;
       }
 
-      if (scrollPositionRecursing) {
-        console.log("scrollPositionRecursing")
-        return;
-      }
-
-      scrollPositionRecursing = true
       var scrollX       = window.scrollX;
       var documentWidth = document.scrollingElement.scrollWidth;
       var progress      = scrollX / documentWidth;
@@ -103,7 +96,6 @@ var readium = (function() {
       var pageCount = getCurrentPageCount();
       var pageIndex = getCurrentPageIndex();
       Android.onReadingPositionChanged(progress, pageIndex, pageCount);
-      scrollPositionRecursing = false
     }
 
     /*
@@ -164,9 +156,7 @@ var readium = (function() {
         }
         console.log("scrolling to element " + element + " with id " + id)
         element.scrollIntoView({inline: "center"});
-        console.log("position before snap: " + document.scrollingElement.scrollLeft)
         snapCurrentOffset();
-        console.log("position after snap:  " + document.scrollingElement.scrollLeft)
     }
 
     // Position must be in the range [0 - 1], 0-100%.

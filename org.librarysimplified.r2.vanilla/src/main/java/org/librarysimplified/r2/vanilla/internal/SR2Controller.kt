@@ -48,6 +48,7 @@ import java.net.ServerSocket
 import java.net.URI
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.annotation.concurrent.GuardedBy
 
@@ -216,11 +217,12 @@ internal class SR2Controller private constructor(
 
   init {
     this.subscriptions.add(
-      this.eventSubject.subscribe { event -> this.logger.debug("event: {}", event) }
+      this.eventSubject.subscribe { event -> this.logger.trace("event: {}", event) }
     )
     this.subscriptions.add(
       this.eventSubject.ofType(SR2ReadingPositionChanged::class.java)
-        .distinct()
+        .distinctUntilChanged()
+        .throttleLast(1, TimeUnit.SECONDS)
         .subscribe(this::updateBookmarkLastRead)
     )
   }

@@ -19,6 +19,12 @@ sealed class SR2Locator : Comparable<SR2Locator> {
       }
     }
 
+    companion object {
+      fun start(href: String): SR2LocatorPercent {
+        return SR2LocatorPercent(chapterProgress = 0.0, chapterHref = href)
+      }
+    }
+
     override fun compareTo(other: SR2Locator): Int {
       val indexCmp = this.chapterHref.compareTo(other.chapterHref)
       return if (indexCmp == 0) {

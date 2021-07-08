@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1" xml:lang="en-US">
+	<head>
+		<meta content="urn:uuid:4d66b198-3bd3-4118-923f-963e9dde56a7" name="dtb:uid"/>
+	</head>
+	<docTitle>
+		<text>Table of Contents</text>
+	</docTitle>
+	<navMap id="navmap">
+		<navPoint id="navpoint-1" playOrder="1">
+			<navLabel>
+                <text>Chapter 0</text>
+			</navLabel>
+			<content src="text/p0.xhtml"/>
+            <navPoint id="navpoint-2" playOrder="2">
+                <navLabel>
+                    <text>Chapter 0.1</text>
+                </navLabel>
+                <content src="text/p0.xhtml#p0_01"/>
+            </navPoint>
+            <navPoint id="navpoint-3" playOrder="3">
+                <navLabel>
+                    <text>Chapter 0.2</text>
+                </navLabel>
+                <content src="text/p0.xhtml#p0_02"/>
+            </navPoint>
+		</navPoint>
+
+        <navPoint id="navpoint-4" playOrder="4">
+            <navLabel>
+                <text>Chapter 1</text>
+            </navLabel>
+            <content src="text/p1.xhtml"/>
+            <navPoint id="navpoint-5" playOrder="5">
+                <navLabel>
+                    <text>Chapter 0</text>
+                </navLabel>
+                <content src="text/p1.xhtml#p1_01"/>
+            </navPoint>
+            <navPoint id="navpoint-6" playOrder="6">
+                <navLabel>
+                    <text>Chapter 0</text>
+                </navLabel>
+                <content src="text/p1.xhtml#p1_02"/>
+            </navPoint>
+        </navPoint>
+
+        <navPoint id="navpoint-7" playOrder="7">
+            <navLabel>
+                <text>Chapter 2</text>
+            </navLabel>
+            <content src="text/p2.xhtml"/>
+        </navPoint>
+	</navMap>
+</ncx>

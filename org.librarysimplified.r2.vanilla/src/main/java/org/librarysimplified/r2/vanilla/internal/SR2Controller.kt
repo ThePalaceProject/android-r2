@@ -7,11 +7,11 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import com.google.common.util.concurrent.SettableFuture
 import io.reactivex.Observable
+import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.Subject
 import kotlinx.coroutines.runBlocking
 import org.joda.time.DateTime
-import org.librarysimplified.r2.api.SR2BookChapter
 import org.librarysimplified.r2.api.SR2BookMetadata
 import org.librarysimplified.r2.api.SR2Bookmark
 import org.librarysimplified.r2.api.SR2Bookmark.Type.LAST_READ
@@ -32,8 +32,12 @@ import org.librarysimplified.r2.api.SR2Event.SR2ReadingPositionChanged
 import org.librarysimplified.r2.api.SR2Locator
 import org.librarysimplified.r2.api.SR2Locator.SR2LocatorChapterEnd
 import org.librarysimplified.r2.api.SR2Locator.SR2LocatorPercent
+import org.librarysimplified.r2.api.SR2NavigationNode
+import org.librarysimplified.r2.api.SR2NavigationTarget
 import org.librarysimplified.r2.api.SR2Theme
 import org.readium.r2.shared.publication.Publication
+import org.readium.r2.shared.publication.epub.EpubLayout
+import org.readium.r2.shared.publication.presentation.presentation
 import org.readium.r2.shared.publication.services.isRestricted
 import org.readium.r2.shared.publication.services.protectionError
 import org.readium.r2.shared.util.getOrElse
@@ -44,6 +48,7 @@ import java.net.ServerSocket
 import java.net.URI
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.annotation.concurrent.GuardedBy
 
@@ -156,6 +161,8 @@ internal class SR2Controller private constructor(
     }
   }
 
+  private val subscriptions =
+    CompositeDisposable()
   private val logger =
     LoggerFactory.getLogger(SR2Controller::class.java)
 
@@ -193,11 +200,11 @@ internal class SR2Controller private constructor(
     )
 
   @Volatile
-  private var currentChapter: SR2BookChapter =
-    this.bookMetadata.readingOrder.first()
+  private var currentTarget: SR2NavigationTarget =
+    this.bookMetadata.navigationGraph.start()
 
   @Volatile
-  private var currentChapterProgress = 0.0
+  private var currentTargetProgress = 0.0
 
   @Volatile
   private var currentBookProgress = 0.0
@@ -209,43 +216,66 @@ internal class SR2Controller private constructor(
   private var uiVisible: Boolean = true
 
   init {
-    this.eventSubject.subscribe { event -> this.logger.debug("event: {}", event) }
+    this.subscriptions.add(
+      this.eventSubject.subscribe { event -> this.logger.trace("event: {}", event) }
+    )
+    this.subscriptions.add(
+      this.eventSubject.ofType(SR2ReadingPositionChanged::class.java)
+        .distinctUntilChanged()
+        .throttleLast(1, TimeUnit.SECONDS)
+        .subscribe(this::updateBookmarkLastRead)
+    )
   }
 
-  private fun serverLocationOfChapter(
-    chapter: SR2BookChapter
+  private fun serverLocationOfTarget(
+    target: SR2NavigationTarget
   ): String {
-    val href = chapter.chapterHref.replace("^/+".toRegex(), "")
-    return String.format("%s/%s", this.baseUrl, href)
+    val href = target.node.navigationPoint.locator.chapterHref.replace("^/+".toRegex(), "")
+    return when (target.extraFragment) {
+      null -> String.format("%s/%s", this.baseUrl, href)
+      else -> String.format("%s/%s#%s", this.baseUrl, href, target.extraFragment)
+    }
   }
 
-  private fun setCurrentChapter(locator: SR2Locator) {
-    val chapter = this.bookMetadata.findChapter(locator)
-      ?: throw IllegalStateException("Unable to find a chapter for locator $locator")
-
-    this.currentChapter = chapter
-    this.currentChapterProgress = when (locator) {
+  private fun setCurrentNode(target: SR2NavigationTarget) {
+    this.logger.debug("currentNode: {}", target.node.javaClass)
+    this.currentTarget = target
+    this.currentTargetProgress = when (val locator = target.node.navigationPoint.locator) {
       is SR2LocatorPercent -> locator.chapterProgress
       is SR2LocatorChapterEnd -> 1.0
     }
   }
 
   private fun updateBookmarkLastRead(
-    title: String,
-    locator: SR2Locator
+    position: SR2ReadingPositionChanged
   ) {
-    val newBookmark = SR2Bookmark(
-      date = DateTime.now(),
-      type = LAST_READ,
-      title = title,
-      locator = locator,
-      bookProgress = this.currentBookProgress
-    )
-    val newBookmarks = this.bookmarks.toMutableList()
-    newBookmarks.removeAll { bookmark -> bookmark.type == LAST_READ }
-    newBookmarks.add(newBookmark)
-    this.bookmarks = newBookmarks.toList()
-    this.eventSubject.onNext(SR2BookmarkCreated(newBookmark))
+
+    /*
+     * This is pure paranoia; we only update the last-read location if the new position
+     * doesn't appear to point to the very start of the book. This is to defend against
+     * any future bugs that might cause a "reading position change" event to be published
+     * before the user's _real_ last-read position has been restored using a command or
+     * bookmark. If this happened, we'd accidentally overwrite the user's reading position with
+     * a pointer to the start of the book, so this check prevents that.
+     */
+
+    val currentIndex = inferredNodeIndexOf(this.currentTarget)
+    if (currentIndex != 0 || position.chapterProgress > 0.000_001) {
+      this.queueExecutor.execute {
+        val newBookmark = SR2Bookmark(
+          date = DateTime.now(),
+          type = LAST_READ,
+          title = position.chapterTitle ?: "",
+          locator = position.locator,
+          bookProgress = this.currentBookProgress
+        )
+        val newBookmarks = this.bookmarks.toMutableList()
+        newBookmarks.removeAll { bookmark -> bookmark.type == LAST_READ }
+        newBookmarks.add(newBookmark)
+        this.bookmarks = newBookmarks.toList()
+        this.eventSubject.onNext(SR2BookmarkCreated(newBookmark))
+      }
+    }
   }
 
   private fun executeInternalCommand(
@@ -299,7 +329,7 @@ internal class SR2Controller private constructor(
     apiCommand: SR2Command.ThemeSet
   ): ListenableFuture<*> {
     this.publishCommmandRunningLong(command)
-    return this.executeThemeSet(waitForWebViewAvailability(), apiCommand.theme)
+    return this.executeThemeSet(this.waitForWebViewAvailability(), apiCommand.theme)
   }
 
   private fun executeThemeSet(
@@ -330,7 +360,7 @@ internal class SR2Controller private constructor(
   }
 
   private fun executeCommandThemeRefresh(): ListenableFuture<*> {
-    return this.executeThemeSet(waitForWebViewAvailability(), this.themeMostRecent)
+    return this.executeThemeSet(this.waitForWebViewAvailability(), this.themeMostRecent)
   }
 
   /**
@@ -358,8 +388,8 @@ internal class SR2Controller private constructor(
       SR2Bookmark(
         date = DateTime.now(),
         type = SR2Bookmark.Type.EXPLICIT,
-        title = this.currentChapter.title,
-        locator = SR2LocatorPercent(this.currentChapter.chapterHref, this.currentChapterProgress),
+        title = this.currentTarget.node.title,
+        locator = SR2LocatorPercent(this.currentTarget.node.navigationPoint.locator.chapterHref, this.currentTargetProgress),
         bookProgress = this.currentBookProgress
       )
 
@@ -377,20 +407,12 @@ internal class SR2Controller private constructor(
   private fun executeCommandRefresh(
     command: SR2CommandSubmission
   ): ListenableFuture<*> {
-    val openFuture =
-      this.openChapterForLocator(
-        command,
-        SR2LocatorPercent(this.currentChapter.chapterHref, this.currentChapterProgress)
+    return this.openNodeForLocator(
+      command,
+      SR2LocatorPercent(
+        chapterHref = this.currentTarget.node.navigationPoint.locator.chapterHref,
+        chapterProgress = this.currentTargetProgress
       )
-
-    /*
-     * If there was previously a theme set, then refresh the theme.
-     */
-
-    return Futures.transformAsync(
-      openFuture,
-      AsyncFunction { this.executeCommandThemeRefresh() },
-      MoreExecutors.directExecutor()
     )
   }
 
@@ -415,13 +437,13 @@ internal class SR2Controller private constructor(
   private fun executeCommandOpenChapterPrevious(
     command: SR2CommandSubmission
   ): ListenableFuture<*> {
-    val prevChapter =
-      this.bookMetadata.previousChapter(this.currentChapter)
+    val previousNode =
+      this.bookMetadata.navigationGraph.findPreviousNode(this.currentTarget.node)
         ?: return Futures.immediateFuture(Unit)
 
-    return this.openChapterForLocator(
+    return this.openNodeForLocator(
       command,
-      SR2LocatorChapterEnd(chapterHref = prevChapter.chapterHref)
+      SR2LocatorChapterEnd(chapterHref = previousNode.navigationPoint.locator.chapterHref)
     )
   }
 
@@ -432,14 +454,14 @@ internal class SR2Controller private constructor(
   private fun executeCommandOpenChapterNext(
     command: SR2CommandSubmission
   ): ListenableFuture<*> {
-    val nextChapter =
-      this.bookMetadata.nextChapter(this.currentChapter)
+    val nextNode =
+      this.bookMetadata.navigationGraph.findNextNode(this.currentTarget.node)
         ?: return Futures.immediateFuture(Unit)
 
-    return this.openChapterForLocator(
+    return this.openNodeForLocator(
       command,
       SR2LocatorPercent(
-        chapterHref = nextChapter.chapterHref,
+        chapterHref = nextNode.navigationPoint.locator.chapterHref,
         chapterProgress = 0.0
       )
     )
@@ -469,7 +491,7 @@ internal class SR2Controller private constructor(
     command: SR2CommandSubmission,
     apiCommand: SR2Command.OpenChapter
   ): ListenableFuture<*> {
-    return this.openChapterForLocator(command, apiCommand.locator)
+    return this.openNodeForLocator(command, apiCommand.locator)
   }
 
   /**
@@ -511,30 +533,25 @@ internal class SR2Controller private constructor(
   }
 
   /**
-   * Load the chapter for the given locator, and set the reading position appropriately.
+   * Load the node for the given locator, and set the reading position appropriately.
    */
 
-  private fun openChapterForLocator(
+  private fun openNodeForLocator(
     command: SR2CommandSubmission,
     locator: SR2Locator
   ): ListenableFuture<*> {
-    val previousLocator =
-      SR2LocatorPercent(
-        chapterHref = this.currentChapter.chapterHref,
-        chapterProgress = this.currentChapterProgress
-      )
+    val previousNode = this.currentTarget
 
-    try {
+    return try {
       this.publishCommmandRunningLong(command)
 
-      val targetChapter =
-        this.bookMetadata.findChapter(locator)
+      val target =
+        this.bookMetadata.navigationGraph.findNavigationNode(locator)
           ?: throw IllegalStateException("Unable to locate a chapter for locator $locator")
-      val targetLocation =
-        this.serverLocationOfChapter(targetChapter)
 
-      this.logger.debug("openChapterForLocator: {}", targetLocation)
-      this.setCurrentChapter(locator)
+      val targetLocation = this.serverLocationOfTarget(target)
+      this.logger.debug("openNodeForLocator: {}", targetLocation)
+      this.setCurrentNode(target)
 
       val connection =
         this.waitForWebViewAvailability()
@@ -562,10 +579,23 @@ internal class SR2Controller private constructor(
           MoreExecutors.directExecutor()
         )
 
-      return moveFuture
+      /*
+       * If there's a fragment, attempt to scroll to it.
+       */
+
+      when (val fragment = locator.chapterHref.substringAfter('#', "")) {
+        "" ->
+          moveFuture
+        else ->
+          Futures.transformAsync(
+            moveFuture,
+            AsyncFunction { connection.executeJS { js -> js.scrollToId(fragment) } },
+            MoreExecutors.directExecutor()
+          )
+      }
     } catch (e: Exception) {
       this.logger.error("unable to open chapter ${locator.chapterHref}: ", e)
-      this.setCurrentChapter(previousLocator)
+      this.setCurrentNode(previousNode)
       this.eventSubject.onNext(
         SR2Event.SR2Error.SR2ChapterNonexistent(
           chapterHref = locator.chapterHref,
@@ -583,8 +613,9 @@ internal class SR2Controller private constructor(
     locator: SR2Locator
   ): ListenableFuture<*> =
     when (locator) {
-      is SR2LocatorPercent ->
+      is SR2LocatorPercent -> {
         connection.executeJS { js -> js.setProgression(locator.chapterProgress) }
+      }
       is SR2LocatorChapterEnd ->
         connection.executeJS { js -> js.openPageLast() }
     }
@@ -595,7 +626,8 @@ internal class SR2Controller private constructor(
     }
 
     val chapterCount = this.publication.readingOrder.size
-    val currentIndex = this.currentChapter.chapterIndex
+    val currentIndex = this.inferredNodeIndexOf(this.currentTarget)
+
     val result = ((currentIndex + 1 * chapterProgress) / chapterCount)
     this.logger.debug("$result = ($currentIndex + 1 * $chapterProgress) / $chapterCount")
     return result
@@ -619,47 +651,54 @@ internal class SR2Controller private constructor(
       currentPage: Int,
       pageCount: Int
     ) {
+      val currentTarget =
+        this@SR2Controller.currentTarget
       val chapterTitle =
-        this@SR2Controller.currentChapter.title
+        currentTarget.node.title
 
-      val currentChapter =
-        this@SR2Controller.currentChapter
       this@SR2Controller.currentBookProgress =
         this@SR2Controller.getBookProgress(chapterProgress)
-      this@SR2Controller.currentChapterProgress =
+      this@SR2Controller.currentTargetProgress =
         chapterProgress
 
-      /*
-       * This is pure paranoia; we only update the last-read location if the new position
-       * doesn't appear to point to the very start of the book. This is to defend against
-       * any future bugs that might cause a "reading position change" event to be published
-       * before the user's _real_ last-read position has been restored using a command or
-       * bookmark. If this happened, we'd accidentally overwrite the user's reading position with
-       * a pointer to the start of the book, so this check prevents that.
-       */
+      val currentIndex =
+        this@SR2Controller.inferredNodeIndexOf(currentTarget)
 
-      if (currentChapter.chapterIndex != 0 || chapterProgress > 0.000_001) {
-        this@SR2Controller.queueExecutor.execute {
-          this@SR2Controller.updateBookmarkLastRead(
-            title = chapterTitle,
-            locator = SR2LocatorPercent(
-              chapterHref = currentChapter.chapterHref,
-              chapterProgress = chapterProgress
+      return when (this@SR2Controller.publication.metadata.presentation.layout) {
+        EpubLayout.FIXED -> {
+
+          /*
+           * For fixed-layout EPUB files, we'll have one page per chapter, and the chapters
+           * themselves are supposed to represent "pages". Therefore, we publish page number
+           * indicators that are actually the chapter indices and counts instead.
+           */
+
+          this@SR2Controller.eventSubject.onNext(
+            SR2ReadingPositionChanged(
+              chapterHref = currentTarget.node.navigationPoint.locator.chapterHref,
+              chapterTitle = chapterTitle,
+              chapterProgress = chapterProgress,
+              currentPage = Math.max(1, currentIndex + 1),
+              pageCount = this@SR2Controller.bookMetadata.navigationGraph.readingOrder.size,
+              bookProgress = this@SR2Controller.currentBookProgress
+            )
+          )
+        }
+
+        EpubLayout.REFLOWABLE,
+        null -> {
+          this@SR2Controller.eventSubject.onNext(
+            SR2ReadingPositionChanged(
+              chapterHref = currentTarget.node.navigationPoint.locator.chapterHref,
+              chapterTitle = chapterTitle,
+              chapterProgress = chapterProgress,
+              currentPage = currentPage,
+              pageCount = pageCount,
+              bookProgress = this@SR2Controller.currentBookProgress
             )
           )
         }
       }
-
-      this@SR2Controller.eventSubject.onNext(
-        SR2ReadingPositionChanged(
-          chapterHref = currentChapter.chapterHref,
-          chapterTitle = chapterTitle,
-          chapterProgress = chapterProgress,
-          currentPage = currentPage,
-          pageCount = pageCount,
-          bookProgress = this@SR2Controller.currentBookProgress
-        )
-      )
     }
 
     @android.webkit.JavascriptInterface
@@ -711,6 +750,15 @@ internal class SR2Controller private constructor(
     ) {
       this.logger.error("logError: {}:{}: {}", file, line, message)
     }
+  }
+
+  private fun inferredNodeIndexOf(currentTarget: SR2NavigationTarget): Int {
+    val currentIndex = when (val node = currentTarget.node) {
+      is SR2NavigationNode.SR2NavigationReadingOrderNode -> node.index
+      is SR2NavigationNode.SR2NavigationResourceNode -> 1
+      is SR2NavigationNode.SR2NavigationTOCNode -> 1
+    }
+    return currentIndex
   }
 
   private fun submitCommandActual(
@@ -773,8 +821,8 @@ internal class SR2Controller private constructor(
 
   override fun positionNow(): SR2Locator {
     return SR2LocatorPercent(
-      this.currentChapter.chapterHref,
-      this.currentChapterProgress
+      this.currentTarget.node.navigationPoint.locator.chapterHref,
+      this.currentTargetProgress
     )
   }
 
@@ -869,6 +917,11 @@ internal class SR2Controller private constructor(
         this.eventSubject.onComplete()
       } catch (e: Exception) {
         this.logger.error("could not complete event stream: ", e)
+      }
+
+      try {
+      } catch (e: Exception) {
+        this.logger.error("could not unsubscribe: ", e)
       }
     }
   }

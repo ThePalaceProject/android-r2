@@ -62,12 +62,19 @@ class DemoDatabase(private val context: Context) {
     bookMetadata: SR2BookMetadata
   ): SR2Bookmark {
     val bookmarks = this.bookmarksFor(bookId)
+
+    val startLocator =
+      SR2LocatorPercent(
+        chapterHref = bookMetadata.navigationGraph.start().node.navigationPoint.locator.chapterHref,
+        chapterProgress = 0.0
+      )
+
     return bookmarks.find { bookmark -> bookmark.type == LAST_READ }
       ?: SR2Bookmark(
         date = DateTime.now(),
         type = LAST_READ,
         title = "",
-        locator = SR2LocatorPercent(bookMetadata.readingOrder[0].chapterHref, 0.0),
+        locator = startLocator,
         bookProgress = 0.0
       )
   }

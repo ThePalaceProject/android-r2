@@ -72,4 +72,11 @@ internal interface SR2JavascriptAPIType {
 
   @UiThread
   fun setScrollMode(mode: SR2ScrollingMode): ListenableFuture<*>
+
+  /**
+   * Scroll to the element with the given ID.
+   */
+
+  @UiThread
+  fun scrollToId(id: String): ListenableFuture<*>
 }

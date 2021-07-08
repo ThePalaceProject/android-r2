@@ -16,11 +16,61 @@ var readium = (function() {
             onViewportWidthChanged();
             snapCurrentOffset();
         });
-
         onViewportWidthChanged();
     }, false);
 
     var pageWidth = 1;
+
+    /*
+     * Return the number of pages in paginated mode, or 1 for scrolling mode.
+     */
+
+    function getCurrentPageCount() {
+        if (isScrollModeEnabled()) {
+            return 1;
+        }
+
+        var scrollX       = window.scrollX;
+        var documentWidth = document.scrollingElement.scrollWidth;
+        var pageCountRaw  = Math.round(documentWidth / pageWidth);
+        return Math.max(1, pageCountRaw);
+    }
+
+    /*
+     * Return the index of the current page (starting from 1) in paginated mode, or 1 for
+     * scrolling mode.
+     */
+
+    function getCurrentPageIndex() {
+        if (isScrollModeEnabled()) {
+            return 1;
+        }
+
+        var scrollX       = window.scrollX;
+        var pageIndexRaw  = Math.round(scrollX / pageWidth);
+        var pageIndex1    = pageIndexRaw + 1;
+        return Math.max(1, pageIndex1);
+    }
+
+    /*
+     * Return `true` if the user is currently on the last page of the chapter. Always true
+     * for scrolling mode.
+     */
+
+    function isOnLastPage() {
+        var pageCount = getCurrentPageCount();
+        var pageIndex = getCurrentPageIndex();
+        return pageIndex == pageCount;
+    }
+
+    /*
+     * Return `true` if the user is currently on the first page of the chapter. Always true
+     * for scrolling mode.
+     */
+
+    function isOnFirstPage() {
+        return getCurrentPageIndex() == 1;
+    }
 
     /*
      * A function executed when the scroll position changes. This is used to calculate
@@ -41,13 +91,10 @@ var readium = (function() {
       var scrollX       = window.scrollX;
       var documentWidth = document.scrollingElement.scrollWidth;
       var progress      = scrollX / documentWidth;
+      scrollToPosition(progress);
 
-      var pageCountRaw  = Math.round(documentWidth / pageWidth);
-      var pageCount     = Math.max(1, pageCountRaw);
-      var pageIndexRaw  = Math.round(scrollX / pageWidth);
-      var pageIndex1    = pageIndexRaw + 1;
-      var pageIndex     = Math.max(1, pageIndex1);
-
+      var pageCount = getCurrentPageCount();
+      var pageIndex = getCurrentPageIndex();
       Android.onReadingPositionChanged(progress, pageIndex, pageCount);
     }
 
@@ -100,21 +147,22 @@ var readium = (function() {
         return document.body.dir.toLowerCase() == 'rtl';
     }
 
-    // Scroll to the given TagId in document and snap.
+    // Scroll to the element with the given tag ID
     function scrollToId(id) {
         var element = document.getElementById(id);
         if (!element) {
+            console.log("no element with id " + id)
             return;
         }
-
+        console.log("scrolling to element " + element + " with id " + id)
         element.scrollIntoView({inline: "center"});
-        snapCurrentOffset()
+        snapCurrentOffset();
     }
 
     // Position must be in the range [0 - 1], 0-100%.
     function scrollToPosition(position) {
         if ((position < 0) || (position > 1)) {
-            throw "scrollToPosition() must be given a position from 0.0 to  1.0";
+            throw "scrollToPosition() must be given a position from 0.0 to 1.0";
         }
 
         if (isScrollModeEnabled()) {
@@ -124,7 +172,8 @@ var readium = (function() {
             var documentWidth = document.scrollingElement.scrollWidth;
             var factor = isRTL() ? -1 : 1;
             var offset = documentWidth * position * factor;
-            document.scrollingElement.scrollLeft = snapOffset(offset);
+            var offsetSnapped = snapOffset(offset);
+            document.scrollingElement.scrollLeft = offsetSnapped;
         }
     }
 
@@ -149,6 +198,13 @@ var readium = (function() {
 
     // Returns false if the page is already at the left-most scroll offset.
     function scrollLeft() {
+        if (isRTL() && isOnLastPage()) {
+          return false;
+        }
+        if (isOnFirstPage()) {
+          return false;
+        }
+
         var documentWidth = document.scrollingElement.scrollWidth;
         var offset = window.scrollX - pageWidth;
         var minOffset = isRTL() ? -(documentWidth - pageWidth) : 0;
@@ -157,6 +213,13 @@ var readium = (function() {
 
     // Returns false if the page is already at the right-most scroll offset.
     function scrollRight() {
+        if (isRTL() && isOnFirstPage()) {
+          return false;
+        }
+        if (isOnLastPage()) {
+          return false
+        }
+
         var documentWidth = document.scrollingElement.scrollWidth;
         var offset = window.scrollX + pageWidth;
         var maxOffset = isRTL() ? 0 : (documentWidth - pageWidth);
@@ -177,22 +240,17 @@ var readium = (function() {
         return (diff > 0.01);
     }
 
-    // Snap the offset to the screen width (page width).
+    // Snap the offset to the nearest multiple of the page width.
     function snapOffset(offset) {
-        var value = offset + (isRTL() ? -1 : 1);
-        return value - (value % pageWidth);
+        return pageWidth * Math.round(offset / pageWidth)
     }
 
-    // Snaps the current offset to the page width.
+    // Snaps the current offset to the nearest multiple of the page width.
     function snapCurrentOffset() {
         if (isScrollModeEnabled()) {
             return;
         }
-        var currentOffset = window.scrollX;
-        // Adds half a page to make sure we don't snap to the previous page.
-        var factor = isRTL() ? -1 : 1;
-        var delta = factor * (pageWidth / 2);
-        document.scrollingElement.scrollLeft = snapOffset(currentOffset + delta);
+        document.scrollingElement.scrollLeft = snapOffset(window.scrollX);
     }
 
     /// User Settings.

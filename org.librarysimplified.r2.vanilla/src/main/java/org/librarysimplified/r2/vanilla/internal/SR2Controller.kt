@@ -36,7 +36,8 @@ import org.librarysimplified.r2.api.SR2NavigationNode
 import org.librarysimplified.r2.api.SR2NavigationTarget
 import org.librarysimplified.r2.api.SR2Theme
 import org.readium.r2.shared.publication.Publication
-import org.readium.r2.shared.publication.epub.EpubLayout
+import org.readium.r2.shared.publication.epub.EpubLayout.FIXED
+import org.readium.r2.shared.publication.epub.EpubLayout.REFLOWABLE
 import org.readium.r2.shared.publication.presentation.presentation
 import org.readium.r2.shared.publication.services.isRestricted
 import org.readium.r2.shared.publication.services.protectionError
@@ -665,7 +666,7 @@ internal class SR2Controller private constructor(
         this@SR2Controller.inferredNodeIndexOf(currentTarget)
 
       return when (this@SR2Controller.publication.metadata.presentation.layout) {
-        EpubLayout.FIXED -> {
+        FIXED -> {
 
           /*
            * For fixed-layout EPUB files, we'll have one page per chapter, and the chapters
@@ -685,7 +686,7 @@ internal class SR2Controller private constructor(
           )
         }
 
-        EpubLayout.REFLOWABLE,
+        REFLOWABLE,
         null -> {
           this@SR2Controller.eventSubject.onNext(
             SR2ReadingPositionChanged(
@@ -716,25 +717,49 @@ internal class SR2Controller private constructor(
     @android.webkit.JavascriptInterface
     override fun onLeftTapped() {
       this.logger.debug("onLeftTapped")
-      this@SR2Controller.submitCommand(SR2Command.OpenPagePrevious)
+
+      return when (this@SR2Controller.publication.metadata.presentation.layout) {
+        FIXED ->
+          this@SR2Controller.submitCommand(SR2Command.OpenChapterPrevious(atEnd = true))
+        REFLOWABLE, null ->
+          this@SR2Controller.submitCommand(SR2Command.OpenPagePrevious)
+      }
     }
 
     @android.webkit.JavascriptInterface
     override fun onRightTapped() {
       this.logger.debug("onRightTapped")
-      this@SR2Controller.submitCommand(SR2Command.OpenPageNext)
+
+      return when (this@SR2Controller.publication.metadata.presentation.layout) {
+        FIXED ->
+          this@SR2Controller.submitCommand(SR2Command.OpenChapterNext)
+        REFLOWABLE, null ->
+          this@SR2Controller.submitCommand(SR2Command.OpenPageNext)
+      }
     }
 
     @android.webkit.JavascriptInterface
     override fun onLeftSwiped() {
       this.logger.debug("onLeftSwiped")
-      this@SR2Controller.submitCommand(SR2Command.OpenPageNext)
+
+      return when (this@SR2Controller.publication.metadata.presentation.layout) {
+        FIXED ->
+          this@SR2Controller.submitCommand(SR2Command.OpenChapterNext)
+        REFLOWABLE, null ->
+          this@SR2Controller.submitCommand(SR2Command.OpenPageNext)
+      }
     }
 
     @android.webkit.JavascriptInterface
     override fun onRightSwiped() {
       this.logger.debug("onRightSwiped")
-      this@SR2Controller.submitCommand(SR2Command.OpenPagePrevious)
+
+      return when (this@SR2Controller.publication.metadata.presentation.layout) {
+        FIXED ->
+          this@SR2Controller.submitCommand(SR2Command.OpenChapterPrevious(atEnd = true))
+        REFLOWABLE, null ->
+          this@SR2Controller.submitCommand(SR2Command.OpenPagePrevious)
+      }
     }
 
     @android.webkit.JavascriptInterface

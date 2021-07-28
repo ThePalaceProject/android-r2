@@ -339,16 +339,24 @@ internal class SR2Controller private constructor(
   ): ListenableFuture<*> {
     this.themeMostRecent = theme
 
-    val f0 =
+    val tasks = mutableListOf<ListenableFuture<Any>>()
+    tasks.add(
       viewConnection.executeJS { js -> js.setFontFamily(SR2Fonts.fontFamilyStringOf(theme.font)) }
-    val f1 =
+    )
+    tasks.add(
       viewConnection.executeJS { js -> js.setTheme(SR2ReadiumInternalTheme.from(theme.colorScheme)) }
-    val f2 =
+    )
+    tasks.add(
       viewConnection.executeJS { js -> js.setFontSize(theme.textSize) }
-    val f3 =
+    )
+    tasks.add(
+      viewConnection.executeJS { js -> js.setPublisherCSS(theme.publisherCSS) }
+    )
+    tasks.add(
       viewConnection.executeJS { js -> js.broadcastReadingPosition() }
+    )
 
-    val allFutures = Futures.allAsList(f0, f1, f2, f3)
+    val allFutures = Futures.allAsList(tasks)
     val setFuture = SettableFuture.create<Unit>()
     allFutures.addListener(
       {

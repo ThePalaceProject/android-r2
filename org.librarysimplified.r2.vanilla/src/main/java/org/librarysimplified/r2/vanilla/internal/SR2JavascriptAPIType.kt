@@ -2,6 +2,7 @@ package org.librarysimplified.r2.vanilla.internal
 
 import androidx.annotation.UiThread
 import com.google.common.util.concurrent.ListenableFuture
+import org.librarysimplified.r2.api.SR2PublisherCSS
 import org.librarysimplified.r2.api.SR2ScrollingMode
 
 /**
@@ -79,4 +80,11 @@ internal interface SR2JavascriptAPIType {
 
   @UiThread
   fun scrollToId(id: String): ListenableFuture<*>
+
+  /**
+   * Enable/disable publisher CSS.
+   */
+
+  @UiThread
+  fun setPublisherCSS(css: SR2PublisherCSS): ListenableFuture<*>
 }

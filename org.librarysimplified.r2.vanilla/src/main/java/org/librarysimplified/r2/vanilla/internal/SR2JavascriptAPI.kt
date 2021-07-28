@@ -7,6 +7,9 @@ import com.google.common.util.concurrent.MoreExecutors
 import com.google.common.util.concurrent.SettableFuture
 import org.librarysimplified.r2.api.SR2Command
 import org.librarysimplified.r2.api.SR2ControllerCommandQueueType
+import org.librarysimplified.r2.api.SR2PublisherCSS
+import org.librarysimplified.r2.api.SR2PublisherCSS.SR2_PUBLISHER_DEFAULT_CSS_DISABLED
+import org.librarysimplified.r2.api.SR2PublisherCSS.SR2_PUBLISHER_DEFAULT_CSS_ENABLED
 import org.librarysimplified.r2.api.SR2ScrollingMode
 import org.librarysimplified.r2.api.SR2ScrollingMode.SCROLLING_MODE_CONTINUOUS
 import org.librarysimplified.r2.api.SR2ScrollingMode.SCROLLING_MODE_PAGINATED
@@ -161,6 +164,18 @@ internal class SR2JavascriptAPI(
   @UiThread
   override fun scrollToId(id: String): ListenableFuture<*> {
     return this.executeJavascript("readium.scrollToId(\"$id\");")
+  }
+
+  @UiThread
+  override fun setPublisherCSS(
+    css: SR2PublisherCSS
+  ): ListenableFuture<*> {
+    return when (css) {
+      SR2_PUBLISHER_DEFAULT_CSS_ENABLED ->
+        this.setUserProperty("advancedSettings", "")
+      SR2_PUBLISHER_DEFAULT_CSS_DISABLED ->
+        this.setUserProperty("advancedSettings", "readium-advanced-on")
+    }
   }
 
   @UiThread

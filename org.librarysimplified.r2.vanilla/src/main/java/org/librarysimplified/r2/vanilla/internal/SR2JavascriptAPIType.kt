@@ -37,14 +37,14 @@ internal interface SR2JavascriptAPIType {
    */
 
   @UiThread
-  fun setFontFamily(value: String): ListenableFuture<String>
+  fun setFontFamily(value: String): ListenableFuture<*>
 
   /**
    * Set the text scale (in the range [0, n], where `n = 1.0` means "100%".
    */
 
   @UiThread
-  fun setFontSize(value: Double): ListenableFuture<String>
+  fun setFontSize(value: Double): ListenableFuture<*>
 
   /**
    * Set the reader color scheme.

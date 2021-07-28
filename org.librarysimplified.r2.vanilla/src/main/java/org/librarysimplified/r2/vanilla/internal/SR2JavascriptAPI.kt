@@ -2,6 +2,7 @@ package org.librarysimplified.r2.vanilla.internal
 
 import android.webkit.WebView
 import androidx.annotation.UiThread
+import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import com.google.common.util.concurrent.SettableFuture
@@ -92,42 +93,18 @@ internal class SR2JavascriptAPI(
     return this.executeJavascript("readium.scrollToEnd();")
   }
 
-  override fun setFontFamily(value: String): ListenableFuture<String> {
-    val future = this.setUserProperty("fontFamily", value)
-    future.addListener(
-      Runnable {
-        this.setUserProperty("fontOverride", "readium-font-on")
-      },
-      MoreExecutors.directExecutor()
+  @UiThread
+  override fun setFontFamily(value: String): ListenableFuture<*> {
+    return Futures.allAsList(
+      this.setUserProperty("fontFamily", value),
+      this.setUserProperty("fontOverride", "readium-font-on")
     )
-    return future
   }
 
   @UiThread
   override fun setFontSize(value: Double): ListenableFuture<String> {
     val percent = (value * 100.0).toString() + "%"
     return this.setUserProperty("fontSize", percent)
-  }
-
-  private fun setTextAlign(value: String): ListenableFuture<String> {
-    return this.setUserProperty("textAlign", value)
-  }
-
-  private fun setPageMargin(value: Double): ListenableFuture<String> {
-    // Note: The js property name is 'pageMargins' plural
-    return this.setUserProperty("pageMargins", "$value")
-  }
-
-  private fun setLineHeight(value: Double): ListenableFuture<String> {
-    return this.setUserProperty("lineHeight", "$value")
-  }
-
-  private fun setLetterSpacing(value: Double): ListenableFuture<String> {
-    return this.setUserProperty("letterSpacing", "${value}em")
-  }
-
-  private fun setWordSpacing(value: Double): ListenableFuture<String> {
-    return this.setUserProperty("wordSpacing", "${value}rem")
   }
 
   override fun setTheme(value: SR2ReadiumInternalTheme): ListenableFuture<String> =
@@ -172,9 +149,15 @@ internal class SR2JavascriptAPI(
   ): ListenableFuture<*> {
     return when (css) {
       SR2_PUBLISHER_DEFAULT_CSS_ENABLED ->
-        this.setUserProperty("advancedSettings", "")
+        Futures.allAsList(
+          this.setUserProperty("advancedSettings", ""),
+          this.setUserProperty("fontOverride", "")
+        )
       SR2_PUBLISHER_DEFAULT_CSS_DISABLED ->
-        this.setUserProperty("advancedSettings", "readium-advanced-on")
+        Futures.allAsList(
+          this.setUserProperty("advancedSettings", "readium-advanced-on"),
+          this.setUserProperty("fontOverride", "readium-font-on")
+        )
     }
   }
 

@@ -8,15 +8,14 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import org.librarysimplified.r2.api.SR2TOCEntry
 import org.librarysimplified.r2.views.R
 import org.librarysimplified.r2.views.internal.SR2DiffUtils.tocEntryCallback
 import org.librarysimplified.r2.views.internal.SR2TOCChapterAdapter.SR2TOCChapterViewHolder
 
 internal class SR2TOCChapterAdapter(
   private val resources: Resources,
-  private val onTOCEntrySelected: (SR2TOCEntry) -> Unit
-) : ListAdapter<SR2TOCEntry, SR2TOCChapterViewHolder>(tocEntryCallback) {
+  private val onTOCEntrySelected: (SR2TOCChapterItem) -> Unit
+) : ListAdapter<SR2TOCChapterItem, SR2TOCChapterViewHolder>(tocEntryCallback) {
 
   class SR2TOCChapterViewHolder(
     val rootView: View
@@ -55,14 +54,14 @@ internal class SR2TOCChapterAdapter(
     val layoutParams = holder.chapterTitleText.layoutParams as ViewGroup.MarginLayoutParams
     layoutParams.marginStart = (chapter.depth + 1) * this.dpToPixels(24.0f)
     holder.chapterTitleText.layoutParams = layoutParams
-    holder.chapterTitleText.text = chapter.node.title
+    holder.chapterTitleText.text = chapter.title
   }
 
   private fun dpToPixels(dp: Float): Int {
     return Math.round(dp * (this.resources.displayMetrics.densityDpi / 160f))
   }
 
-  fun setTableOfContentsEntries(entriesNow: List<SR2TOCEntry>) {
+  fun setTableOfContentsEntries(entriesNow: List<SR2TOCChapterItem>) {
     this.submitList(entriesNow)
   }
 }

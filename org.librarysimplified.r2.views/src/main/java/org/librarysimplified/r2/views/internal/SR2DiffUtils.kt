@@ -2,7 +2,6 @@ package org.librarysimplified.r2.views.internal
 
 import androidx.recyclerview.widget.DiffUtil
 import org.librarysimplified.r2.api.SR2Bookmark
-import org.librarysimplified.r2.api.SR2TOCEntry
 
 internal object SR2DiffUtils {
 
@@ -21,17 +20,17 @@ internal object SR2DiffUtils {
         oldItem == newItem
     }
 
-  val tocEntryCallback: DiffUtil.ItemCallback<SR2TOCEntry> =
-    object : DiffUtil.ItemCallback<SR2TOCEntry>() {
+  val tocEntryCallback: DiffUtil.ItemCallback<SR2TOCChapterItem> =
+    object : DiffUtil.ItemCallback<SR2TOCChapterItem>() {
       override fun areItemsTheSame(
-        oldItem: SR2TOCEntry,
-        newItem: SR2TOCEntry
+        oldItem: SR2TOCChapterItem,
+        newItem: SR2TOCChapterItem
       ): Boolean =
         oldItem == newItem
 
       override fun areContentsTheSame(
-        oldItem: SR2TOCEntry,
-        newItem: SR2TOCEntry
+        oldItem: SR2TOCChapterItem,
+        newItem: SR2TOCChapterItem
       ): Boolean =
         oldItem == newItem
     }

@@ -72,24 +72,35 @@ internal class SR2TOCChaptersFragment private constructor(
         .get(SR2ReaderViewModel::class.java)
 
     this.controller = this.readerModel.get()!!
-    this.chapterAdapter.setTableOfContentsEntries(
-      this.controller.bookMetadata.navigationGraph.tableOfContentsFlat
-    )
+    this.chapterAdapter.setTableOfContentsEntries(getChapters())
   }
 
-  private fun onTOCEntrySelected(entry: SR2TOCEntry) {
+  private fun onTOCEntrySelected(entry: SR2TOCChapterItem) {
     this.controller.submitCommand(
       SR2Command.OpenChapter(
         SR2LocatorPercent(
-          chapterHref = entry.node.navigationPoint.locator.chapterHref,
+          chapterHref = entry.href,
           chapterProgress = 0.0
         )
       )
     )
 
     SR2UIThread.runOnUIThreadDelayed(
-      Runnable { this.readerModel.publishViewEvent(SR2ReaderViewNavigationClose) },
+      { this.readerModel.publishViewEvent(SR2ReaderViewNavigationClose) },
       SR2TOC.tocSelectionDelay()
     )
+  }
+
+  /**
+   * Generates a list of SR2TOCChapterItem based on publication's tableOfContents.
+   * If tableOfContents is empty will try to use readingOrder instead.
+   * */
+  private fun getChapters(): List<SR2TOCChapterItem> {
+    val toc = this.controller.bookMetadata.navigationGraph.tableOfContentsFlat
+    return if (toc.isEmpty()) {
+      this.controller.bookMetadata.navigationGraph.readingOrder.map { it.toChapterItem() }
+    } else {
+      toc.map(SR2TOCEntry::toChapterItem)
+    }
   }
 }

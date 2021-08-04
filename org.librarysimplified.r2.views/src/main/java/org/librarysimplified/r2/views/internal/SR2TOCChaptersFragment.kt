@@ -4,9 +4,10 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.isGone
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.SimpleItemAnimator
 import org.librarysimplified.r2.api.SR2Command
@@ -57,7 +58,6 @@ internal class SR2TOCChaptersFragment private constructor(
     recyclerView.adapter = this.chapterAdapter
     recyclerView.setHasFixedSize(true)
     recyclerView.setItemViewCacheSize(32)
-    recyclerView.layoutManager = LinearLayoutManager(this.context)
     (recyclerView.itemAnimator as SimpleItemAnimator).supportsChangeAnimations = false
     return layout
   }
@@ -72,24 +72,40 @@ internal class SR2TOCChaptersFragment private constructor(
         .get(SR2ReaderViewModel::class.java)
 
     this.controller = this.readerModel.get()!!
-    this.chapterAdapter.setTableOfContentsEntries(
-      this.controller.bookMetadata.navigationGraph.tableOfContentsFlat
-    )
+    val chapters = getChapters()
+    view?.apply {
+      findViewById<View>(R.id.tocChaptersError)?.isVisible = chapters.isEmpty()
+      findViewById<RecyclerView>(R.id.tocChaptersList)?.isGone = chapters.isEmpty()
+    }
+    this.chapterAdapter.setTableOfContentsEntries(chapters)
   }
 
-  private fun onTOCEntrySelected(entry: SR2TOCEntry) {
+  private fun onTOCEntrySelected(entry: SR2TOCChapterItem) {
     this.controller.submitCommand(
       SR2Command.OpenChapter(
         SR2LocatorPercent(
-          chapterHref = entry.node.navigationPoint.locator.chapterHref,
+          chapterHref = entry.href,
           chapterProgress = 0.0
         )
       )
     )
 
     SR2UIThread.runOnUIThreadDelayed(
-      Runnable { this.readerModel.publishViewEvent(SR2ReaderViewNavigationClose) },
+      { this.readerModel.publishViewEvent(SR2ReaderViewNavigationClose) },
       SR2TOC.tocSelectionDelay()
     )
+  }
+
+  /**
+   * Generates a list of SR2TOCChapterItem based on publication's tableOfContents.
+   * If tableOfContents is empty will try to use readingOrder instead.
+   * */
+  private fun getChapters(): List<SR2TOCChapterItem> {
+    val toc = this.controller.bookMetadata.navigationGraph.tableOfContentsFlat
+    return if (toc.isEmpty()) {
+      this.controller.bookMetadata.navigationGraph.readingOrder.map { it.toChapterItem() }
+    } else {
+      toc.map(SR2TOCEntry::toChapterItem)
+    }
   }
 }

@@ -1,7 +1,7 @@
 dependencies {
   implementation libraries.androidx_app_compat
   implementation libraries.androidx_constraint_layout
-  implementation libraries.androidx_core
+  implementation libraries.androidx_core_ktx
   implementation libraries.androidx_lifecycle
   implementation libraries.androidx_lifecycle_viewmodel
   implementation libraries.androidx_view_pager2

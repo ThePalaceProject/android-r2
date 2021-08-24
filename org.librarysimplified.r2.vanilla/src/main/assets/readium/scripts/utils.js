@@ -222,7 +222,10 @@ var readium = (function() {
 
         var documentWidth = document.scrollingElement.scrollWidth;
         var offset = window.scrollX + pageWidth;
-        var maxOffset = isRTL() ? 0 : (documentWidth - pageWidth);
+        var maxOffset = Math.max(documentWidth - pageWidth, pageWidth);
+        if (isRTL()) {
+          maxOffset = 0;
+        }
         return scrollToOffset(Math.min(offset, maxOffset));
     }
 
@@ -233,11 +236,12 @@ var readium = (function() {
             throw "Called scrollToOffset() with scroll mode enabled. This can only be used in paginated mode.";
         }
 
-        var currentOffset = window.scrollX;
-        document.scrollingElement.scrollLeft = snapOffset(offset);
-        // In some case the scrollX cannot reach the position respecting to innerWidth
-        var diff = Math.abs(currentOffset - offset) / pageWidth;
-        return (diff > 0.01);
+        var offsetThen = window.scrollX;
+        var offsetNow = snapOffset(offset);
+        document.scrollingElement.scrollLeft = offsetNow;
+
+        var difference = Math.abs(offsetNow - offsetThen)
+        return difference > 0;
     }
 
     // Snap the offset to the nearest multiple of the page width.

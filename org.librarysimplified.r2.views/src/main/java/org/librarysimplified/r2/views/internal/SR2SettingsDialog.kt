@@ -5,11 +5,14 @@ import android.view.View
 import android.widget.SeekBar
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.widget.SwitchCompat
 import androidx.core.content.res.ResourcesCompat
 import org.librarysimplified.r2.api.SR2ColorScheme
 import org.librarysimplified.r2.api.SR2Command
 import org.librarysimplified.r2.api.SR2ControllerType
 import org.librarysimplified.r2.api.SR2Font
+import org.librarysimplified.r2.api.SR2PublisherCSS.SR2_PUBLISHER_DEFAULT_CSS_DISABLED
+import org.librarysimplified.r2.api.SR2PublisherCSS.SR2_PUBLISHER_DEFAULT_CSS_ENABLED
 import org.librarysimplified.r2.api.SR2Theme
 import org.librarysimplified.r2.views.R
 
@@ -56,6 +59,8 @@ internal class SR2SettingsDialog private constructor() {
         dialog.findViewById<View>(R.id.setTextLarger)!!
       val setBrightness =
         dialog.findViewById<SeekBar>(R.id.setBrightness)!!
+      val publisherCSS =
+        dialog.findViewById<SwitchCompat>(R.id.sr2_publisher_css_switch)!!
 
       val openDyslexic = ResourcesCompat.getFont(context, R.font.open_dyslexic)
       setFontDyslexicText.typeface = openDyslexic
@@ -86,6 +91,24 @@ internal class SR2SettingsDialog private constructor() {
       }
       setTextSmaller.setOnClickListener {
         this.updateTheme(controller) { it.copy(textSize = SR2Theme.sizeConstrain(it.textSize - 0.1)) }
+      }
+
+      publisherCSS.isChecked =
+        when (controller.themeNow().publisherCSS) {
+          SR2_PUBLISHER_DEFAULT_CSS_ENABLED -> true
+          SR2_PUBLISHER_DEFAULT_CSS_DISABLED -> false
+        }
+
+      publisherCSS.setOnCheckedChangeListener { buttonView, isChecked ->
+        this.updateTheme(controller) {
+          it.copy(
+            publisherCSS = if (isChecked) {
+              SR2_PUBLISHER_DEFAULT_CSS_ENABLED
+            } else {
+              SR2_PUBLISHER_DEFAULT_CSS_DISABLED
+            }
+          )
+        }
       }
 
       val brightnessInitial = brightness.brightness()

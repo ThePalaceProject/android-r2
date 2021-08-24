@@ -40,6 +40,7 @@ ext.libraries = [
   androidx_app_compat         : "androidx.appcompat:appcompat:${versions.androidx_app_compat}",
   androidx_constraint_layout  : "androidx.constraintlayout:constraintlayout:${versions.androidx_constraint_layout}",
   androidx_core               : "androidx.core:core:${versions.androidx_core}",
+  androidx_core_ktx           : "androidx.core:core-ktx:${versions.androidx_core}",
   androidx_fragment_testing   : "androidx.fragment:fragment-testing:${versions.androidx_fragment_testing}",
   androidx_lifecycle          : "androidx.lifecycle:lifecycle-extensions:${versions.androidx_lifecycle}",
   androidx_lifecycle_viewmodel: "androidx.lifecycle:lifecycle-viewmodel:${versions.androidx_lifecycle_viewmodel}",

@@ -2,6 +2,7 @@ package org.librarysimplified.r2.vanilla.internal
 
 import androidx.annotation.UiThread
 import com.google.common.util.concurrent.ListenableFuture
+import org.librarysimplified.r2.api.SR2PublisherCSS
 import org.librarysimplified.r2.api.SR2ScrollingMode
 
 /**
@@ -36,14 +37,14 @@ internal interface SR2JavascriptAPIType {
    */
 
   @UiThread
-  fun setFontFamily(value: String): ListenableFuture<String>
+  fun setFontFamily(value: String): ListenableFuture<*>
 
   /**
    * Set the text scale (in the range [0, n], where `n = 1.0` means "100%".
    */
 
   @UiThread
-  fun setFontSize(value: Double): ListenableFuture<String>
+  fun setFontSize(value: Double): ListenableFuture<*>
 
   /**
    * Set the reader color scheme.
@@ -79,4 +80,11 @@ internal interface SR2JavascriptAPIType {
 
   @UiThread
   fun scrollToId(id: String): ListenableFuture<*>
+
+  /**
+   * Enable/disable publisher CSS.
+   */
+
+  @UiThread
+  fun setPublisherCSS(css: SR2PublisherCSS): ListenableFuture<*>
 }

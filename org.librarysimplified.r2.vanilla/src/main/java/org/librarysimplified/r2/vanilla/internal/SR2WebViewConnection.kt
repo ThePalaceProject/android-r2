@@ -66,7 +66,6 @@ internal class SR2WebViewConnection(
           builtInZoomControls = true
           displayZoomControls = false
 
-
           /*
            * Allow the web view to obey <meta> viewport elements in the <head> section of
            * documents. This is required for rendering fixed-layout EPUB files.

@@ -9,6 +9,7 @@ import org.librarysimplified.r2.api.SR2ControllerCommandQueueType
 import org.librarysimplified.r2.api.SR2ScrollingMode
 import org.librarysimplified.r2.api.SR2ScrollingMode.SCROLLING_MODE_CONTINUOUS
 import org.librarysimplified.r2.api.SR2ScrollingMode.SCROLLING_MODE_PAGINATED
+import org.readium.r2.shared.publication.epub.EpubLayout
 import org.slf4j.LoggerFactory
 import java.util.UUID
 import java.util.concurrent.ExecutorService
@@ -39,7 +40,8 @@ internal class SR2WebViewConnection(
       jsReceiver: SR2JavascriptAPIReceiverType,
       uiExecutor: (f: () -> Unit) -> Unit,
       commandQueue: SR2ControllerCommandQueueType,
-      scrollingMode: SR2ScrollingMode
+      scrollingMode: SR2ScrollingMode,
+      layout: EpubLayout
     ): SR2WebViewConnectionType {
 
       val threadFactory = ThreadFactory { runnable ->
@@ -52,34 +54,45 @@ internal class SR2WebViewConnection(
       val webChromeClient = SR2WebChromeClient()
       webView.webChromeClient = webChromeClient
       webView.settings.javaScriptEnabled = true
+      webView.addJavascriptInterface(jsReceiver, "Android")
 
-      /*
-       * Allow the web view to obey <meta> viewport elements in the <head> section of
-       * documents. This is required for rendering fixed-layout EPUB files.
-       *
-       * @see "https://www.w3.org/publishing/epub/epub-contentdocs.html#sec-fixed-layouts"
-       */
-
-      webView.settings.loadWithOverviewMode = true
-      webView.settings.useWideViewPort = true
-
-      when (scrollingMode) {
-        SCROLLING_MODE_PAGINATED -> {
+      if (layout == EpubLayout.FIXED) {
+        with(webView.settings) {
           /*
+           * Allow pinch-and-zoom.
+           */
+
+          setSupportZoom(true)
+          builtInZoomControls = true
+          displayZoomControls = false
+
+          /*
+           * Allow the web view to obey <meta> viewport elements in the <head> section of
+           * documents. This is required for rendering fixed-layout EPUB files.
+           *
+           * @see "https://www.w3.org/publishing/epub/epub-contentdocs.html#sec-fixed-layouts"
+           */
+
+          loadWithOverviewMode = true
+          useWideViewPort = true
+        }
+      } else {
+        when (scrollingMode) {
+          SCROLLING_MODE_PAGINATED -> {
+            /*
            * Disable manual scrolling on the web view. Scrolling is controlled via the javascript API.
            */
 
-          webView.setOnTouchListener { v, event -> event.action == MotionEvent.ACTION_MOVE }
-          webView.isVerticalScrollBarEnabled = false
-          webView.isHorizontalScrollBarEnabled = false
-        }
-        SCROLLING_MODE_CONTINUOUS -> {
-          webView.isVerticalScrollBarEnabled = true
-          webView.isHorizontalScrollBarEnabled = false
+            webView.setOnTouchListener { v, event -> event.action == MotionEvent.ACTION_MOVE }
+            webView.isVerticalScrollBarEnabled = false
+            webView.isHorizontalScrollBarEnabled = false
+          }
+          SCROLLING_MODE_CONTINUOUS -> {
+            webView.isVerticalScrollBarEnabled = true
+            webView.isHorizontalScrollBarEnabled = false
+          }
         }
       }
-
-      webView.addJavascriptInterface(jsReceiver, "Android")
 
       return SR2WebViewConnection(
         jsAPI = SR2JavascriptAPI(webView, commandQueue),

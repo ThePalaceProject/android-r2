@@ -876,7 +876,8 @@ internal class SR2Controller private constructor(
         jsReceiver = this.JavascriptAPIReceiver(webView),
         commandQueue = this,
         uiExecutor = this.configuration.uiExecutor,
-        scrollingMode = this.configuration.scrollingMode
+        scrollingMode = this.configuration.scrollingMode,
+        layout = this.publication.metadata.presentation.layout ?: REFLOWABLE
       )
 
     synchronized(this.webViewConnectionLock) {

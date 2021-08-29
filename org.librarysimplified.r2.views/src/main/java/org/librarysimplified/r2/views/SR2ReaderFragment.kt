@@ -6,6 +6,8 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
+import android.view.View.GONE
+import android.view.View.VISIBLE
 import android.view.ViewGroup
 import android.webkit.WebView
 import android.widget.ProgressBar
@@ -213,7 +215,8 @@ class SR2ReaderFragment private constructor(
         streamer = this.parameters.streamer,
         theme = this.parameters.theme,
         uiExecutor = SR2UIThread::runOnUIThread,
-        scrollingMode = this.parameters.scrollingMode
+        scrollingMode = this.parameters.scrollingMode,
+        pageNumberingMode = this.parameters.pageNumberingMode
       )
     )
 
@@ -233,10 +236,30 @@ class SR2ReaderFragment private constructor(
   private fun onReadingPositionChanged(event: SR2ReadingPositionChanged) {
     val context = this.context ?: return
     this.logger.debug("chapterTitle=${event.chapterTitle}")
-    this.progressView.apply { this.max = 100; this.progress = event.bookProgressPercent }
-    this.positionPageView.text = context.getString(R.string.progress_page, event.currentPage, event.pageCount)
-    this.positionTitleView.text = event.chapterTitle
-    this.positionPercentView.text = this.getString(R.string.progress_percent, event.bookProgressPercent)
+    if (event.chapterTitle == null) {
+      this.positionTitleView.visibility = GONE
+    } else {
+      this.positionTitleView.text = event.chapterTitle
+      this.positionTitleView.visibility = VISIBLE
+    }
+
+    if (event.currentPage == null || event.pageCount == null) {
+      this.positionPageView.visibility = GONE
+    } else {
+      this.positionPageView.text = context.getString(R.string.progress_page, event.currentPage, event.pageCount)
+      this.positionPageView.visibility = VISIBLE
+    }
+
+    val bookProgressPercent = event.bookProgressPercent
+    if (bookProgressPercent == null) {
+      this.positionPercentView.visibility = GONE
+      this.progressView.visibility = GONE
+    } else {
+      this.positionPercentView.text = this.getString(R.string.progress_percent, bookProgressPercent)
+      this.progressView.apply { this.max = 100; this.progress = bookProgressPercent }
+      this.positionPercentView.visibility = VISIBLE
+      this.progressView.visibility = VISIBLE
+    }
     this.reconfigureBookmarkMenuItem(event.locator)
   }
 

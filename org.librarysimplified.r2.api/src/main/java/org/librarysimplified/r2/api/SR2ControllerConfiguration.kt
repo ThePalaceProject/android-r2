@@ -58,5 +58,11 @@ data class SR2ControllerConfiguration(
    * The book scrolling mode.
    */
 
-  val scrollingMode: SR2ScrollingMode
+  val scrollingMode: SR2ScrollingMode,
+
+  /**
+   * The pagination numbering mode.
+   */
+
+  val pageNumberingMode: SR2PageNumberingMode
 )

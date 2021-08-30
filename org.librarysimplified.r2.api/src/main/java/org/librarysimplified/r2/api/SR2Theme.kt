@@ -27,12 +27,20 @@ data class SR2Theme(
     const val TEXT_SIZE_MAXIMUM_EXCLUSIVE = 8.0
     const val TEXT_SIZE_MINIMUM_INCLUSIVE = 0.7
 
+    private const val EPSILON = 0.01
+
     /**
      * Constrain the given size parameter to the allowed range [TEXT_SIZE_MINIMUM_INCLUSIVE, TEXT_SIZE_MAXIMUM_EXCLUSIVE).
      */
 
     fun sizeConstrain(size: Double): Double {
-      return Math.max(TEXT_SIZE_MINIMUM_INCLUSIVE, Math.min(size, TEXT_SIZE_MAXIMUM_EXCLUSIVE - 0.01))
+      return Math.max(TEXT_SIZE_MINIMUM_INCLUSIVE, Math.min(size, TEXT_SIZE_MAXIMUM_EXCLUSIVE - EPSILON))
     }
   }
+
+  val isTextSizeMaximized: Boolean
+    get() = this.textSize >= (TEXT_SIZE_MAXIMUM_EXCLUSIVE - (2 * EPSILON))
+
+  val isTextSizeMinimized: Boolean
+    get() = this.textSize <= (TEXT_SIZE_MINIMUM_INCLUSIVE + EPSILON)
 }

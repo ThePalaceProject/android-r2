@@ -7,9 +7,11 @@ import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.SwitchCompat
 import androidx.core.content.res.ResourcesCompat
+import io.reactivex.disposables.CompositeDisposable
 import org.librarysimplified.r2.api.SR2ColorScheme
 import org.librarysimplified.r2.api.SR2Command
 import org.librarysimplified.r2.api.SR2ControllerType
+import org.librarysimplified.r2.api.SR2Event
 import org.librarysimplified.r2.api.SR2Font
 import org.librarysimplified.r2.api.SR2PublisherCSS.SR2_PUBLISHER_DEFAULT_CSS_DISABLED
 import org.librarysimplified.r2.api.SR2PublisherCSS.SR2_PUBLISHER_DEFAULT_CSS_ENABLED
@@ -30,9 +32,14 @@ internal class SR2SettingsDialog private constructor() {
       context: Context,
       controller: SR2ControllerType
     ): SR2SettingsDialog {
+      val eventSubscriptions = CompositeDisposable()
+
       val dialog =
         AlertDialog.Builder(context)
           .setView(R.layout.sr2_settings)
+          .setOnDismissListener {
+            eventSubscriptions.dispose()
+          }
           .create()
 
       dialog.show()
@@ -92,6 +99,21 @@ internal class SR2SettingsDialog private constructor() {
       setTextSmaller.setOnClickListener {
         this.updateTheme(controller) { it.copy(textSize = SR2Theme.sizeConstrain(it.textSize - 0.1)) }
       }
+
+      fun updateSetText() {
+        val themeNow = controller.themeNow()
+
+        setTextSmaller.isEnabled = !themeNow.isTextSizeMinimized
+        setTextLarger.isEnabled = !themeNow.isTextSizeMaximized
+      }
+
+      eventSubscriptions.add(
+        controller.events.ofType(SR2Event.SR2ThemeChanged::class.java).subscribe {
+          updateSetText()
+        }
+      )
+
+      updateSetText()
 
       publisherCSS.isChecked =
         when (controller.themeNow().publisherCSS) {

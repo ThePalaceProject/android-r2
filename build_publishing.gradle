@@ -103,7 +103,7 @@ afterEvaluate {
       }
       maven {
         name = "centralSnapshots"
-        url = "https://oss.sonatype.org/content/repositories/snapshots/"
+        url = "https://s01.oss.sonatype.org/content/repositories/snapshots/"
         credentials(PasswordCredentials) {
           username mavenCentralUsername
           password mavenCentralPassword

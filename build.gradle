@@ -40,14 +40,6 @@ ext {
     mavenCentralPassword = ""
   }
 
-  if (!project.hasProperty("org.librarysimplified.nexus.depend")) {
-    logger.warn("org.librarysimplified.nexus.depend is not set: We will not depend on artifacts on the NYPL Nexus")
-    useNYPLNexusDepend = false
-  } else {
-    logger.warn("org.librarysimplified.nexus.depend is set: We will depend on artifacts on the NYPL Nexus")
-    useNYPLNexusDepend = true
-  }
-
   if (project.hasProperty("org.librarysimplified.directory.publish")) {
     useDirectoryPublishPath = project.property("org.librarysimplified.directory.publish")
     useDirectoryPublish = true
@@ -187,14 +179,9 @@ Automatic-Module-Name: ${POM_AUTOMATIC_MODULE_NAME}
     mavenLocal()
     mavenCentral()
 
-    if (useNYPLNexusDepend) {
-      maven {
-        credentials {
-          username findProperty("org.librarysimplified.nexus.username")
-          password findProperty("org.librarysimplified.nexus.password")
-        }
-        url "https://nexus.librarysimplified.org:8443/nexus/content/groups/external/"
-      }
+    // Sonatype snapshots
+    maven {
+      url "https://s01.oss.sonatype.org/content/repositories/snapshots/"
     }
 
     maven { url "https://jitpack.io" }

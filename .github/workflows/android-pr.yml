@@ -2,7 +2,7 @@ name: Android CI (Pull Requests)
 
 on:
   pull_request:
-    branches: [ develop ]
+    branches: [ main, feature/* ]
 
 jobs:
   build:
@@ -18,3 +18,4 @@ jobs:
           java-version: 11
       - name: Build PR
         run: .ci/ci-main.sh pull-request
+

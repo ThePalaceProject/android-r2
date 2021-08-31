@@ -239,7 +239,7 @@ internal class SR2Controller private constructor(
     )
 
     // Pre-compute positions
-    coroutineScope.launch { publication.positionsByReadingOrder() }
+    runBlocking { publication.positionsByReadingOrder() }
   }
 
   private fun serverLocationOfTarget(

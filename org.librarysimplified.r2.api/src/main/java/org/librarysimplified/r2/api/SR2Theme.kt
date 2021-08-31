@@ -24,7 +24,7 @@ data class SR2Theme(
   }
 
   companion object {
-    const val TEXT_SIZE_MAXIMUM_EXCLUSIVE = 8.0
+    const val TEXT_SIZE_MAXIMUM_EXCLUSIVE = 3.81
     const val TEXT_SIZE_MINIMUM_INCLUSIVE = 0.7
 
     private const val EPSILON = 0.01

@@ -24,6 +24,9 @@ data class SR2Theme(
   }
 
   companion object {
+    // These min and max values are selected to support (approximately) the same range of scaling
+    // as the Palace iOS app:
+    // https://github.com/ThePalaceProject/ios-core/blob/4eeb10aa6fdb0813eef417ef14168cc11c8acc86/Palace/Reader2/Internal/TPPReaderSettings.m#L453
     const val TEXT_SIZE_MAXIMUM_EXCLUSIVE = 3.81
     const val TEXT_SIZE_MINIMUM_INCLUSIVE = 0.7
 

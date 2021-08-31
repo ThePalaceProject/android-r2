@@ -36,11 +36,11 @@ data class SR2Bookmark(
    * An estimate of the current progress through the entire book.
    */
 
-  val bookProgress: Double
+  val bookProgress: Double?
 ) {
 
   init {
-    require(this.bookProgress in 0.0..1.0) {
+    require(this.bookProgress == null || this.bookProgress in 0.0..1.0) {
       "Book progress must be in the range [0, 1]"
     }
   }

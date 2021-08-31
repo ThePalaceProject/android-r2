@@ -1,4 +1,6 @@
-package org.librarysimplified.r2.api
+package org.librarysimplified.r2.vanilla.internal
+
+import org.librarysimplified.r2.api.SR2Locator
 
 /**
  * A navigation point.

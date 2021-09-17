@@ -39,10 +39,9 @@
           android:layout_height="0dp"
           android:gravity="center"
           android:background="@drawable/sr2_transparent_bordered"
-          android:text="@string/settingsABC"
+          android:text="CED"
           android:textAlignment="center"
           android:textSize="24sp"
-          android:typeface="sans"
           android:clickable="false"
           android:focusable="false"
           app:layout_constraintBottom_toBottomOf="parent"
@@ -64,18 +63,20 @@
         <TextView
           android:layout_width="0dp"
           android:layout_height="0dp"
-          android:gravity="center"
           android:background="@drawable/sr2_transparent_bordered"
+          android:clickable="false"
+          android:focusable="false"
+          android:gravity="center"
           android:text="@string/settingsABC"
           android:textAlignment="center"
           android:textSize="24sp"
           android:typeface="serif"
-          android:clickable="false"
-          android:focusable="false"
           app:layout_constraintBottom_toBottomOf="parent"
           app:layout_constraintEnd_toEndOf="parent"
+          app:layout_constraintHorizontal_bias="0.0"
           app:layout_constraintStart_toStartOf="parent"
-          app:layout_constraintTop_toTopOf="parent" />
+          app:layout_constraintTop_toTopOf="parent"
+          app:layout_constraintVertical_bias="0.0" />
       </androidx.constraintlayout.widget.ConstraintLayout>
 
       <androidx.constraintlayout.widget.ConstraintLayout

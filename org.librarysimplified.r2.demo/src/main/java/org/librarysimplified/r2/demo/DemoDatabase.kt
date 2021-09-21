@@ -2,7 +2,6 @@ package org.librarysimplified.r2.demo
 
 import android.content.Context
 import org.joda.time.DateTime
-import org.librarysimplified.r2.api.SR2BookMetadata
 import org.librarysimplified.r2.api.SR2Bookmark
 import org.librarysimplified.r2.api.SR2Bookmark.Type
 import org.librarysimplified.r2.api.SR2Bookmark.Type.EXPLICIT
@@ -59,24 +58,9 @@ class DemoDatabase(private val context: Context) {
 
   fun bookmarkFindLastReadLocation(
     bookId: String,
-    bookMetadata: SR2BookMetadata
-  ): SR2Bookmark {
+  ): SR2Bookmark? {
     val bookmarks = this.bookmarksFor(bookId)
-
-    val startLocator =
-      SR2LocatorPercent(
-        chapterHref = bookMetadata.navigationGraph.start().node.navigationPoint.locator.chapterHref,
-        chapterProgress = 0.0
-      )
-
     return bookmarks.find { bookmark -> bookmark.type == LAST_READ }
-      ?: SR2Bookmark(
-        date = DateTime.now(),
-        type = LAST_READ,
-        title = "",
-        locator = startLocator,
-        bookProgress = 0.0
-      )
   }
 
   fun bookmarksFor(bookId: String): List<SR2Bookmark> {

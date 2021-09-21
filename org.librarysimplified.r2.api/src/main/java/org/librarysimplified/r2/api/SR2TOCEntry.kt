@@ -5,7 +5,8 @@ package org.librarysimplified.r2.api
  */
 
 data class SR2TOCEntry(
-  val node: SR2NavigationNode.SR2NavigationTOCNode,
+  val title: String,
+  val href: String,
   val depth: Int
 ) {
   init {

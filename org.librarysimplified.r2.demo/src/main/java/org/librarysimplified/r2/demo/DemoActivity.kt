@@ -29,6 +29,7 @@ import org.librarysimplified.r2.api.SR2Event.SR2ExternalLinkSelected
 import org.librarysimplified.r2.api.SR2Event.SR2OnCenterTapped
 import org.librarysimplified.r2.api.SR2Event.SR2ReadingPositionChanged
 import org.librarysimplified.r2.api.SR2Event.SR2ThemeChanged
+import org.librarysimplified.r2.api.SR2PageNumberingMode
 import org.librarysimplified.r2.api.SR2ScrollingMode
 import org.librarysimplified.r2.ui_thread.SR2UIThread
 import org.librarysimplified.r2.vanilla.SR2Controllers
@@ -73,6 +74,7 @@ class DemoActivity : AppCompatActivity() {
   private var epubId: String? = null
   private var viewSubscription: Disposable? = null
   private lateinit var scrollMode: CheckBox
+  private lateinit var perChapterPageNumbering: CheckBox
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -82,7 +84,8 @@ class DemoActivity : AppCompatActivity() {
 
       val browseButton = this.findViewById<Button>(R.id.browse_button)!!
       browseButton.setOnClickListener { this.startDocumentPickerForResult() }
-      this.scrollMode = this.findViewById<CheckBox>(R.id.scrollMode)!!
+      this.scrollMode = this.findViewById(R.id.scrollMode)
+      this.perChapterPageNumbering = this.findViewById(R.id.perChapterPageNumbering)
     }
   }
 
@@ -120,9 +123,10 @@ class DemoActivity : AppCompatActivity() {
       // Navigate to the first chapter or saved reading position.
       val database = DemoApplication.application.database()
       val bookId = reference.controller.bookMetadata.id
-      val lastRead = database.bookmarkFindLastReadLocation(bookId, reference.controller.bookMetadata)
       reference.controller.submitCommand(SR2Command.BookmarksLoad(database.bookmarksFor(bookId)))
-      reference.controller.submitCommand(SR2Command.OpenChapter(lastRead.locator))
+      val lastRead = database.bookmarkFindLastReadLocation(bookId)
+      val startLocator = lastRead?.locator ?: reference.controller.bookMetadata.start
+      reference.controller.submitCommand(SR2Command.OpenChapter(startLocator))
     } else {
       // Refresh whatever the controller was looking at previously.
       reference.controller.submitCommand(SR2Command.Refresh)
@@ -158,6 +162,11 @@ class DemoActivity : AppCompatActivity() {
           SR2ScrollingMode.SCROLLING_MODE_CONTINUOUS
         } else {
           SR2ScrollingMode.SCROLLING_MODE_PAGINATED
+        },
+        pageNumberingMode = if (this.perChapterPageNumbering.isChecked) {
+          SR2PageNumberingMode.PER_CHAPTER
+        } else {
+          SR2PageNumberingMode.WHOLE_BOOK
         }
       )
 

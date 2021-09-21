@@ -1,6 +1,7 @@
 package org.librarysimplified.r2.views
 
 import org.librarysimplified.r2.api.SR2ControllerProviderType
+import org.librarysimplified.r2.api.SR2PageNumberingMode
 import org.librarysimplified.r2.api.SR2ScrollingMode
 import org.librarysimplified.r2.api.SR2Theme
 import org.readium.r2.shared.publication.asset.PublicationAsset
@@ -47,5 +48,11 @@ data class SR2ReaderParameters(
    * The book scrolling mode.
    */
 
-  val scrollingMode: SR2ScrollingMode
+  val scrollingMode: SR2ScrollingMode,
+
+  /**
+   * The pagination numbering mode.
+   */
+
+  val pageNumberingMode: SR2PageNumberingMode
 )

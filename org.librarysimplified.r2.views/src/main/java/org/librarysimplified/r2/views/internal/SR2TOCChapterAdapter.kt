@@ -8,16 +8,17 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import org.librarysimplified.r2.api.SR2TOCEntry
 import org.librarysimplified.r2.views.R
 import org.librarysimplified.r2.views.internal.SR2DiffUtils.tocEntryCallback
-import org.librarysimplified.r2.views.internal.SR2TOCChapterAdapter.SR2TOCChapterViewHolder
+import org.librarysimplified.r2.views.internal.SR2TOCChapterAdapter.SR2TOCEntryViewHolder
 
 internal class SR2TOCChapterAdapter(
   private val resources: Resources,
-  private val onTOCEntrySelected: (SR2TOCChapterItem) -> Unit
-) : ListAdapter<SR2TOCChapterItem, SR2TOCChapterViewHolder>(tocEntryCallback) {
+  private val onTOCEntrySelected: (SR2TOCEntry) -> Unit
+) : ListAdapter<SR2TOCEntry, SR2TOCEntryViewHolder>(tocEntryCallback) {
 
-  class SR2TOCChapterViewHolder(
+  class SR2TOCEntryViewHolder(
     val rootView: View
   ) : RecyclerView.ViewHolder(rootView) {
     val chapterIcon: ImageView =
@@ -29,16 +30,16 @@ internal class SR2TOCChapterAdapter(
   override fun onCreateViewHolder(
     parent: ViewGroup,
     viewType: Int
-  ): SR2TOCChapterViewHolder {
+  ): SR2TOCEntryViewHolder {
     val inflater =
       LayoutInflater.from(parent.context)
     val chapterView =
       inflater.inflate(R.layout.sr2_toc_chapter_item, parent, false)
-    return SR2TOCChapterViewHolder(chapterView)
+    return SR2TOCEntryViewHolder(chapterView)
   }
 
   override fun onBindViewHolder(
-    holder: SR2TOCChapterViewHolder,
+    holder: SR2TOCEntryViewHolder,
     position: Int
   ) {
     val chapter = this.getItem(position)
@@ -61,7 +62,7 @@ internal class SR2TOCChapterAdapter(
     return Math.round(dp * (this.resources.displayMetrics.densityDpi / 160f))
   }
 
-  fun setTableOfContentsEntries(entriesNow: List<SR2TOCChapterItem>) {
+  fun setTableOfContentsEntries(entriesNow: List<SR2TOCEntry>) {
     this.submitList(entriesNow)
   }
 }

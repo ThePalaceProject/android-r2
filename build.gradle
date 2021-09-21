@@ -188,6 +188,10 @@ Automatic-Module-Name: ${POM_AUTOMATIC_MODULE_NAME}
     jcenter()
     google()
   }
+
+  tasks.withType(Test) {
+    useJUnitPlatform()
+  }
 }
 
 /*

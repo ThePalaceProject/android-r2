@@ -19,91 +19,62 @@
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintTop_toTopOf="parent">
 
-    <LinearLayout
-      android:layout_width="match_parent"
+    <com.google.android.material.tabs.TabLayout
+      android:id="@+id/setFontTabs"
       android:layout_height="64dp"
-      android:orientation="horizontal">
+      android:layout_width="match_parent"
+      app:tabMode="fixed"
+      app:tabGravity="center"
+      app:tabBackground="@drawable/sr2_transparent_bordered">
 
-      <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/setFontSans"
+      <com.google.android.material.tabs.TabItem
+        android:layout_height="wrap_content"
         android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:background="?attr/selectableItemBackground"
-        android:contentDescription="@string/settingsAccessibilitySetSans"
-        android:clickable="true"
-        android:focusable="true">
+        android:text="@string/settingsABC"
+        android:contentDescription="@string/settingsAccessibilitySetSans"/>
 
-        <TextView
-          android:layout_width="0dp"
-          android:layout_height="0dp"
-          android:gravity="center"
-          android:background="@drawable/sr2_transparent_bordered"
-          android:text="@string/settingsABC"
-          android:textAlignment="center"
-          android:textSize="24sp"
-          android:typeface="sans"
-          android:clickable="false"
-          android:focusable="false"
-          app:layout_constraintBottom_toBottomOf="parent"
-          app:layout_constraintEnd_toEndOf="parent"
-          app:layout_constraintStart_toStartOf="parent"
-          app:layout_constraintTop_toTopOf="parent" />
-      </androidx.constraintlayout.widget.ConstraintLayout>
-
-      <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/setFontSerif"
+      <com.google.android.material.tabs.TabItem
+        android:layout_height="wrap_content"
         android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:background="?attr/selectableItemBackground"
-        android:contentDescription="@string/settingsAccessibilitySetSerif"
-        android:clickable="true"
-        android:focusable="true">
+        android:text="@string/settingsABC"
+        android:contentDescription="@string/settingsAccessibilitySetSerif"/>
 
-        <TextView
-          android:layout_width="0dp"
-          android:layout_height="0dp"
-          android:gravity="center"
-          android:background="@drawable/sr2_transparent_bordered"
-          android:text="@string/settingsABC"
-          android:textAlignment="center"
-          android:textSize="24sp"
-          android:typeface="serif"
-          android:clickable="false"
-          android:focusable="false"
-          app:layout_constraintBottom_toBottomOf="parent"
-          app:layout_constraintEnd_toEndOf="parent"
-          app:layout_constraintStart_toStartOf="parent"
-          app:layout_constraintTop_toTopOf="parent" />
-      </androidx.constraintlayout.widget.ConstraintLayout>
-
-      <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/setFontDyslexic"
+      <com.google.android.material.tabs.TabItem
+        android:layout_height="wrap_content"
         android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:background="?attr/selectableItemBackground"
-        android:contentDescription="@string/settingsAccessibilitySetDyslexic"
-        android:clickable="true"
-        android:focusable="true">
+        android:text="@string/settingsABC"
+        android:contentDescription="@string/settingsAccessibilitySetDyslexic"/>
 
-        <TextView
-          android:id="@+id/setFontDyslexicText"
-          android:layout_width="0dp"
-          android:layout_height="0dp"
-          android:background="@drawable/sr2_transparent_bordered"
-          android:gravity="center"
-          android:text="@string/settingsABC"
-          android:textAlignment="center"
-          android:textSize="24sp"
-          android:clickable="false"
-          android:focusable="false"
-          app:layout_constraintBottom_toBottomOf="parent"
-          app:layout_constraintEnd_toEndOf="parent"
-          app:layout_constraintStart_toStartOf="parent"
-          app:layout_constraintTop_toTopOf="parent" />
-      </androidx.constraintlayout.widget.ConstraintLayout>
+      <com.google.android.material.tabs.TabItem
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:text="@string/settingsPub"
+        android:contentDescription="@string/settingsAccessibilitySetPublisher"/>
+
+    </com.google.android.material.tabs.TabLayout>
+
+    <LinearLayout
+      android:id="@+id/setFontDetail"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:visibility="gone"
+      android:orientation="vertical"
+      android:background="@drawable/sr2_transparent_bordered">
+
+      <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/settingsPublisherTitle"
+        android:textStyle="bold"
+        android:padding="5sp" />
+
+      <TextView
+        android:layout_marginTop="5sp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/settingsPublisherText"
+        android:padding="5sp" />
+
     </LinearLayout>
 
     <LinearLayout
@@ -130,7 +101,7 @@
           android:text="@string/settingsAa"
           android:textAlignment="center"
           android:textColor="#000000"
-          android:textSize="24sp"
+          android:textSize="20sp"
           android:clickable="false"
           android:focusable="false"
           app:layout_constraintBottom_toBottomOf="parent"
@@ -157,7 +128,7 @@
           android:text="@string/settingsAa"
           android:textAlignment="center"
           android:textColor="#FFFFFF"
-          android:textSize="24sp"
+          android:textSize="20sp"
           android:clickable="false"
           android:focusable="false"
           app:layout_constraintBottom_toBottomOf="parent"
@@ -185,7 +156,7 @@
           android:text="@string/settingsAa"
           android:textAlignment="center"
           android:textColor="#000000"
-          android:textSize="24sp"
+          android:textSize="20sp"
           android:clickable="false"
           android:focusable="false"
           app:layout_constraintBottom_toBottomOf="parent"
@@ -246,7 +217,7 @@
           android:background="@drawable/sr2_transparent_bordered"
           android:text="@string/settingsABCReset"
           android:textAlignment="center"
-          android:textSize="24sp"
+          android:textSize="20sp"
           android:clickable="false"
           android:focusable="false"
           app:layout_constraintBottom_toBottomOf="parent"
@@ -276,34 +247,13 @@
           android:gravity="center"
           android:text="@string/settingsABCLarger"
           android:textAlignment="center"
-          android:textSize="36sp"
+          android:textSize="28sp"
           app:layout_constraintBottom_toBottomOf="parent"
           app:layout_constraintEnd_toEndOf="parent"
           app:layout_constraintStart_toStartOf="parent"
           app:layout_constraintTop_toTopOf="parent" />
       </androidx.constraintlayout.widget.ConstraintLayout>
     </LinearLayout>
-
-    <androidx.constraintlayout.widget.ConstraintLayout
-      android:background="@drawable/sr2_transparent_bordered"
-      android:layout_width="match_parent"
-      android:layout_height="64dp">
-
-      <androidx.appcompat.widget.SwitchCompat
-        android:id="@+id/sr2_publisher_css_switch"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="16dp"
-        android:text="@string/publisherDefaults"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <androidx.constraintlayout.widget.ConstraintLayout
       android:background="@drawable/sr2_transparent_bordered"

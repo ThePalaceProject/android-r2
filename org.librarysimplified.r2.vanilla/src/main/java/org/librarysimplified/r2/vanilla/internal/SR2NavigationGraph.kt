@@ -1,8 +1,8 @@
-package org.librarysimplified.r2.api
+package org.librarysimplified.r2.vanilla.internal
 
-import org.librarysimplified.r2.api.SR2NavigationNode.SR2NavigationReadingOrderNode
-import org.librarysimplified.r2.api.SR2NavigationNode.SR2NavigationResourceNode
-import org.librarysimplified.r2.api.SR2NavigationNode.SR2NavigationTOCNode
+import org.librarysimplified.r2.api.SR2Locator
+import org.librarysimplified.r2.vanilla.internal.SR2NavigationNode.SR2NavigationReadingOrderNode
+import org.librarysimplified.r2.vanilla.internal.SR2NavigationNode.SR2NavigationResourceNode
 
 /**
  * A navigation graph.
@@ -15,12 +15,6 @@ data class SR2NavigationGraph(
    */
 
   val readingOrder: List<SR2NavigationReadingOrderNode>,
-
-  /**
-   * The book's table of contents.
-   */
-
-  val tableOfContents: List<SR2NavigationTOCNode>,
 
   /**
    * The book's list of extra resources.
@@ -36,13 +30,6 @@ data class SR2NavigationGraph(
       "The reading order indices must be unique"
     }
   }
-
-  /*
-   * A flattened table of contents.
-   */
-
-  val tableOfContentsFlat: List<SR2TOCEntry> =
-    flattenTOC(this.tableOfContents)
 
   /**
    * The node pointing at the start of the book.
@@ -71,20 +58,6 @@ data class SR2NavigationGraph(
 
   /**
    * Try to find a relevant navigation node for the given locator, but do not check outside
-   * of the table of contents to do so.
-   */
-
-  fun findNavigationTOCNodeExact(locator: SR2Locator): SR2NavigationTOCNode? {
-    for (entry in this.tableOfContentsFlat) {
-      if (entry.node.matches(locator)) {
-        return entry.node
-      }
-    }
-    return null
-  }
-
-  /**
-   * Try to find a relevant navigation node for the given locator, but do not check outside
    * of the resources to do so.
    */
 
@@ -104,7 +77,6 @@ data class SR2NavigationGraph(
   fun findNavigationNode(locator: SR2Locator): SR2NavigationTarget? {
     val exact =
       this.findNavigationReadingOrderNodeExact(locator)
-        ?: this.findNavigationTOCNodeExact(locator)
         ?: this.findResourcesNodeExact(locator)
 
     if (exact != null) {
@@ -131,7 +103,6 @@ data class SR2NavigationGraph(
 
       (
         this.findNavigationReadingOrderNodeExact(withoutFragment)
-          ?: findNavigationTOCNodeExact(withoutFragment)
           ?: findResourcesNodeExact(withoutFragment)
         )
         ?.let { node -> SR2NavigationTarget(node, fragment) }
@@ -157,15 +128,6 @@ data class SR2NavigationGraph(
 
       is SR2NavigationResourceNode ->
         null
-
-      is SR2NavigationTOCNode -> {
-        val indexOf = this.tableOfContentsFlat.indexOfFirst { entry -> entry.node == currentNode }
-        if (indexOf > 0) {
-          this.tableOfContentsFlat[indexOf - 1].node
-        } else {
-          null
-        }
-      }
     }
   }
 
@@ -186,40 +148,6 @@ data class SR2NavigationGraph(
 
       is SR2NavigationResourceNode ->
         null
-
-      is SR2NavigationTOCNode -> {
-        val indexOf = this.tableOfContentsFlat.indexOfFirst { entry -> entry.node == currentNode }
-        if (indexOf > 0) {
-          if (indexOf + 1 < this.tableOfContentsFlat.size - 1) {
-            this.tableOfContentsFlat[indexOf + 1].node
-          } else {
-            null
-          }
-        } else {
-          null
-        }
-      }
-    }
-  }
-
-  companion object {
-    private fun flattenTOC(
-      tableOfContents: List<SR2NavigationTOCNode>
-    ): List<SR2TOCEntry> {
-      val results = mutableListOf<SR2TOCEntry>()
-      tableOfContents.forEach { node -> this.flattenTOCNode(node, 0, results) }
-      return results.toList()
-    }
-
-    private fun flattenTOCNode(
-      node: SR2NavigationTOCNode,
-      depth: Int,
-      results: MutableList<SR2TOCEntry>
-    ) {
-      results.add(SR2TOCEntry(node, depth))
-      for (child in node.children) {
-        this.flattenTOCNode(child, depth + 1, results)
-      }
     }
   }
 }

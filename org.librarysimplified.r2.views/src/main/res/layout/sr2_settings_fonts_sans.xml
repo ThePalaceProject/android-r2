@@ -11,5 +11,5 @@
     android:text="@string/settingsABC"
     android:gravity="center"
     android:textSize="20sp"
-    android:typeface="sans" />
+    android:fontFamily="sans-serif" />
 </FrameLayout>

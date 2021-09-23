@@ -32,5 +32,12 @@
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
       android:text="Scrolling mode" />
+
+    <CheckBox
+      android:id="@+id/perChapterPageNumbering"
+      android:layout_marginTop="16dp"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:text="Per chapter page numbering" />
   </LinearLayout>
 </FrameLayout>

@@ -1,4 +1,6 @@
-package org.librarysimplified.r2.api
+package org.librarysimplified.r2.vanilla.internal
+
+import org.librarysimplified.r2.api.SR2Locator
 
 /**
  * A navigation node.
@@ -32,15 +34,6 @@ sealed class SR2NavigationNode {
   data class SR2NavigationReadingOrderNode(
     override val navigationPoint: SR2NavigationPoint,
     val index: Int
-  ) : SR2NavigationNode()
-
-  /**
-   * A node in the table of contents.
-   */
-
-  data class SR2NavigationTOCNode(
-    override val navigationPoint: SR2NavigationPoint,
-    val children: List<SR2NavigationTOCNode>
   ) : SR2NavigationNode()
 
   /**

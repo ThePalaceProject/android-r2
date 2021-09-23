@@ -2,6 +2,7 @@
 
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:app="http://schemas.android.com/apk/res-auto"
+  xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent"
   android:layout_height="match_parent">
 
@@ -18,93 +19,62 @@
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintTop_toTopOf="parent">
 
-    <LinearLayout
-      android:layout_width="match_parent"
+    <com.google.android.material.tabs.TabLayout
+      android:id="@+id/setFontTabs"
       android:layout_height="64dp"
-      android:orientation="horizontal">
+      android:layout_width="match_parent"
+      app:tabMode="fixed"
+      app:tabGravity="center"
+      app:tabBackground="@drawable/sr2_transparent_bordered">
 
-      <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/setFontSans"
+      <com.google.android.material.tabs.TabItem
+        android:layout_height="wrap_content"
         android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:background="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:contentDescription="@string/settingsAccessibilitySetSans"
-        android:focusable="true">
+        android:text="@string/settingsABC"
+        android:contentDescription="@string/settingsAccessibilitySetSans"/>
 
-        <TextView
-          android:layout_width="0dp"
-          android:layout_height="0dp"
-          android:background="@drawable/sr2_transparent_bordered"
-          android:clickable="false"
-          android:focusable="false"
-          android:fontFamily="sans-serif"
-          android:gravity="center"
-          android:text="@string/settingsABC"
-          android:textAlignment="center"
-          android:textSize="24sp"
-          app:layout_constraintBottom_toBottomOf="parent"
-          app:layout_constraintEnd_toEndOf="parent"
-          app:layout_constraintStart_toStartOf="parent"
-          app:layout_constraintTop_toTopOf="parent" />
-      </androidx.constraintlayout.widget.ConstraintLayout>
-
-      <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/setFontSerif"
+      <com.google.android.material.tabs.TabItem
+        android:layout_height="wrap_content"
         android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:background="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:contentDescription="@string/settingsAccessibilitySetSerif"
-        android:focusable="true">
+        android:text="@string/settingsABC"
+        android:contentDescription="@string/settingsAccessibilitySetSerif"/>
 
-        <TextView
-          android:layout_width="0dp"
-          android:layout_height="0dp"
-          android:background="@drawable/sr2_transparent_bordered"
-          android:clickable="false"
-          android:focusable="false"
-          android:fontFamily="serif"
-          android:gravity="center"
-          android:text="@string/settingsABC"
-          android:textAlignment="center"
-          android:textSize="24sp"
-          app:layout_constraintBottom_toBottomOf="parent"
-          app:layout_constraintEnd_toEndOf="parent"
-          app:layout_constraintHorizontal_bias="0.0"
-          app:layout_constraintStart_toStartOf="parent"
-          app:layout_constraintTop_toTopOf="parent"
-          app:layout_constraintVertical_bias="0.0" />
-      </androidx.constraintlayout.widget.ConstraintLayout>
-
-      <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/setFontDyslexic"
+      <com.google.android.material.tabs.TabItem
+        android:layout_height="wrap_content"
         android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:background="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:contentDescription="@string/settingsAccessibilitySetDyslexic"
-        android:focusable="true">
+        android:text="@string/settingsABC"
+        android:contentDescription="@string/settingsAccessibilitySetDyslexic"/>
 
-        <TextView
-          android:id="@+id/setFontDyslexicText"
-          android:layout_width="0dp"
-          android:layout_height="0dp"
-          android:background="@drawable/sr2_transparent_bordered"
-          android:clickable="false"
-          android:focusable="false"
-          android:gravity="center"
-          android:text="@string/settingsABC"
-          android:textAlignment="center"
-          android:textSize="24sp"
-          app:layout_constraintBottom_toBottomOf="parent"
-          app:layout_constraintEnd_toEndOf="parent"
-          app:layout_constraintStart_toStartOf="parent"
-          app:layout_constraintTop_toTopOf="parent" />
-      </androidx.constraintlayout.widget.ConstraintLayout>
+      <com.google.android.material.tabs.TabItem
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:text="@string/settingsPub"
+        android:contentDescription="@string/settingsAccessibilitySetPublisher"/>
+
+    </com.google.android.material.tabs.TabLayout>
+
+    <LinearLayout
+      android:id="@+id/setFontDetail"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:visibility="gone"
+      android:orientation="vertical"
+      android:background="@drawable/sr2_transparent_bordered">
+
+      <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/settingsPublisherTitle"
+        android:textStyle="bold"
+        android:padding="5sp" />
+
+      <TextView
+        android:layout_marginTop="5sp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/settingsPublisherText"
+        android:padding="5sp" />
+
     </LinearLayout>
 
     <LinearLayout
@@ -118,8 +88,8 @@
         android:layout_height="match_parent"
         android:layout_weight="1"
         android:background="@drawable/sr2_white"
-        android:clickable="true"
         android:contentDescription="@string/settingsAccessibilitySetBlackTextOnWhite"
+        android:clickable="true"
         android:focusable="true">
 
         <TextView
@@ -127,13 +97,13 @@
           android:layout_height="match_parent"
           android:layout_weight="1"
           android:background="?attr/selectableItemBackground"
-          android:clickable="false"
-          android:focusable="false"
           android:gravity="center"
           android:text="@string/settingsAa"
           android:textAlignment="center"
           android:textColor="#000000"
-          android:textSize="24sp"
+          android:textSize="20sp"
+          android:clickable="false"
+          android:focusable="false"
           app:layout_constraintBottom_toBottomOf="parent"
           app:layout_constraintEnd_toEndOf="parent"
           app:layout_constraintStart_toStartOf="parent"
@@ -146,22 +116,21 @@
         android:layout_height="match_parent"
         android:layout_weight="1"
         android:background="@drawable/sr2_black"
-        android:clickable="true"
         android:contentDescription="@string/settingsAccessibilitySetWhiteTextOnBlack"
+        android:clickable="true"
         android:focusable="true">
-
         <TextView
           android:layout_width="0dp"
           android:layout_height="match_parent"
           android:layout_weight="1"
           android:background="?attr/selectableItemBackground"
-          android:clickable="false"
-          android:focusable="false"
           android:gravity="center"
           android:text="@string/settingsAa"
           android:textAlignment="center"
           android:textColor="#FFFFFF"
-          android:textSize="24sp"
+          android:textSize="20sp"
+          android:clickable="false"
+          android:focusable="false"
           app:layout_constraintBottom_toBottomOf="parent"
           app:layout_constraintEnd_toEndOf="parent"
           app:layout_constraintStart_toStartOf="parent"
@@ -174,8 +143,8 @@
         android:layout_height="match_parent"
         android:layout_weight="1"
         android:background="@drawable/sr2_beige"
-        android:clickable="true"
         android:contentDescription="@string/settingsAccessibilitySetBlackTextOnSepia"
+        android:clickable="true"
         android:focusable="true">
 
         <TextView
@@ -183,13 +152,13 @@
           android:layout_height="match_parent"
           android:layout_weight="1"
           android:background="?attr/selectableItemBackground"
-          android:clickable="false"
-          android:focusable="false"
           android:gravity="center"
           android:text="@string/settingsAa"
           android:textAlignment="center"
           android:textColor="#000000"
-          android:textSize="24sp"
+          android:textSize="20sp"
+          android:clickable="false"
+          android:focusable="false"
           app:layout_constraintBottom_toBottomOf="parent"
           app:layout_constraintEnd_toEndOf="parent"
           app:layout_constraintStart_toStartOf="parent"
@@ -208,8 +177,8 @@
         android:layout_height="match_parent"
         android:layout_weight="1"
         android:background="?attr/selectableItemBackground"
-        android:clickable="true"
         android:contentDescription="@string/settingsAccessibilitySetSizeSmaller"
+        android:clickable="true"
         android:focusable="true">
 
         <TextView
@@ -236,21 +205,21 @@
         android:layout_height="match_parent"
         android:layout_weight="1"
         android:background="?attr/selectableItemBackground"
-        android:clickable="true"
         android:contentDescription="@string/settingsAccessibilitySetSizeReset"
+        android:clickable="true"
         android:focusable="true">
 
         <TextView
           android:layout_width="0dp"
           android:layout_height="match_parent"
           android:layout_weight="1"
-          android:background="@drawable/sr2_transparent_bordered"
-          android:clickable="false"
-          android:focusable="false"
           android:gravity="center"
+          android:background="@drawable/sr2_transparent_bordered"
           android:text="@string/settingsABCReset"
           android:textAlignment="center"
-          android:textSize="24sp"
+          android:textSize="20sp"
+          android:clickable="false"
+          android:focusable="false"
           app:layout_constraintBottom_toBottomOf="parent"
           app:layout_constraintEnd_toEndOf="parent"
           app:layout_constraintStart_toStartOf="parent"
@@ -263,8 +232,8 @@
         android:layout_height="match_parent"
         android:layout_weight="1"
         android:background="?attr/selectableItemBackground"
-        android:clickable="true"
         android:contentDescription="@string/settingsAccessibilitySetSizeLarger"
+        android:clickable="true"
         android:focusable="true">
 
         <TextView
@@ -278,7 +247,7 @@
           android:gravity="center"
           android:text="@string/settingsABCLarger"
           android:textAlignment="center"
-          android:textSize="36sp"
+          android:textSize="28sp"
           app:layout_constraintBottom_toBottomOf="parent"
           app:layout_constraintEnd_toEndOf="parent"
           app:layout_constraintStart_toStartOf="parent"
@@ -287,30 +256,9 @@
     </LinearLayout>
 
     <androidx.constraintlayout.widget.ConstraintLayout
+      android:background="@drawable/sr2_transparent_bordered"
       android:layout_width="match_parent"
-      android:layout_height="64dp"
-      android:background="@drawable/sr2_transparent_bordered">
-
-      <androidx.appcompat.widget.SwitchCompat
-        android:id="@+id/sr2_publisher_css_switch"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="16dp"
-        android:text="@string/publisherDefaults"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-    <androidx.constraintlayout.widget.ConstraintLayout
-      android:layout_width="match_parent"
-      android:layout_height="64dp"
-      android:background="@drawable/sr2_transparent_bordered">
+      android:layout_height="64dp">
 
       <ImageView
         android:layout_width="24dp"

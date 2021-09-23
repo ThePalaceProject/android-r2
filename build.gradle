@@ -1,6 +1,6 @@
 buildscript {
-  if ("$gradle.gradleVersion" != "6.7") {
-    throw new GradleException("Gradle version 6.7 is required (received $gradle.gradleVersion)")
+  if ("$gradle.gradleVersion" != "7.0") {
+    throw new GradleException("Gradle version 7.0 is required (received $gradle.gradleVersion)")
   }
 
   apply from: file("$rootDir/build_libraries.gradle")
@@ -9,7 +9,6 @@ buildscript {
     mavenLocal()
     mavenCentral()
     google()
-    jcenter()
   }
 
   dependencies {
@@ -198,7 +197,6 @@ Automatic-Module-Name: ${POM_AUTOMATIC_MODULE_NAME}
     }
 
     maven { url "https://jitpack.io" }
-    jcenter()
     google()
   }
 

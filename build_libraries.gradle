@@ -58,6 +58,7 @@ ext.libraries = [
   junit_jupiter_api           : "org.junit.jupiter:junit-jupiter-api:${versions.junit_jupiter}",
   junit_jupiter_engine        : "org.junit.jupiter:junit-jupiter-engine:${versions.junit_jupiter}",
   kotlin_coroutines           : "org.jetbrains.kotlinx:kotlinx-coroutines-core:${versions.kotlin_coroutines}",
+  kotlin_coroutines_android   : "org.jetbrains.kotlinx:kotlinx-coroutines-android:${versions.kotlin_coroutines}",
   kotlin_stdlib               : "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version",
   kxml                        : "net.sf.kxml:kxml2:2.3.0",
   logback_android_classic     : "com.github.tony19:logback-android-classic:${versions.logback_android_classic}",

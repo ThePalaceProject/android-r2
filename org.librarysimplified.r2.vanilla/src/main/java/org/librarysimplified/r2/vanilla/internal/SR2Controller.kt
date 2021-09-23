@@ -10,6 +10,10 @@ import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.Subject
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.joda.time.DateTime
 import org.librarysimplified.r2.api.SR2BookMetadata
@@ -32,14 +36,14 @@ import org.librarysimplified.r2.api.SR2Event.SR2ReadingPositionChanged
 import org.librarysimplified.r2.api.SR2Locator
 import org.librarysimplified.r2.api.SR2Locator.SR2LocatorChapterEnd
 import org.librarysimplified.r2.api.SR2Locator.SR2LocatorPercent
-import org.librarysimplified.r2.api.SR2NavigationNode
-import org.librarysimplified.r2.api.SR2NavigationTarget
+import org.librarysimplified.r2.api.SR2PageNumberingMode
 import org.librarysimplified.r2.api.SR2Theme
 import org.readium.r2.shared.publication.Publication
 import org.readium.r2.shared.publication.epub.EpubLayout.FIXED
 import org.readium.r2.shared.publication.epub.EpubLayout.REFLOWABLE
 import org.readium.r2.shared.publication.presentation.presentation
 import org.readium.r2.shared.publication.services.isRestricted
+import org.readium.r2.shared.publication.services.positionsByReadingOrder
 import org.readium.r2.shared.publication.services.protectionError
 import org.readium.r2.shared.util.getOrElse
 import org.readium.r2.streamer.server.Server
@@ -52,6 +56,8 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.annotation.concurrent.GuardedBy
+import kotlin.collections.List
+import kotlin.math.round
 
 /**
  * The default R2 controller implementation.
@@ -166,6 +172,8 @@ internal class SR2Controller private constructor(
     CompositeDisposable()
   private val logger =
     LoggerFactory.getLogger(SR2Controller::class.java)
+  private val coroutineScope: CoroutineScope =
+    CoroutineScope(Dispatchers.Main)
 
   /*
    * A single threaded command executor. The purpose of this executor is to accept
@@ -200,15 +208,18 @@ internal class SR2Controller private constructor(
       bookId = this.configuration.bookId
     )
 
+  private val navigationGraph: SR2NavigationGraph =
+    SR2NavigationGraphs.create(publication)
+
   @Volatile
   private var currentTarget: SR2NavigationTarget =
-    this.bookMetadata.navigationGraph.start()
+    this.navigationGraph.start()
 
   @Volatile
-  private var currentTargetProgress = 0.0
+  private var currentTargetProgress: Double = 0.0
 
   @Volatile
-  private var currentBookProgress = 0.0
+  private var currentBookProgress: Double? = 0.0
 
   @Volatile
   private var bookmarks = listOf<SR2Bookmark>()
@@ -226,6 +237,9 @@ internal class SR2Controller private constructor(
         .throttleLast(1, TimeUnit.SECONDS)
         .subscribe(this::updateBookmarkLastRead)
     )
+
+    // Pre-compute positions
+    runBlocking { publication.positionsByReadingOrder() }
   }
 
   private fun serverLocationOfTarget(
@@ -260,8 +274,10 @@ internal class SR2Controller private constructor(
      * a pointer to the start of the book, so this check prevents that.
      */
 
-    val currentIndex = inferredNodeIndexOf(this.currentTarget)
-    if (currentIndex != 0 || position.chapterProgress > 0.000_001) {
+    val currentNode = this.currentTarget.node
+    if (currentNode !is SR2NavigationNode.SR2NavigationReadingOrderNode ||
+      currentNode.index != 0 || position.chapterProgress > 0.000_001
+    ) {
       this.queueExecutor.execute {
         val newBookmark = SR2Bookmark(
           date = DateTime.now(),
@@ -447,7 +463,7 @@ internal class SR2Controller private constructor(
     command: SR2CommandSubmission
   ): ListenableFuture<*> {
     val previousNode =
-      this.bookMetadata.navigationGraph.findPreviousNode(this.currentTarget.node)
+      this.navigationGraph.findPreviousNode(this.currentTarget.node)
         ?: return Futures.immediateFuture(Unit)
 
     return this.openNodeForLocator(
@@ -464,7 +480,7 @@ internal class SR2Controller private constructor(
     command: SR2CommandSubmission
   ): ListenableFuture<*> {
     val nextNode =
-      this.bookMetadata.navigationGraph.findNextNode(this.currentTarget.node)
+      this.navigationGraph.findNextNode(this.currentTarget.node)
         ?: return Futures.immediateFuture(Unit)
 
     return this.openNodeForLocator(
@@ -555,7 +571,7 @@ internal class SR2Controller private constructor(
       this.publishCommmandRunningLong(command)
 
       val target =
-        this.bookMetadata.navigationGraph.findNavigationNode(locator)
+        this.navigationGraph.findNavigationNode(locator)
           ?: throw IllegalStateException("Unable to locate a chapter for locator $locator")
 
       val targetLocation = this.serverLocationOfTarget(target)
@@ -629,17 +645,56 @@ internal class SR2Controller private constructor(
         connection.executeJS { js -> js.openPageLast() }
     }
 
-  private fun getBookProgress(chapterProgress: Double): Double {
+  private fun getBookProgress(chapterProgress: Double): Double? {
     require(chapterProgress < 1 || chapterProgress > 0) {
       "progress must be in [0, 1]; was $chapterProgress"
     }
 
+    val currentNode = currentTarget.node
+    if (currentNode !is SR2NavigationNode.SR2NavigationReadingOrderNode) {
+      return null
+    }
+
+    val currentIndex = currentNode.index
     val chapterCount = this.publication.readingOrder.size
-    val currentIndex = this.inferredNodeIndexOf(this.currentTarget)
 
     val result = ((currentIndex + 1 * chapterProgress) / chapterCount)
     this.logger.debug("$result = ($currentIndex + 1 * $chapterProgress) / $chapterCount")
     return result
+  }
+
+  private suspend fun getCurrentPage(chapterProgress: Double): Pair<Int?, Int?> {
+    val currentNode = this.currentTarget.node
+    if (currentNode !is SR2NavigationNode.SR2NavigationReadingOrderNode) {
+      return null to null
+    }
+
+    val pageNumberingMode =
+      when (this@SR2Controller.publication.metadata.presentation.layout) {
+        FIXED -> SR2PageNumberingMode.WHOLE_BOOK
+        else -> this.configuration.pageNumberingMode
+      }
+
+    val indexInReadingOrder = currentNode.index
+    val positionsByChapter = this.publication.positionsByReadingOrder()
+    val currentChapterPositions = positionsByChapter[indexInReadingOrder]
+
+    val positionIndex =
+      round(chapterProgress * currentChapterPositions.size).toInt()
+        .coerceAtMost(currentChapterPositions.size - 1)
+
+    return when (pageNumberingMode) {
+      SR2PageNumberingMode.PER_CHAPTER -> {
+        val pageNumber = positionIndex + 1
+        val pageCount = currentChapterPositions.size
+        pageNumber to pageCount
+      }
+      SR2PageNumberingMode.WHOLE_BOOK -> {
+        val pageNumber = currentChapterPositions[positionIndex].locations.position!!
+        val pageCount = positionsByChapter.fold(0) { current, list -> current + list.size }
+        pageNumber to pageCount
+      }
+    }
   }
 
   /**
@@ -660,53 +715,31 @@ internal class SR2Controller private constructor(
       currentPage: Int,
       pageCount: Int
     ) {
-      val currentTarget =
-        this@SR2Controller.currentTarget
-      val chapterTitle =
-        currentTarget.node.title
+      this@SR2Controller.coroutineScope.launch {
+        this@SR2Controller.currentBookProgress =
+          this@SR2Controller.getBookProgress(chapterProgress)
+        this@SR2Controller.currentTargetProgress =
+          chapterProgress
 
-      this@SR2Controller.currentBookProgress =
-        this@SR2Controller.getBookProgress(chapterProgress)
-      this@SR2Controller.currentTargetProgress =
-        chapterProgress
+        val currentTarget =
+          this@SR2Controller.currentTarget
+        val targetHref =
+          currentTarget.node.navigationPoint.locator.chapterHref
+        val targetTitle =
+          currentTarget.node.title
+        val (currentPage, pageCount) =
+          this@SR2Controller.getCurrentPage(chapterProgress)
 
-      val currentIndex =
-        this@SR2Controller.inferredNodeIndexOf(currentTarget)
-
-      return when (this@SR2Controller.publication.metadata.presentation.layout) {
-        FIXED -> {
-
-          /*
-           * For fixed-layout EPUB files, we'll have one page per chapter, and the chapters
-           * themselves are supposed to represent "pages". Therefore, we publish page number
-           * indicators that are actually the chapter indices and counts instead.
-           */
-
-          this@SR2Controller.eventSubject.onNext(
-            SR2ReadingPositionChanged(
-              chapterHref = currentTarget.node.navigationPoint.locator.chapterHref,
-              chapterTitle = chapterTitle,
-              chapterProgress = chapterProgress,
-              currentPage = Math.max(1, currentIndex + 1),
-              pageCount = this@SR2Controller.bookMetadata.navigationGraph.readingOrder.size,
-              bookProgress = this@SR2Controller.currentBookProgress
-            )
+        this@SR2Controller.eventSubject.onNext(
+          SR2ReadingPositionChanged(
+            chapterHref = targetHref,
+            chapterTitle = targetTitle,
+            chapterProgress = chapterProgress,
+            currentPage = currentPage,
+            pageCount = pageCount,
+            bookProgress = this@SR2Controller.currentBookProgress
           )
-        }
-
-        REFLOWABLE,
-        null -> {
-          this@SR2Controller.eventSubject.onNext(
-            SR2ReadingPositionChanged(
-              chapterHref = currentTarget.node.navigationPoint.locator.chapterHref,
-              chapterTitle = chapterTitle,
-              chapterProgress = chapterProgress,
-              currentPage = currentPage,
-              pageCount = pageCount,
-              bookProgress = this@SR2Controller.currentBookProgress
-            )
-          )
-        }
+        )
       }
     }
 
@@ -783,15 +816,6 @@ internal class SR2Controller private constructor(
     ) {
       this.logger.error("logError: {}:{}: {}", file, line, message)
     }
-  }
-
-  private fun inferredNodeIndexOf(currentTarget: SR2NavigationTarget): Int {
-    val currentIndex = when (val node = currentTarget.node) {
-      is SR2NavigationNode.SR2NavigationReadingOrderNode -> node.index
-      is SR2NavigationNode.SR2NavigationResourceNode -> 1
-      is SR2NavigationNode.SR2NavigationTOCNode -> 1
-    }
-    return currentIndex
   }
 
   private fun submitCommandActual(
@@ -876,7 +900,8 @@ internal class SR2Controller private constructor(
         jsReceiver = this.JavascriptAPIReceiver(webView),
         commandQueue = this,
         uiExecutor = this.configuration.uiExecutor,
-        scrollingMode = this.configuration.scrollingMode
+        scrollingMode = this.configuration.scrollingMode,
+        layout = this.publication.metadata.presentation.layout ?: REFLOWABLE
       )
 
     synchronized(this.webViewConnectionLock) {
@@ -916,6 +941,8 @@ internal class SR2Controller private constructor(
 
   override fun close() {
     if (this.closed.compareAndSet(false, true)) {
+      this.coroutineScope.cancel()
+
       try {
         this.viewDisconnect()
       } catch (e: Exception) {

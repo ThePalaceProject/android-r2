@@ -19,8 +19,14 @@ data class SR2BookMetadata(
   val title: String,
 
   /**
-   * The book's navigation graph
+   * The table of contents of the book.
    */
 
-  val navigationGraph: SR2NavigationGraph
+  val tableOfContents: List<SR2TOCEntry>,
+
+  /**
+   * A locator pointing at the first chapter.
+   */
+
+  val start: SR2Locator
 )

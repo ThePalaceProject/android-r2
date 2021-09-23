@@ -12,6 +12,9 @@
   <string name="readerAddBookmark">Add A Bookmark</string>
   <string name="readerSettings">Settings</string>
   <string name="readerTableOfContents">Table Of Contents &amp; Bookmarks</string>
+  <string name="settingsPublisherTitle">Publisher\'s Default</string>
+  <string name="settingsPublisherText">Show the publisher-specified fonts and layout choices in this ebook.</string>
+  <string name="settingsPub">Pub</string>
   <string name="settingsABC">ABC</string>
   <string name="settingsABCLarger">ABC ↑</string>
   <string name="settingsABCReset">ABC ↺</string>
@@ -26,6 +29,7 @@
   <string name="tocAccessChapter">Open Chapter %1$d: %2$s</string>
   <string name="publisherDefaults">Publisher Defaults</string>
 
+  <string name="settingsAccessibilitySetPublisher">Show the publisher-specified fonts and layout choices.</string>
   <string name="settingsAccessibilitySetSans">Set book font to sans-serif.</string>
   <string name="settingsAccessibilitySetSerif">Set book font to serif.</string>
   <string name="settingsAccessibilitySetDyslexic">Set book font to Open Dyslexic.</string>

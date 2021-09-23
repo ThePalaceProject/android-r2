@@ -1,6 +1,7 @@
 dependencies {
   api libraries.kotlin_stdlib
   api libraries.kotlin_coroutines
+  api libraries.kotlin_coroutines_android
   api libraries.nano_httpd
   api libraries.nano_httpd_nanolets
   api libraries.r2_shared

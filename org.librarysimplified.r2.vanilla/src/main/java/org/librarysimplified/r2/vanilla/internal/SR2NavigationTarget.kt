@@ -1,4 +1,4 @@
-package org.librarysimplified.r2.api
+package org.librarysimplified.r2.vanilla.internal
 
 /**
  * A navigation target. Essentially, the result of looking up a navigation node with

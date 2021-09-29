@@ -10,7 +10,7 @@ dependencies {
   implementation libs.r2.shared
   implementation libs.r2.streamer
   implementation libs.slf4j
-  implementation libs.rxjava2extensions
+  implementation libs.rxjava2.extensions
   implementation libs.rxandroid2
 
   api project(":org.librarysimplified.r2.api")

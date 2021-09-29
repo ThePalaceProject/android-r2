@@ -3,7 +3,7 @@ buildscript {
     throw new GradleException("Gradle version 7.2 is required (received $gradle.gradleVersion)")
   }
 
-  ext.kotlin_version = "1.4.20"
+  ext.kotlin_version = "1.5.30"
 
   repositories {
     mavenLocal()

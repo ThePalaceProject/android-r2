@@ -1,9 +1,9 @@
 buildscript {
-  if ("$gradle.gradleVersion" != "7.0.2") {
-    throw new GradleException("Gradle version 7.0.2 is required (received $gradle.gradleVersion)")
+  if ("$gradle.gradleVersion" != "7.2") {
+    throw new GradleException("Gradle version 7.2 is required (received $gradle.gradleVersion)")
   }
 
-  apply from: file("$rootDir/build_libraries.gradle")
+  ext.kotlin_version = "1.4.20"
 
   repositories {
     mavenLocal()

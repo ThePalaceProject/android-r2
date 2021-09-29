@@ -1,11 +1,11 @@
 dependencies {
-  api libraries.androidx_app_compat
-  api libraries.androidx_multidex
-  api libraries.kotlin_stdlib
+  api libs.androidx.app.compat
+  api libs.androidx.multidex
+  api libs.kotlin.stdlib
 
-  api libraries.slf4j
-  api libraries.logback_android_core
-  api(libraries.logback_android_classic) {
+  api libs.slf4j
+  api libs.logback.android.core
+  api(libs.logback.android.classic) {
     // https://github.com/tony19/logback-android/issues/73
     exclude group: "com.google.android", module: "android"
   }

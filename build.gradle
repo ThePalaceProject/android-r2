@@ -1,9 +1,9 @@
 buildscript {
-  if ("$gradle.gradleVersion" != "7.0.2") {
-    throw new GradleException("Gradle version 7.0.2 is required (received $gradle.gradleVersion)")
+  if ("$gradle.gradleVersion" != "7.2") {
+    throw new GradleException("Gradle version 7.2 is required (received $gradle.gradleVersion)")
   }
 
-  apply from: file("$rootDir/build_libraries.gradle")
+  ext.kotlin_version = "1.5.30"
 
   repositories {
     mavenLocal()
@@ -125,6 +125,9 @@ Automatic-Module-Name: ${POM_AUTOMATIC_MODULE_NAME}
           sourceCompatibility JavaVersion.VERSION_1_8
           targetCompatibility JavaVersion.VERSION_1_8
         }
+        kotlinOptions {
+          jvmTarget = JavaVersion.VERSION_1_8.toString()
+        }
       }
       break
 
@@ -148,6 +151,9 @@ Automatic-Module-Name: ${POM_AUTOMATIC_MODULE_NAME}
           encoding 'UTF-8'
           sourceCompatibility JavaVersion.VERSION_1_8
           targetCompatibility JavaVersion.VERSION_1_8
+        }
+        kotlinOptions {
+          jvmTarget = JavaVersion.VERSION_1_8.toString()
         }
         testOptions {
           execution 'ANDROIDX_TEST_ORCHESTRATOR'

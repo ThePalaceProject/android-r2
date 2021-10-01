@@ -42,6 +42,7 @@ import org.librarysimplified.r2.api.SR2Theme
 import org.librarysimplified.r2.ui_thread.SR2UIThread
 import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewBookEvent.SR2BookLoadingFailed
 import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewControllerEvent.SR2ControllerBecameAvailable
+import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewNavigationEvent.SR2ReaderViewNavigationClose
 import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewNavigationEvent.SR2ReaderViewNavigationOpenTOC
 import org.librarysimplified.r2.views.internal.SR2BrightnessService
 import org.librarysimplified.r2.views.internal.SR2SettingsDialog
@@ -119,6 +120,8 @@ class SR2ReaderFragment private constructor(
     this.toolbar.menu.findItem(R.id.readerMenuAddBookmark)
       .setOnMenuItemClickListener { this.onReaderMenuAddBookmarkSelected() }
 
+    this.toolbar.setNavigationOnClickListener { this.onToolbarNavigationSelected() }
+
     /*
      * We don't show page numbers in continuous scroll mode.
      */
@@ -160,6 +163,13 @@ class SR2ReaderFragment private constructor(
     SR2UIThread.checkIsUIThread()
 
     this.openSettings()
+    return true
+  }
+
+  private fun onToolbarNavigationSelected(): Boolean {
+    SR2UIThread.checkIsUIThread()
+
+    this.readerModel.publishViewEvent(SR2ReaderViewNavigationClose)
     return true
   }
 

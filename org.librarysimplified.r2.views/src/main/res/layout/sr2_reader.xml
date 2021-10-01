@@ -13,11 +13,12 @@
     android:layout_height="?attr/actionBarSize"
     android:background="?attr/colorPrimary"
     android:minHeight="?attr/actionBarSize"
-    app:titleTextColor="@android:color/white"
-    tools:title="Placeholder"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toTopOf="parent" />
+    app:layout_constraintTop_toTopOf="parent"
+    app:navigationIcon="@drawable/sr2_arrow_back"
+    app:titleTextColor="@android:color/white"
+    tools:title="Placeholder" />
 
   <WebView
     android:id="@+id/readerWebView"

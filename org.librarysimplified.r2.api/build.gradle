@@ -1,8 +1,8 @@
 dependencies {
-  api libraries.google_guava
-  api libraries.joda_time
-  api libraries.kotlin_stdlib
-  api libraries.r2_shared
-  api libraries.r2_streamer
-  api libraries.rxjava2
+  api libs.google.guava
+  api libs.joda.time
+  api libs.kotlin.stdlib
+  api libs.r2.shared
+  api libs.r2.streamer
+  api libs.rxjava2
 }

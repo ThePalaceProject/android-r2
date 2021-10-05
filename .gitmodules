@@ -1,3 +1,7 @@
 [submodule ".ci"]
 	path = .ci
 	url = https://github.com/ThePalaceProject/android-ci
+[submodule "org.thepalaceproject.android.platform"]
+	path = org.thepalaceproject.android.platform
+        branch = main
+	url = https://github.com/ThePalaceProject/android-platform

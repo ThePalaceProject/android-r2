@@ -7,6 +7,15 @@
   android:layout_width="match_parent"
   android:layout_height="match_parent">
 
+  <TextView
+    android:id="@+id/titleText"
+    android:layout_width="match_parent"
+    android:layout_height="?attr/actionBarSize"
+    android:gravity="center"
+    android:textAppearance="?android:textAppearanceMedium"
+    app:layout_constraintTop_toTopOf="parent"
+    tools:text="Placeholder" />
+
   <androidx.appcompat.widget.Toolbar
     android:id="@+id/readerToolbar"
     android:layout_width="0dp"
@@ -26,10 +35,10 @@
     android:layout_height="0dp"
     android:layout_marginTop="8dp"
     android:layout_marginBottom="8dp"
-    app:layout_constraintBottom_toTopOf="@+id/readerProgressContainer"
+    app:layout_constraintBottom_toTopOf="@id/readerProgressContainer"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toBottomOf="@id/readerToolbar" />
+    app:layout_constraintTop_toBottomOf="@id/titleText" />
 
   <include
     android:id="@+id/readerProgressContainer"

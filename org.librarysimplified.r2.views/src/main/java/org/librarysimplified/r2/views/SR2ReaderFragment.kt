@@ -73,6 +73,7 @@ class SR2ReaderFragment private constructor(
   private lateinit var progressContainer: ViewGroup
   private lateinit var progressView: ProgressBar
   private lateinit var readerModel: SR2ReaderViewModel
+  private lateinit var titleText: TextView
   private lateinit var toolbar: Toolbar
   private lateinit var webView: WebView
   private var controller: SR2ControllerType? = null
@@ -110,6 +111,8 @@ class SR2ReaderFragment private constructor(
       view.findViewById(R.id.reader2_position_percent)
     this.loadingView =
       view.findViewById(R.id.readerLoading)
+    this.titleText =
+      view.findViewById(R.id.titleText)
 
     this.toolbar.inflateMenu(R.menu.sr2_reader_menu)
     this.menuBookmarkItem = this.toolbar.menu.findItem(R.id.readerMenuAddBookmark)
@@ -316,6 +319,7 @@ class SR2ReaderFragment private constructor(
         this.controller = newController
         newController.viewConnect(this.webView)
         this.toolbar.title = newController.bookMetadata.title
+        this.titleText.text = newController.bookMetadata.title
         this.readerModel.publishViewEvent(SR2ControllerBecameAvailable(event.reference))
       }
 
@@ -376,12 +380,10 @@ class SR2ReaderFragment private constructor(
   private fun showOrHideReadingUI(uiVisible: Boolean) {
     SR2UIThread.checkIsUIThread()
 
-    if (uiVisible) {
-      this.progressContainer.visibility = View.VISIBLE
-      this.toolbar.visibility = View.VISIBLE
+    this.toolbar.visibility = if (uiVisible) {
+      View.VISIBLE
     } else {
-      this.progressContainer.visibility = View.GONE
-      this.toolbar.visibility = View.GONE
+      View.GONE
     }
   }
 

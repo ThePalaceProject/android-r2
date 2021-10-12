@@ -23,6 +23,14 @@ _Image by [Jose Antonio Alba](https://pixabay.com/users/josealbafotos-1624766/) 
 The contents of this repository define an API and a set of views for working with
 the [Readium 2](https://readium.org/technical/r2-toc/) library.
 
+Make sure you clone this repository with `git clone --recursive`. 
+If you forgot to use `--recursive`, then execute:
+
+```
+$ git submodule init
+$ git submodule update --remote --recursive
+```
+
 ### Architecture
 
 The architecture of the project is modularized and carefully structured to separate

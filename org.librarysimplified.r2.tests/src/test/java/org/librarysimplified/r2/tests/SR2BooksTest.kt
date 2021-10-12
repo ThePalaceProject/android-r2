@@ -2,11 +2,13 @@ package org.librarysimplified.r2.tests
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.librarysimplified.r2.vanilla.internal.SR2Books
 import org.slf4j.LoggerFactory
 import java.io.File
 
+@Disabled("Roboelectric is not yet compatible with JUnit5")
 class SR2BooksTest {
   private val logger =
     LoggerFactory.getLogger(SR2BooksTest::class.java)

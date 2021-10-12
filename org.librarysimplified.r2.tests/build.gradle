@@ -3,7 +3,7 @@ dependencies {
   implementation libs.junit.jupiter.engine
   implementation libs.kotlin.stdlib
   implementation libs.kxml
-  implementation libs.mockito.core
+  implementation libs.mockito
 
   //noinspection DuplicatePlatformClasses
   implementation libs.org.json

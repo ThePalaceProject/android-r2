@@ -1,0 +1,408 @@
+/*
+ * Copyright 2020 Readium Foundation. All rights reserved.
+ * Use of this source code is governed by the BSD-style license
+ * available in the top-level LICENSE file of the project.
+ */
+
+"use strict";
+
+var readium = (function() {
+    // Catch JS errors to log them in the app.
+    window.addEventListener("error", function(event) {
+        Android.logError(event.message, event.filename, event.lineno);
+    }, false);
+
+    // Notify native code that the page has loaded.
+    window.addEventListener("load", function(){ // on page load
+        window.addEventListener("orientationchange", function() {
+            onViewportWidthChanged();
+            snapCurrentOffset();
+        });
+        onViewportWidthChanged();
+    }, false);
+
+    var pageWidth = 1;
+
+    /*
+     * Return the number of pages in paginated mode, or 1 for scrolling mode.
+     */
+
+    function getCurrentPageCount() {
+        if (isScrollModeEnabled()) {
+            return 1;
+        }
+
+        var scrollX       = window.scrollX;
+        var documentWidth = document.scrollingElement.scrollWidth;
+        var pageCountRaw  = Math.round(documentWidth / pageWidth);
+        return Math.max(1, pageCountRaw);
+    }
+
+    /*
+     * Return the index of the current page (starting from 1) in paginated mode, or 1 for
+     * scrolling mode.
+     */
+
+    function getCurrentPageIndex() {
+        if (isScrollModeEnabled()) {
+            return 1;
+        }
+
+        var scrollX       = window.scrollX;
+        var pageIndexRaw  = Math.round(scrollX / pageWidth);
+        var pageIndex1    = pageIndexRaw + 1;
+        return Math.max(1, pageIndex1);
+    }
+
+    /*
+     * Return `true` if the user is currently on the last page of the chapter. Always true
+     * for scrolling mode.
+     */
+
+    function isOnLastPage() {
+        var pageCount = getCurrentPageCount();
+        var pageIndex = getCurrentPageIndex();
+        return pageIndex == pageCount;
+    }
+
+    /*
+     * Return `true` if the user is currently on the first page of the chapter. Always true
+     * for scrolling mode.
+     */
+
+    function isOnFirstPage() {
+        return getCurrentPageIndex() == 1;
+    }
+
+    /*
+     * A function executed when the scroll position changes. This is used to calculate
+     * page numbers, and will result in the last-read position being updated by the native
+     * code.
+     */
+
+    function onScrollPositionChanged() {
+      if (isScrollModeEnabled()) {
+        var scrollY  = window.scrollY
+        var height   = document.scrollingElement.scrollHeight;
+        var progress = scrollY / height;
+
+        Android.onReadingPositionChanged(progress, 1, 1);
+        return;
+      }
+
+      var scrollX       = window.scrollX;
+      var documentWidth = document.scrollingElement.scrollWidth;
+      var progress      = scrollX / documentWidth;
+      scrollToPosition(progress);
+
+      var pageCount = getCurrentPageCount();
+      var pageIndex = getCurrentPageIndex();
+      Android.onReadingPositionChanged(progress, pageIndex, pageCount);
+    }
+
+    /*
+     * A simple throttle used to prevent scroll events from being published too frequently.
+     */
+
+    var scrollThrottleTimeout = false;
+    var scrollThrottle = (callback, time) => {
+        if (scrollThrottleTimeout) {
+            return;
+        }
+
+        scrollThrottleTimeout = true;
+        setTimeout(() => {
+            callback();
+            scrollThrottleTimeout = false;
+        }, time);
+    }
+
+    /*
+     * Notify native code when the user scrolls. This is throttled in scrolling mode to prevent
+     * updates from occurring too frequently, should the user fling the text somehow.
+     */
+
+    window.addEventListener("scroll", function() {
+        if (isScrollModeEnabled()) {
+          scrollThrottle(onScrollPositionChanged, 1000);
+        } else {
+          onScrollPositionChanged();
+        }
+    })
+
+    function onViewportWidthChanged() {
+        // We can't rely on window.innerWidth for the pageWidth on Android, because if the
+        // device pixel ratio is not an integer, we get rounding issues offsetting the pages.
+        //
+        // See https://github.com/readium/readium-css/issues/97
+        // and https://github.com/readium/r2-navigator-kotlin/issues/146
+        var width = Android.getViewportWidth()
+        pageWidth = width / window.devicePixelRatio;
+        setProperty("--RS__viewportWidth", "calc(" + width + "px / " + window.devicePixelRatio + ")")
+    }
+
+    function isScrollModeEnabled() {
+        return document.documentElement.style.getPropertyValue("--USER__scroll").toString().trim() == 'readium-scroll-on';
+    }
+
+    function isRTL() {
+        return document.body.dir.toLowerCase() == 'rtl';
+    }
+
+    // Scroll to the element with the given tag ID
+    function scrollToId(id) {
+        var element = document.getElementById(id);
+        if (!element) {
+            console.log("no element with id " + id)
+            return;
+        }
+        console.log("scrolling to element " + element + " with id " + id)
+        element.scrollIntoView({inline: "center"});
+        snapCurrentOffset();
+    }
+
+    // Position must be in the range [0 - 1], 0-100%.
+    function scrollToPosition(position) {
+        if ((position < 0) || (position > 1)) {
+            throw "scrollToPosition() must be given a position from 0.0 to 1.0";
+        }
+
+        if (isScrollModeEnabled()) {
+            var offset = document.scrollingElement.scrollHeight * position;
+            document.scrollingElement.scrollTop = offset;
+        } else {
+            var documentWidth = document.scrollingElement.scrollWidth;
+            var factor = isRTL() ? -1 : 1;
+            var offset = documentWidth * position * factor;
+            var offsetSnapped = snapOffset(offset);
+            document.scrollingElement.scrollLeft = offsetSnapped;
+        }
+    }
+
+    function scrollToStart() {
+        if (!isScrollModeEnabled()) {
+            document.scrollingElement.scrollLeft = 0;
+        } else {
+            document.scrollingElement.scrollTop = 0;
+            window.scrollTo(0, 0);
+        }
+    }
+
+    function scrollToEnd() {
+        if (!isScrollModeEnabled()) {
+            var factor = isRTL() ? -1 : 1;
+            document.scrollingElement.scrollLeft = snapOffset(document.scrollingElement.scrollWidth * factor);
+        } else {
+            document.scrollingElement.scrollTop = document.body.scrollHeight;
+            window.scrollTo(0, document.body.scrollHeight);
+        }
+    }
+
+    // Returns false if the page is already at the left-most scroll offset.
+    function scrollLeft() {
+        if (isRTL() && isOnLastPage()) {
+          return false;
+        }
+        if (isOnFirstPage()) {
+          return false;
+        }
+
+        var documentWidth = document.scrollingElement.scrollWidth;
+        var offset = window.scrollX - pageWidth;
+        var minOffset = isRTL() ? -(documentWidth - pageWidth) : 0;
+        return scrollToOffset(Math.max(offset, minOffset));
+    }
+
+    // Returns false if the page is already at the right-most scroll offset.
+    function scrollRight() {
+        if (isRTL() && isOnFirstPage()) {
+          return false;
+        }
+        if (isOnLastPage()) {
+          return false
+        }
+
+        var documentWidth = document.scrollingElement.scrollWidth;
+        var offset = window.scrollX + pageWidth;
+        var maxOffset = Math.max(documentWidth - pageWidth, pageWidth);
+        if (isRTL()) {
+          maxOffset = 0;
+        }
+        return scrollToOffset(Math.min(offset, maxOffset));
+    }
+
+    // Scrolls to the given left offset.
+    // Returns false if the page scroll position is already close enough to the given offset.
+    function scrollToOffset(offset) {
+        if (isScrollModeEnabled()) {
+            throw "Called scrollToOffset() with scroll mode enabled. This can only be used in paginated mode.";
+        }
+
+        var offsetThen = window.scrollX;
+        var offsetNow = snapOffset(offset);
+        document.scrollingElement.scrollLeft = offsetNow;
+
+        var difference = Math.abs(offsetNow - offsetThen)
+        return difference > 0;
+    }
+
+    // Snap the offset to the nearest multiple of the page width.
+    function snapOffset(offset) {
+        return pageWidth * Math.round(offset / pageWidth)
+    }
+
+    // Snaps the current offset to the nearest multiple of the page width.
+    function snapCurrentOffset() {
+        if (isScrollModeEnabled()) {
+            return;
+        }
+        document.scrollingElement.scrollLeft = snapOffset(window.scrollX);
+    }
+
+    /// User Settings.
+
+    // For setting user setting.
+    function setProperty(key, value) {
+        var root = document.documentElement;
+
+        root.style.setProperty(key, value);
+    }
+
+    // For removing user setting.
+    function removeProperty(key) {
+        var root = document.documentElement;
+
+        root.style.removeProperty(key);
+    }
+
+    // Public API used by the navigator.
+    return {
+        'scrollToId': scrollToId,
+        'scrollToPosition': scrollToPosition,
+        'scrollLeft': scrollLeft,
+        'scrollRight': scrollRight,
+        'scrollToStart': scrollToStart,
+        'scrollToEnd': scrollToEnd,
+        'setProperty': setProperty,
+        'removeProperty': removeProperty,
+        'broadcastReadingPosition': onScrollPositionChanged
+    };
+
+})();
+
+(function() {
+    var singleTouchGesture = false;
+    var startX = 0;
+    var startY = 0;
+    var startTime = Date.now();
+    var availWidth = window.screen.availWidth;
+    var availHeight = window.screen.availHeight;
+
+    /*
+     * When a touch is detected, record the starting coordinates and properties of the event.
+     */
+
+    var handleTouchStart = function(event) {
+        startTime = Date.now();
+        console.log("touchStart: " + startTime);
+
+        if (event.target.nodeName.toUpperCase() === 'A') {
+            console.log("Touched a link.");
+            singleTouchGesture = false;
+            return;
+        }
+
+        singleTouchGesture = event.touches.length == 1;
+        var touch = event.changedTouches[0];
+        startX = touch.screenX % availWidth;
+        startY = touch.screenY % availHeight;
+    };
+
+    /*
+     * Handle taps that occur within the page movement areas (the left and right edges of the screen).
+     */
+
+    var handlePageMovementTap = function(event, touch) {
+        var position = (touch.screenX % availWidth) / availWidth;
+        console.log("pageMovementTap: " + position);
+
+        if (position <= 0.2) {
+            console.log("LeftTapped");
+            Android.onLeftTapped();
+        } else if (position >= 0.8) {
+            console.log("RightTapped");
+            Android.onRightTapped();
+        } else {
+            console.log("CenterTapped");
+            Android.onCenterTapped();
+        }
+
+        event.stopPropagation();
+        event.preventDefault();
+    };
+
+    /*
+     * Handle swipes.
+     */
+
+    var handleSwipe = function(event) {
+        console.log("swipe");
+
+        var touch =
+          event.changedTouches[0];
+        var direction =
+          ((touch.screenX % availWidth) - startX) / availWidth;
+
+        if (direction > 0) {
+            console.log("swipeRight");
+            Android.onRightSwiped();
+        } else {
+            console.log("swipeLeft");
+            Android.onLeftSwiped();
+        }
+
+        event.stopPropagation();
+        event.preventDefault();
+    }
+
+    /*
+     * When a touch ends, check if any action has to be made, and contact native code.
+     */
+
+    var handleTouchEnd = function(event) {
+        var endTime = Date.now();
+        var timeDelta = endTime - startTime;
+        console.log("touchEnd: timeDelta: " + timeDelta);
+
+        if (!singleTouchGesture) {
+            return;
+        }
+
+        var touch = event.changedTouches[0];
+
+        var relativeDistanceX =
+          Math.abs(((touch.screenX % availWidth) - startX) / availWidth);
+        var relativeDistanceY =
+          Math.abs(((touch.screenY % availHeight) - startY) / availHeight);
+        var touchDistance =
+          Math.max(relativeDistanceX, relativeDistanceY);
+
+        var swipeFarEnough = relativeDistanceX > 0.25
+        var swipeFastEnough = timeDelta < 250
+        if (swipeFastEnough && swipeFarEnough) {
+            handleSwipe(event);
+            return;
+        }
+
+        var tapAreaSize = 0.01
+        if (touchDistance < tapAreaSize) {
+            handlePageMovementTap(event, touch);
+            return;
+        }
+    };
+
+    window.addEventListener("load", function() {
+        window.document.addEventListener("touchstart", handleTouchStart, false);
+        window.document.addEventListener("touchend", handleTouchEnd, false);
+    }, false);
+})();

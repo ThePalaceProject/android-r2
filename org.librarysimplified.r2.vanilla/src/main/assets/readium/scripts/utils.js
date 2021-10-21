@@ -155,8 +155,19 @@ var readium = (function() {
             return;
         }
         console.log("scrolling to element " + element + " with id " + id)
-        element.scrollIntoView({inline: "center"});
-        snapCurrentOffset();
+        var rect = element.getBoundingClientRect();
+        scrollToRect(rect);
+    }
+
+    function scrollToRect(rect) {
+      if (isScrollModeEnabled()) {
+        document.scrollingElement.scrollTop =
+          rect.top + window.scrollY - window.innerHeight / 2;
+      } else {
+        document.scrollingElement.scrollLeft = snapOffset(
+          rect.left + window.scrollX
+        );
+      }
     }
 
     // Position must be in the range [0 - 1], 0-100%.

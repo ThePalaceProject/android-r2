@@ -18,7 +18,8 @@
     tools:replace="android:label,android:allowBackup"
     tools:targetApi="n">
 
-    <activity android:name="org.librarysimplified.r2.demo.DemoActivity">
+    <activity android:name="org.librarysimplified.r2.demo.DemoActivity"
+      android:theme="@style/DemoTheme_NoActionBar">
       <intent-filter>
         <action android:name="android.intent.action.MAIN" />
         <category android:name="android.intent.category.LAUNCHER" />

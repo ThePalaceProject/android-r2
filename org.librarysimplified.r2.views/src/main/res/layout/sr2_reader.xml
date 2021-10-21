@@ -9,11 +9,9 @@
 
   <androidx.appcompat.widget.Toolbar
     android:id="@+id/readerToolbar"
-    android:layout_width="0dp"
-    android:layout_height="?attr/actionBarSize"
-    android:background="?attr/colorPrimary"
-    android:minHeight="?attr/actionBarSize"
-    app:titleTextColor="@android:color/white"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:theme="?android:attr/actionBarTheme"
     tools:title="Placeholder"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintStart_toStartOf="parent"

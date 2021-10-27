@@ -116,7 +116,7 @@ internal class SR2Controller private constructor(
       val bookFile = configuration.bookFile
       this.logger.debug("creating controller for {}", bookFile)
 
-      val onCreatePublication: Publication.Builder.() -> Unit  = {
+      val onCreatePublication: Publication.Builder.() -> Unit = {
         fetcher = TransformingFetcher(fetcher, SR2HtmlInjector(manifest)::transform)
       }
 

@@ -3,7 +3,7 @@ package org.librarysimplified.r2.vanilla.internal
 import org.readium.r2.shared.publication.Metadata
 import org.readium.r2.shared.publication.ReadingProgression
 
-internal enum class ReadiumCssLayout(val cssId: String) {
+internal enum class SR2ReadiumCssLayout(val cssId: String) {
   // Right to left
   RTL("rtl"),
   // Left to right
@@ -22,18 +22,18 @@ internal enum class ReadiumCssLayout(val cssId: String) {
 
   companion object {
 
-    operator fun invoke(metadata: Metadata): ReadiumCssLayout =
+    operator fun invoke(metadata: Metadata): SR2ReadiumCssLayout =
       invoke(languages = metadata.languages, readingProgression = metadata.effectiveReadingProgression)
 
     /**
-     * Determines the [ReadiumCssLayout] for the given BCP 47 language codes and
+     * Determines the [SR2ReadiumCssLayout] for the given BCP 47 language codes and
      * [readingProgression].
      * Defaults to [LTR].
      */
-    operator fun invoke(languages: List<String>, readingProgression: ReadingProgression): ReadiumCssLayout {
+    operator fun invoke(languages: List<String>, readingProgression: ReadingProgression): SR2ReadiumCssLayout {
       val isCjk: Boolean =
         if (languages.size == 1) {
-          val language = languages[0].split("-")[0]  // Remove region
+          val language = languages[0].split("-")[0] // Remove region
           listOf("zh", "ja", "ko").contains(language)
         } else {
           false

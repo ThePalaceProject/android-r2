@@ -32,7 +32,6 @@ internal class SR2HtmlInjector(private val manifest: Manifest) {
           injectFixedLayoutHtml(trimmedText)
         res.toByteArray()
       }
-
   }
 
   private fun injectReflowableHtml(content: String): String {
@@ -44,7 +43,7 @@ internal class SR2HtmlInjector(private val manifest: Manifest) {
     if (endHeadIndex == -1)
       return content
 
-    val layout = ReadiumCssLayout(manifest.metadata)
+    val layout = SR2ReadiumCssLayout(manifest.metadata)
 
     val endIncludes = mutableListOf<String>()
     val beginIncludes = mutableListOf<String>()
@@ -89,7 +88,7 @@ internal class SR2HtmlInjector(private val manifest: Manifest) {
       }
     }
 
-    val layout = ReadiumCssLayout(manifest.metadata)
+    val layout = SR2ReadiumCssLayout(manifest.metadata)
 
     if (layout.cssId == "rtl") {
       resourceHtml1 = addRTLDir("html", resourceHtml1)
@@ -101,8 +100,6 @@ internal class SR2HtmlInjector(private val manifest: Manifest) {
 
   private fun regexForOpeningHTMLTag(name: String): Regex =
     Regex("""<$name.*?>""", setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL))
-
-
 
   private fun injectFixedLayoutHtml(content: String): String {
     var resourceHtml = content

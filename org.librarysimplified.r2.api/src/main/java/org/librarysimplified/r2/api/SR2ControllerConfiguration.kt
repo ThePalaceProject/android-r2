@@ -4,7 +4,6 @@ import android.content.Context
 import com.google.common.util.concurrent.ListeningExecutorService
 import org.readium.r2.shared.publication.ContentProtection
 import org.readium.r2.shared.publication.asset.PublicationAsset
-import org.readium.r2.streamer.Streamer
 
 /**
  * Configuration values for an R2 controller.

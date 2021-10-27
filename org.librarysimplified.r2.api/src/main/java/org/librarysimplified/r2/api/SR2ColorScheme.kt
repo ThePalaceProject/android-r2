@@ -52,7 +52,7 @@ enum class SR2ColorScheme {
       LIGHT_TEXT_DARK_BACKGROUND ->
         Color.argb(0xff, 0x00, 0x00, 0x00)
       DARK_TEXT_ON_SEPIA ->
-        Color.argb(0xff, 0xf2, 0xe4, 0xcb)
+        Color.argb(0xff, 0xfa, 0xf4, 0xe8)
     }
   }
 }

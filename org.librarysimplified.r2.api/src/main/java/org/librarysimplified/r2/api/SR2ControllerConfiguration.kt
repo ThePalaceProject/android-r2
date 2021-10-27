@@ -2,6 +2,7 @@ package org.librarysimplified.r2.api
 
 import android.content.Context
 import com.google.common.util.concurrent.ListeningExecutorService
+import org.readium.r2.shared.publication.ContentProtection
 import org.readium.r2.shared.publication.asset.PublicationAsset
 import org.readium.r2.streamer.Streamer
 
@@ -37,10 +38,10 @@ data class SR2ControllerConfiguration(
   val context: Context,
 
   /**
-   * A Readium Streamer to open the book.
+   * Content protections to provide the Readium Streamer with.
    */
 
-  val streamer: Streamer,
+  val contentProtections: List<ContentProtection>,
 
   /**
    * An executor service used to execute I/O code on one or more background threads.

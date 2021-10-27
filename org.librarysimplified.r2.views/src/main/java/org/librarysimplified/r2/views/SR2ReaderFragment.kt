@@ -212,7 +212,7 @@ class SR2ReaderFragment private constructor(
         bookId = this.parameters.bookId,
         context = activity,
         ioExecutor = this.readerModel.ioExecutor,
-        streamer = this.parameters.streamer,
+        contentProtections = this.parameters.contentProtections,
         theme = this.parameters.theme,
         uiExecutor = SR2UIThread::runOnUIThread,
         scrollingMode = this.parameters.scrollingMode,

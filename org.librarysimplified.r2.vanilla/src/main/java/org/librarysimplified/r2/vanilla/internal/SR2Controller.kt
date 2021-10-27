@@ -38,6 +38,7 @@ import org.librarysimplified.r2.api.SR2Locator.SR2LocatorChapterEnd
 import org.librarysimplified.r2.api.SR2Locator.SR2LocatorPercent
 import org.librarysimplified.r2.api.SR2PageNumberingMode
 import org.librarysimplified.r2.api.SR2Theme
+import org.readium.r2.shared.fetcher.TransformingFetcher
 import org.readium.r2.shared.publication.Publication
 import org.readium.r2.shared.publication.epub.EpubLayout.FIXED
 import org.readium.r2.shared.publication.epub.EpubLayout.REFLOWABLE
@@ -46,6 +47,8 @@ import org.readium.r2.shared.publication.services.isRestricted
 import org.readium.r2.shared.publication.services.positionsByReadingOrder
 import org.readium.r2.shared.publication.services.protectionError
 import org.readium.r2.shared.util.getOrElse
+import org.readium.r2.streamer.Streamer
+import org.readium.r2.streamer.parser.epub.EpubParser
 import org.readium.r2.streamer.server.Server
 import org.slf4j.LoggerFactory
 import java.io.IOException
@@ -113,8 +116,21 @@ internal class SR2Controller private constructor(
       val bookFile = configuration.bookFile
       this.logger.debug("creating controller for {}", bookFile)
 
+      val onCreatePublication: Publication.Builder.() -> Unit  = {
+        fetcher = TransformingFetcher(fetcher, SR2HtmlInjector(manifest)::transform)
+      }
+
+      val streamer =
+        Streamer(
+          context = configuration.context,
+          onCreatePublication = onCreatePublication,
+          parsers = listOf(EpubParser()),
+          contentProtections = configuration.contentProtections,
+          ignoreDefaultParsers = true
+        )
+
       val publication = runBlocking {
-        configuration.streamer.open(bookFile, allowUserInteraction = false)
+        streamer.open(bookFile, allowUserInteraction = false)
       }.getOrElse {
         throw IOException("Failed to open EPUB", it)
       }
@@ -131,7 +147,7 @@ internal class SR2Controller private constructor(
       val port = this.fetchUnusedHTTPPort()
       this.logger.debug("server port: {}", port)
 
-      val server = Server(port, configuration.context)
+      val server = Server(port, configuration.context, enableReadiumNavigatorSupport = false)
       this.logger.debug("starting server")
       server.start(5_000)
 

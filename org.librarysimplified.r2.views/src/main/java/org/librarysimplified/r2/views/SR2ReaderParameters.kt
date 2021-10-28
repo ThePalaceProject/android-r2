@@ -4,8 +4,8 @@ import org.librarysimplified.r2.api.SR2ControllerProviderType
 import org.librarysimplified.r2.api.SR2PageNumberingMode
 import org.librarysimplified.r2.api.SR2ScrollingMode
 import org.librarysimplified.r2.api.SR2Theme
+import org.readium.r2.shared.publication.ContentProtection
 import org.readium.r2.shared.publication.asset.PublicationAsset
-import org.readium.r2.streamer.Streamer
 
 /**
  * The parameters required to open an SR2 fragment.
@@ -14,10 +14,10 @@ import org.readium.r2.streamer.Streamer
 data class SR2ReaderParameters(
 
   /**
-   * A Readium Streamer to open the book.
+   * Content protections to provide the Readium Streamer with.
    */
 
-  val streamer: Streamer,
+  val contentProtections: List<ContentProtection>,
 
   /**
    * The publication asset containing the book to be opened.

@@ -20,13 +20,13 @@
     android:id="@+id/readerToolbar"
     android:layout_width="0dp"
     android:layout_height="?attr/actionBarSize"
-    android:background="?attr/colorPrimary"
+    android:background="@android:color/white"
     android:minHeight="?attr/actionBarSize"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintTop_toTopOf="parent"
     app:navigationIcon="@drawable/sr2_arrow_back"
-    app:titleTextColor="@android:color/white"
+    app:titleTextColor="@android:color/black"
     tools:title="Placeholder" />
 
   <WebView

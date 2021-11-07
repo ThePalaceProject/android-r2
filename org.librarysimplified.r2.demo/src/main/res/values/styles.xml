@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
 <resources>
-  <color name="demoColorPrimaryLight">#5472d3</color>
-  <color name="demoColorPrimary">#0d47a1</color>
-  <color name="demoColorPrimaryDark">#002171</color>
+  <color name="demoColorPrimaryLight">#000000</color>
+  <color name="demoColorPrimary">#000000</color>
+  <color name="demoColorPrimaryDark">#000000</color>
   <color name="demoColorDisabled">#dddddd</color>
   <color name="demoColorBackground">#ffffff</color>
 

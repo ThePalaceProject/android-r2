@@ -13,6 +13,7 @@ import android.webkit.WebView
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.widget.Toolbar
+import androidx.core.view.MenuItemCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.google.common.base.Preconditions
@@ -148,8 +149,11 @@ class SR2ReaderFragment private constructor(
 
     val controllerNow = this.controller
     if (controllerNow != null) {
-      if (this.findBookmarkForCurrentPage(controllerNow, controllerNow.positionNow()) == null) {
+      val found = this.findBookmarkForCurrentPage(controllerNow, controllerNow.positionNow())
+      if (found == null) {
         controllerNow.submitCommand(SR2Command.BookmarkCreate)
+      } else {
+        controllerNow.submitCommand(SR2Command.BookmarkDelete(found))
       }
     }
     return true
@@ -284,8 +288,16 @@ class SR2ReaderFragment private constructor(
       val bookmark = this.findBookmarkForCurrentPage(controllerNow, currentPosition)
       if (bookmark != null) {
         this.menuBookmarkItem.setIcon(R.drawable.sr2_bookmark_active)
+        MenuItemCompat.setContentDescription(
+          this.menuBookmarkItem,
+          this.resources.getString(R.string.readerAccessDeleteBookmark)
+        )
       } else {
         this.menuBookmarkItem.setIcon(R.drawable.sr2_bookmark_inactive)
+        MenuItemCompat.setContentDescription(
+          this.menuBookmarkItem,
+          this.resources.getString(R.string.readerAccessAddBookmark)
+        )
       }
     }
   }

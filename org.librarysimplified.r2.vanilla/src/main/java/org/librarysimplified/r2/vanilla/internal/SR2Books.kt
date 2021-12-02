@@ -42,7 +42,7 @@ object SR2Books {
   }
 
   private fun flattenTOC(
-    tableOfContents: List<Link>,
+    tableOfContents: List<Link>
   ): List<SR2TOCEntry> {
     val results = mutableListOf<SR2TOCEntry>()
     tableOfContents.forEach { node -> this.flattenTOCNode(node, 0, results) }

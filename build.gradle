@@ -183,6 +183,7 @@ Automatic-Module-Name: ${POM_AUTOMATIC_MODULE_NAME}
   repositories {
     mavenLocal()
     mavenCentral()
+    maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
 
     maven { url "https://jitpack.io" }
     google()

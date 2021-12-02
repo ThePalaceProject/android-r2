@@ -16,8 +16,6 @@
     android:layout_marginStart="16dp"
     android:layout_marginTop="16dp"
     android:src="@drawable/sr2_chapter"
-    android:tint="?attr/colorPrimary"
-    android:tintMode="multiply"
     tools:src="@drawable/sr2_black"
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintTop_toTopOf="parent" />

@@ -1,8 +1,0 @@
---branch
-develop
---repository
-.git
---project
-NYPL-Simplified/Simplified-R2-Android
---formatter
-slack

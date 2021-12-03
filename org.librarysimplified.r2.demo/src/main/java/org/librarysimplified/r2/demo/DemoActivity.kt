@@ -5,12 +5,14 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.view.View
 import android.widget.Button
 import android.widget.CheckBox
 import android.widget.Toast
 import androidx.annotation.UiThread
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import androidx.lifecycle.ViewModelProvider
 import io.reactivex.disposables.Disposable
 import org.librarysimplified.r2.api.SR2Command
@@ -46,8 +48,6 @@ import org.librarysimplified.r2.views.SR2ReaderViewModel
 import org.librarysimplified.r2.views.SR2ReaderViewModelFactory
 import org.librarysimplified.r2.views.SR2TOCFragment
 import org.readium.r2.shared.publication.asset.FileAsset
-import org.readium.r2.streamer.Streamer
-import org.readium.r2.streamer.parser.epub.EpubParser
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.FileNotFoundException
@@ -57,7 +57,7 @@ import java.io.OutputStream
 import java.security.DigestInputStream
 import java.security.MessageDigest
 
-class DemoActivity : AppCompatActivity() {
+class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
 
   companion object {
     const val PICK_DOCUMENT = 1001
@@ -78,6 +78,9 @@ class DemoActivity : AppCompatActivity() {
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
+
+    val toolbar = this.findViewById(R.id.mainToolbar) as Toolbar
+    this.setSupportActionBar(toolbar)
 
     if (savedInstanceState == null) {
       this.setContentView(R.layout.demo_fragment_host)
@@ -141,19 +144,12 @@ class DemoActivity : AppCompatActivity() {
   private fun startReader(file: File) {
     SR2UIThread.checkIsUIThread()
 
-    val streamer =
-      Streamer(
-        context = this,
-        parsers = listOf(EpubParser()),
-        ignoreDefaultParsers = true
-      )
-
     val database =
       DemoApplication.application.database()
 
     this.readerParameters =
       SR2ReaderParameters(
-        streamer = streamer,
+        contentProtections = emptyList(),
         bookFile = FileAsset(file),
         bookId = this.epubId!!,
         theme = database.theme(),
@@ -179,6 +175,11 @@ class DemoActivity : AppCompatActivity() {
 
     this.viewSubscription =
       readerModel.viewEvents.subscribe(this::onViewEvent)
+
+    val selectFileArea =
+      this.findViewById<View>(R.id.selectFileArea)
+
+    selectFileArea.visibility = View.GONE
 
     this.supportFragmentManager.beginTransaction()
       .replace(R.id.demoFragmentArea, this.readerFragmentFactory.instantiate(this.classLoader, SR2ReaderFragment::class.java.name))

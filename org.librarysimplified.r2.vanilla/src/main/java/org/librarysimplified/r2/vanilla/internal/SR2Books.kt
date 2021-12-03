@@ -34,11 +34,10 @@ object SR2Books {
   private fun makeTableOfContents(
     publication: Publication
   ): List<SR2TOCEntry> {
-    val toc = this.flattenTOC(publication.tableOfContents)
-    return if (toc.isNotEmpty()) {
-      toc
+    return if (publication.tableOfContents.isNotEmpty()) {
+      this.flattenTOC(publication.tableOfContents)
     } else {
-      this.flattenTOC(publication.readingOrder)
+      this.tocFromReadingOrder(publication.readingOrder)
     }
   }
 
@@ -55,9 +54,19 @@ object SR2Books {
     depth: Int,
     results: MutableList<SR2TOCEntry>
   ) {
-    results.add(SR2TOCEntry(link.title.orEmpty(), link.href, depth))
+    // Items in tableOfContents are unlikely to have no title because it makes no sense.
+    val title = link.title?.takeUnless(String::isBlank) ?: link.href
+    results.add(SR2TOCEntry(title, link.href, depth))
     for (child in link.children) {
       this.flattenTOCNode(child, depth + 1, results)
     }
   }
+
+  private fun tocFromReadingOrder(
+    readingOrder: List<Link>
+  ): List<SR2TOCEntry> =
+    readingOrder.mapIndexed { index, link ->
+      val title = link.title?.takeUnless(String::isBlank) ?: "Chapter ${index + 1}"
+      SR2TOCEntry(title, link.href, 0)
+    }
 }

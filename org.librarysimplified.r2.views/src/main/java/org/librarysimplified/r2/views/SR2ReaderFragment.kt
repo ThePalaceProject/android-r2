@@ -1,6 +1,7 @@
 package org.librarysimplified.r2.views
 
 import android.content.Intent
+import android.graphics.PorterDuff
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -14,6 +15,7 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.MenuItemCompat
+import androidx.core.view.forEach
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.google.common.base.Preconditions
@@ -186,6 +188,12 @@ class SR2ReaderFragment private constructor(
     val background = theme.colorScheme.background()
     val foreground = theme.colorScheme.foreground()
 
+    this.toolbar.setBackgroundColor(background)
+    this.toolbar.setTitleTextColor(foreground)
+    this.toolbar.navigationIcon?.setColorFilter(foreground, PorterDuff.Mode.SRC_ATOP)
+    this.toolbar.menu.forEach { item ->
+      item.icon.setColorFilter(foreground, PorterDuff.Mode.SRC_ATOP)
+    }
     this.container.setBackgroundColor(background)
     this.positionPageView.setTextColor(foreground)
     this.positionTitleView.setTextColor(foreground)
@@ -285,6 +293,7 @@ class SR2ReaderFragment private constructor(
 
     val controllerNow = this.controller
     if (controllerNow != null) {
+      val currentColorFilter = menuBookmarkItem.icon.colorFilter
       val bookmark = this.findBookmarkForCurrentPage(controllerNow, currentPosition)
       if (bookmark != null) {
         this.menuBookmarkItem.setIcon(R.drawable.sr2_bookmark_active)
@@ -299,6 +308,7 @@ class SR2ReaderFragment private constructor(
           this.resources.getString(R.string.readerAccessAddBookmark)
         )
       }
+      menuBookmarkItem.icon.colorFilter = currentColorFilter
     }
   }
 

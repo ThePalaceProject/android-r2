@@ -305,6 +305,7 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
       ips?.close()
       ops?.close()
     }
+
     return null
   }
 

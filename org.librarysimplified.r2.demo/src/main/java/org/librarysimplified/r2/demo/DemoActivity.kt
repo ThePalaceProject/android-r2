@@ -293,7 +293,7 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
     try {
       ips = this.contentResolver.openInputStream(uri)
       ops = file.outputStream()
-      ips.copyTo(ops)
+      ips?.copyTo(ops)
       return Pair(file, hashOf(file))
     } catch (e: FileNotFoundException) {
       this.logger.warn("File not found", e)

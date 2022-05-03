@@ -26,9 +26,9 @@ plugins {
 }
 
 ext {
-  androidCompileSDKVersion = 28
+  androidCompileSDKVersion = 31
   androidMinimumSDKVersion = 21
-  androidTargetSDKVersion = 28
+  androidTargetSDKVersion = 31
 
   if (!project.hasProperty("mavenCentralUsername")) {
     logger.warn("No mavenCentralUsername property specified: Using an empty value")

@@ -4,8 +4,10 @@
     <c:release date="2022-03-09T00:00:00+00:00" is-open="false" ticket-system="org.nypl.jira" version="1.0.1">
       <c:changes/>
     </c:release>
-    <c:release date="2022-03-09T17:39:38+00:00" is-open="true" ticket-system="org.nypl.jira" version="1.0.2">
-      <c:changes/>
+    <c:release date="2022-05-03T16:20:48+00:00" is-open="true" ticket-system="org.nypl.jira" version="1.0.2">
+      <c:changes>
+        <c:change date="2022-05-03T16:20:48+00:00" summary="Update R2 libraries version"/>
+      </c:changes>
     </c:release>
   </c:releases>
   <c:ticket-systems>

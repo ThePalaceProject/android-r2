@@ -127,6 +127,7 @@ class SR2ReaderFragment private constructor(
       .setOnMenuItemClickListener { this.onReaderMenuAddBookmarkSelected() }
 
     this.toolbar.setNavigationOnClickListener { this.onToolbarNavigationSelected() }
+    this.toolbar.setNavigationContentDescription(R.string.settingsAccessibilityBack)
 
     /*
      * We don't show page numbers in continuous scroll mode.

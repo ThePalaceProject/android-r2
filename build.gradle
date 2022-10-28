@@ -26,9 +26,9 @@ plugins {
 }
 
 ext {
-  androidCompileSDKVersion = 32
+  androidCompileSDKVersion = 33
   androidMinimumSDKVersion = 21
-  androidTargetSDKVersion = 32
+  androidTargetSDKVersion = 33
 
   if (!project.hasProperty("mavenCentralUsername")) {
     logger.warn("No mavenCentralUsername property specified: Using an empty value")
@@ -64,20 +64,6 @@ allprojects {
 }
 
 subprojects { project ->
-  // Workaround for failing readium nanohttpd artifact downloads. Remove this when readium has
-  // fixed the issue.
-  project.configurations.all {
-    resolutionStrategy {
-      dependencySubstitution {
-        all { DependencySubstitution dependency ->
-          if (dependency.requested instanceof ModuleComponentSelector && dependency.requested.group == 'com.github.edrlab.nanohttpd') {
-            dependency.useTarget ('com.github.readium.nanohttpd:' + dependency.requested.module + ':' + dependency.requested.version, 'because nanohttpd ownership changed from edrlab to readium')
-          }
-        }
-      }
-    }
-  }
-
   switch (POM_PACKAGING) {
     case "jar":
       logger.info("Configuring ${project} (${POM_PACKAGING}) as jar project")

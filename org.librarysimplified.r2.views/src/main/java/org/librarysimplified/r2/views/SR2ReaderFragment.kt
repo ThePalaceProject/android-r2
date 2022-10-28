@@ -193,7 +193,7 @@ class SR2ReaderFragment private constructor(
     this.toolbar.setTitleTextColor(foreground)
     this.toolbar.navigationIcon?.setColorFilter(foreground, PorterDuff.Mode.SRC_ATOP)
     this.toolbar.menu.forEach { item ->
-      item.icon.setColorFilter(foreground, PorterDuff.Mode.SRC_ATOP)
+      item.icon?.setColorFilter(foreground, PorterDuff.Mode.SRC_ATOP)
     }
     this.container.setBackgroundColor(background)
     this.positionPageView.setTextColor(foreground)
@@ -294,7 +294,7 @@ class SR2ReaderFragment private constructor(
 
     val controllerNow = this.controller
     if (controllerNow != null) {
-      val currentColorFilter = menuBookmarkItem.icon.colorFilter
+      val currentColorFilter = menuBookmarkItem.icon?.colorFilter
       val bookmark = this.findBookmarkForCurrentPage(controllerNow, currentPosition)
       if (bookmark != null) {
         this.menuBookmarkItem.setIcon(R.drawable.sr2_bookmark_active)
@@ -309,7 +309,7 @@ class SR2ReaderFragment private constructor(
           this.resources.getString(R.string.readerAccessAddBookmark)
         )
       }
-      menuBookmarkItem.icon.colorFilter = currentColorFilter
+      menuBookmarkItem.icon?.colorFilter = currentColorFilter
     }
   }
 

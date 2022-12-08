@@ -9,12 +9,12 @@
         <c:change date="2022-05-03T00:00:00+00:00" summary="Update R2 libraries version"/>
       </c:changes>
     </c:release>
-    <c:release date="2022-10-27T17:21:38+00:00" is-open="true" ticket-system="org.nypl.jira" version="1.0.3">
+    <c:release date="2022-12-08T02:58:47+00:00" is-open="false" ticket-system="org.nypl.jira" version="1.0.3">
       <c:changes>
         <c:change date="2022-10-05T00:00:00+00:00" summary="Added content description to back button on reader screen"/>
         <c:change date="2022-10-20T00:00:00+00:00" summary="Changed target version to Android 12."/>
         <c:change date="2022-10-27T00:00:00+00:00" summary="Added back button to TOC screen."/>
-        <c:change date="2022-10-27T17:21:38+00:00" summary="Changed target version to Android 13."/>
+        <c:change date="2022-10-27T00:00:00+00:00" summary="Changed target version to Android 13."/>
       </c:changes>
     </c:release>
   </c:releases>

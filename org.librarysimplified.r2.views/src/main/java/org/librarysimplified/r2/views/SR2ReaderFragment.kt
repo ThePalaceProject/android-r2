@@ -196,6 +196,7 @@ class SR2ReaderFragment private constructor(
       item.icon?.setColorFilter(foreground, PorterDuff.Mode.SRC_ATOP)
     }
     this.container.setBackgroundColor(background)
+    this.titleText.setTextColor(foreground)
     this.positionPageView.setTextColor(foreground)
     this.positionTitleView.setTextColor(foreground)
     this.positionPercentView.setTextColor(foreground)

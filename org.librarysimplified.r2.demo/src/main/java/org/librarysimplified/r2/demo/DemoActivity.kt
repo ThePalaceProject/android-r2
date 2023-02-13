@@ -152,6 +152,7 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
         contentProtections = emptyList(),
         bookFile = FileAsset(file),
         bookId = this.epubId!!,
+        isPreview = false,
         theme = database.theme(),
         controllers = SR2Controllers(),
         scrollingMode = if (this.scrollMode.isChecked) {

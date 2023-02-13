@@ -123,8 +123,10 @@ class SR2ReaderFragment private constructor(
       .setOnMenuItemClickListener { this.onReaderMenuSettingsSelected() }
     this.toolbar.menu.findItem(R.id.readerMenuTOC)
       .setOnMenuItemClickListener { this.onReaderMenuTOCSelected() }
-    this.toolbar.menu.findItem(R.id.readerMenuAddBookmark)
-      .setOnMenuItemClickListener { this.onReaderMenuAddBookmarkSelected() }
+
+    val addBookmarkOption = this.toolbar.menu.findItem(R.id.readerMenuAddBookmark)
+    addBookmarkOption.setOnMenuItemClickListener { this.onReaderMenuAddBookmarkSelected() }
+    addBookmarkOption.isVisible = !this.parameters.isPreview
 
     this.toolbar.setNavigationOnClickListener { this.onToolbarNavigationSelected() }
     this.toolbar.setNavigationContentDescription(R.string.settingsAccessibilityBack)

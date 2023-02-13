@@ -33,6 +33,13 @@ data class SR2ReaderParameters(
   val bookId: String,
 
   /**
+   * A flag that indicates if the reader will be open for a book preview or not in order to know
+   * what options should be displayed to the user.
+   */
+
+  val isPreview: Boolean,
+
+  /**
    * The initial theme used for the reader.
    */
 

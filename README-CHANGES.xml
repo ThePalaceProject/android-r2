@@ -17,11 +17,14 @@
         <c:change date="2022-10-27T00:00:00+00:00" summary="Changed target version to Android 13."/>
       </c:changes>
     </c:release>
-    <c:release date="2023-03-14T20:54:30+00:00" is-open="false" ticket-system="org.nypl.jira" version="1.0.4">
+    <c:release date="2023-03-14T00:00:00+00:00" is-open="false" ticket-system="org.nypl.jira" version="1.0.4">
       <c:changes>
         <c:change date="2023-01-10T00:00:00+00:00" summary="Fixed book title not being displayed with dark background."/>
         <c:change date="2023-02-13T00:00:00+00:00" summary="Added support for book previews."/>
       </c:changes>
+    </c:release>
+    <c:release date="2023-03-14T21:00:23+00:00" is-open="true" ticket-system="org.nypl.jira" version="1.0.5">
+      <c:changes/>
     </c:release>
   </c:releases>
   <c:ticket-systems>

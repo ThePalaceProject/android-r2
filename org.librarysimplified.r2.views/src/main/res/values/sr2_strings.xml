@@ -29,6 +29,7 @@
   <string name="tocError">No entries available.</string>
   <string name="tocAccessChapter">Open Chapter %1$d: %2$s</string>
   <string name="publisherDefaults">Publisher Defaults</string>
+  <string name="emptyBookmarksMessage">There are no bookmarks for this book</string>
 
   <string name="settingsAccessibilityBack">Back</string>
   <string name="settingsAccessibilitySetPublisher">Show the publisher-specified fonts and layout choices.</string>

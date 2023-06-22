@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.annotation.UiThread
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -37,6 +38,7 @@ internal class SR2TOCBookmarksFragment private constructor(
   }
 
   private lateinit var lastReadItem: SR2TOCBookmarkViewHolder
+  private lateinit var emptyMessage: TextView
   private lateinit var bookmarkAdapter: SR2TOCBookmarkAdapter
   private lateinit var controller: SR2ControllerType
   private lateinit var readerModel: SR2ReaderViewModel
@@ -67,6 +69,8 @@ internal class SR2TOCBookmarksFragment private constructor(
 
     val recyclerView =
       layout.findViewById<RecyclerView>(R.id.tocBookmarksList)
+
+    emptyMessage = layout.findViewById(R.id.empty_bookmarks_text)
 
     recyclerView.adapter = this.bookmarkAdapter
     recyclerView.setHasFixedSize(true)
@@ -111,7 +115,8 @@ internal class SR2TOCBookmarksFragment private constructor(
 
     val bookmarksNow = this.controller.bookmarksNow()
     this.logger.debug("received {} bookmarks", bookmarksNow.size)
-    this.bookmarkAdapter.setBookmarks(bookmarksNow.filter { it.type != LAST_READ })
+    val bookmarks = bookmarksNow.filter { it.type != LAST_READ }
+    this.bookmarkAdapter.setBookmarks(bookmarks)
 
     val lastRead = bookmarksNow.find { it.type == LAST_READ }
     if (lastRead != null) {
@@ -124,6 +129,12 @@ internal class SR2TOCBookmarksFragment private constructor(
       )
     } else {
       this.lastReadItem.rootView.visibility = View.GONE
+    }
+
+    emptyMessage.visibility = if (bookmarks.isEmpty() && lastRead == null) {
+      View.VISIBLE
+    } else {
+      View.GONE
     }
   }
 

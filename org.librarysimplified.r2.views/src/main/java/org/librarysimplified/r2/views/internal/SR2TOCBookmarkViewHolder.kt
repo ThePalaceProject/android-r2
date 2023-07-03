@@ -3,8 +3,10 @@ package org.librarysimplified.r2.views.internal
 import android.content.res.Resources
 import android.view.View
 import android.widget.ImageView
+import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import org.joda.time.format.DateTimeFormatterBuilder
 import org.librarysimplified.r2.api.SR2Bookmark
@@ -23,6 +25,8 @@ internal class SR2TOCBookmarkViewHolder(
     this.rootView.findViewById(R.id.bookmarkDelete)
   private val bookmarkDate: TextView =
     this.rootView.findViewById(R.id.bookmarkDate)
+  private val bookmarkDeleteLoading: ProgressBar =
+    this.rootView.findViewById(R.id.bookmarkDeleteLoading)
   private val bookmarkProgressText: TextView =
     this.rootView.findViewById(R.id.bookmarkProgressText)
   private val bookmarkTitleText: TextView =
@@ -64,6 +68,9 @@ internal class SR2TOCBookmarkViewHolder(
         this.bookmarkDelete.visibility = View.INVISIBLE
       }
     }
+
+    bookmarkDelete.isVisible = !bookmark.isBeingDeleted
+    bookmarkDeleteLoading.isVisible = bookmark.isBeingDeleted
 
     this.rootView.setOnClickListener {
       this.rootView.setOnClickListener(null)

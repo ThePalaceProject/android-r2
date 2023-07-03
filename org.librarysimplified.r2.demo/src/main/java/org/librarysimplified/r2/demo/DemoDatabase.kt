@@ -16,6 +16,7 @@ import java.io.File
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 import java.io.Serializable
+import java.net.URI
 import java.util.Properties
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
@@ -49,7 +50,8 @@ class DemoDatabase(private val context: Context) {
     val title: String,
     val chapterHref: String,
     val chapterProgress: Double,
-    val bookProgress: Double = 0.0
+    val bookProgress: Double = 0.0,
+    val uri: URI?
   ) : Serializable
 
   private fun countBookmarks(map: Map<String, List<SerializableBookmark>>): Int {
@@ -71,7 +73,8 @@ class DemoDatabase(private val context: Context) {
           type = bookmark.type,
           title = bookmark.title,
           locator = SR2LocatorPercent(bookmark.chapterHref, bookmark.chapterProgress),
-          bookProgress = bookmark.bookProgress
+          bookProgress = bookmark.bookProgress,
+          uri = bookmark.uri
         )
       }
   }
@@ -125,7 +128,8 @@ class DemoDatabase(private val context: Context) {
           type = bookmark.type,
           title = bookmark.title,
           chapterHref = bookmark.locator.chapterHref,
-          chapterProgress = locator.chapterProgress
+          chapterProgress = locator.chapterProgress,
+          uri = bookmark.uri
         )
       }
       is SR2LocatorChapterEnd -> {
@@ -134,7 +138,8 @@ class DemoDatabase(private val context: Context) {
           type = bookmark.type,
           title = bookmark.title,
           chapterHref = bookmark.locator.chapterHref,
-          chapterProgress = 1.0
+          chapterProgress = 1.0,
+          uri = bookmark.uri
         )
       }
     }

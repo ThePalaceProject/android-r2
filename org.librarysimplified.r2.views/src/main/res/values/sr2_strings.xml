@@ -24,7 +24,7 @@
   <string name="tocAccessBookmarkDelete">Delete A Bookmark</string>
   <string name="tocBookmarkDelete">Delete</string>
   <string name="tocBookmarkDeleteMessage">Are you sure you want to delete this bookmark?</string>
-  <string name="tocBookmarkDeleteErrorMessage">There was an error while deleting the bookmark</string>
+  <string name="tocBookmarkDeleteErrorMessage">There was an error deleting the bookmark</string>
   <string name="tocBookmarks">Bookmarks</string>
   <string name="tocTitle">Table Of Contents</string>
   <string name="tocError">No entries available.</string>

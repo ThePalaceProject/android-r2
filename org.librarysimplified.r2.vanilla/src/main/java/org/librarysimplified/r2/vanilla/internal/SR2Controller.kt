@@ -432,7 +432,11 @@ internal class SR2Controller private constructor(
           } else {
             this.bookmarks = this.bookmarks.map { bookmark ->
               bookmark.copy(
-                isBeingDeleted = false
+                isBeingDeleted = if (bookmark == apiCommand.bookmark) {
+                  false
+                } else {
+                  bookmark.isBeingDeleted
+                }
               )
             }
             this.eventSubject.onNext(SR2BookmarkFailedToBeDeleted)

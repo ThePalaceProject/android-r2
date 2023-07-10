@@ -23,8 +23,11 @@ import org.librarysimplified.r2.api.SR2Command
 import org.librarysimplified.r2.api.SR2ControllerConfiguration
 import org.librarysimplified.r2.api.SR2ControllerType
 import org.librarysimplified.r2.api.SR2Event
+import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkCreate
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkCreated
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkDeleted
+import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkFailedToBeDeleted
+import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkTryToDelete
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarksLoaded
 import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandEventCompleted.SR2CommandExecutionFailed
 import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandEventCompleted.SR2CommandExecutionSucceeded
@@ -300,7 +303,8 @@ internal class SR2Controller private constructor(
           type = LAST_READ,
           title = position.chapterTitle ?: "",
           locator = position.locator,
-          bookProgress = this.currentBookProgress
+          bookProgress = this.currentBookProgress,
+          uri = null
         )
         val newBookmarks = this.bookmarks.toMutableList()
         newBookmarks.removeAll { bookmark -> bookmark.type == LAST_READ }
@@ -411,12 +415,35 @@ internal class SR2Controller private constructor(
   private fun executeCommandBookmarkDelete(
     apiCommand: SR2Command.BookmarkDelete
   ): ListenableFuture<*> {
-    val newBookmarks = this.bookmarks.toMutableList()
-    val removed = newBookmarks.remove(apiCommand.bookmark)
-    if (removed) {
-      this.bookmarks = newBookmarks.toList()
-      this.eventSubject.onNext(SR2BookmarkDeleted(apiCommand.bookmark))
+    this.bookmarks = this.bookmarks.map { bookmark ->
+      bookmark.copy(
+        isBeingDeleted = bookmark == apiCommand.bookmark
+      )
     }
+    this.eventSubject.onNext(
+      SR2BookmarkTryToDelete(
+        bookmark = apiCommand.bookmark,
+        onDeleteOperationFinished = { wasDeleted ->
+          if (wasDeleted) {
+            val newBookmarks = this.bookmarks.toMutableList()
+            newBookmarks.remove(apiCommand.bookmark)
+            this.bookmarks = newBookmarks.toList()
+            this.eventSubject.onNext(SR2BookmarkDeleted(apiCommand.bookmark))
+          } else {
+            this.bookmarks = this.bookmarks.map { bookmark ->
+              bookmark.copy(
+                isBeingDeleted = if (bookmark == apiCommand.bookmark) {
+                  false
+                } else {
+                  bookmark.isBeingDeleted
+                }
+              )
+            }
+            this.eventSubject.onNext(SR2BookmarkFailedToBeDeleted)
+          }
+        }
+      )
+    )
     return Futures.immediateFuture(Unit)
   }
 
@@ -430,14 +457,28 @@ internal class SR2Controller private constructor(
         date = DateTime.now(),
         type = SR2Bookmark.Type.EXPLICIT,
         title = this.currentTarget.node.title,
-        locator = SR2LocatorPercent(this.currentTarget.node.navigationPoint.locator.chapterHref, this.currentTargetProgress),
-        bookProgress = this.currentBookProgress
+        locator = SR2LocatorPercent(
+          this.currentTarget.node.navigationPoint.locator.chapterHref,
+          this.currentTargetProgress
+        ),
+        bookProgress = this.currentBookProgress,
+        uri = null
       )
 
-    val newBookmarks = this.bookmarks.toMutableList()
-    newBookmarks.add(bookmark)
-    this.bookmarks = newBookmarks.toList()
-    this.eventSubject.onNext(SR2BookmarkCreated(bookmark))
+    this.eventSubject.onNext(
+      SR2BookmarkCreate(
+        bookmark = bookmark,
+        onBookmarkCreationCompleted = { createdBookmark ->
+          if (createdBookmark != null) {
+            val newBookmarks = this.bookmarks.toMutableList()
+            newBookmarks.add(createdBookmark)
+            this.bookmarks = newBookmarks.toList()
+            this.eventSubject.onNext(SR2BookmarkCreated(createdBookmark))
+          }
+        }
+      )
+    )
+
     return Futures.immediateFuture(Unit)
   }
 

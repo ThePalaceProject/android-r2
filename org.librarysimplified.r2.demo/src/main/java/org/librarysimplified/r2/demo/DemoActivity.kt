@@ -18,8 +18,11 @@ import io.reactivex.disposables.Disposable
 import org.librarysimplified.r2.api.SR2Command
 import org.librarysimplified.r2.api.SR2ControllerType
 import org.librarysimplified.r2.api.SR2Event
+import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkCreate
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkCreated
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkDeleted
+import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkFailedToBeDeleted
+import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkTryToDelete
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarksLoaded
 import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandEventCompleted.SR2CommandExecutionFailed
 import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandEventCompleted.SR2CommandExecutionSucceeded
@@ -183,7 +186,10 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
     selectFileArea.visibility = View.GONE
 
     this.supportFragmentManager.beginTransaction()
-      .replace(R.id.demoFragmentArea, this.readerFragmentFactory.instantiate(this.classLoader, SR2ReaderFragment::class.java.name))
+      .replace(
+        R.id.demoFragmentArea,
+        this.readerFragmentFactory.instantiate(this.classLoader, SR2ReaderFragment::class.java.name)
+      )
       .commit()
   }
 
@@ -216,7 +222,10 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
 
   private fun openTOC() {
     this.supportFragmentManager.beginTransaction()
-      .replace(R.id.demoFragmentArea, this.readerFragmentFactory.instantiate(this.classLoader, SR2TOCFragment::class.java.name))
+      .replace(
+        R.id.demoFragmentArea,
+        this.readerFragmentFactory.instantiate(this.classLoader, SR2TOCFragment::class.java.name)
+      )
       .addToBackStack(null)
       .commit()
   }
@@ -226,10 +235,11 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
    */
 
   private fun onControllerEvent(event: SR2Event) {
-    return when (event) {
-      is SR2BookmarkCreated -> {
+    when (event) {
+      is SR2BookmarkCreate -> {
         val database = DemoApplication.application.database()
         database.bookmarkSave(this.controller!!.bookMetadata.id, event.bookmark)
+        event.onBookmarkCreationCompleted(event.bookmark)
       }
 
       is SR2BookmarkDeleted -> {
@@ -242,9 +252,12 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
         database.themeSet(event.theme)
       }
 
+      is SR2BookmarkCreated,
       is SR2OnCenterTapped,
       is SR2ReadingPositionChanged,
       SR2BookmarksLoaded,
+      SR2BookmarkFailedToBeDeleted,
+      is SR2BookmarkTryToDelete,
       is SR2ChapterNonexistent,
       is SR2WebViewInaccessible,
       is SR2ExternalLinkSelected,

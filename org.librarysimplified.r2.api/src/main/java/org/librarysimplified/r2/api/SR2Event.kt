@@ -79,6 +79,14 @@ sealed class SR2Event {
   sealed class SR2BookmarkEvent : SR2Event() {
 
     /**
+     * Create a bookmark.
+     */
+    data class SR2BookmarkCreate(
+      val bookmark: SR2Bookmark,
+      val onBookmarkCreationCompleted: (SR2Bookmark?) -> Unit
+    ) : SR2BookmarkEvent()
+
+    /**
      * A bookmark was created.
      */
 
@@ -92,6 +100,21 @@ sealed class SR2Event {
 
     data class SR2BookmarkDeleted(
       val bookmark: SR2Bookmark
+    ) : SR2BookmarkEvent()
+
+    /**
+     * A bookmark failed to be deleted.
+     */
+
+    object SR2BookmarkFailedToBeDeleted : SR2BookmarkEvent()
+
+    /**
+     * Try to delete a bookmark.
+     */
+
+    data class SR2BookmarkTryToDelete(
+      val bookmark: SR2Bookmark,
+      val onDeleteOperationFinished: (Boolean) -> Unit
     ) : SR2BookmarkEvent()
 
     /**

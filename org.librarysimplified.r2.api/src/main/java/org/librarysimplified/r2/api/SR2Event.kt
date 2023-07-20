@@ -90,6 +90,7 @@ sealed class SR2Event {
      * A bookmark was created.
      */
 
+    @Deprecated("This event will stop being published soon.")
     data class SR2BookmarkCreated(
       val bookmark: SR2Bookmark
     ) : SR2BookmarkEvent()
@@ -98,6 +99,7 @@ sealed class SR2Event {
      * A bookmark was deleted.
      */
 
+    @Deprecated("This event will stop being published soon.")
     data class SR2BookmarkDeleted(
       val bookmark: SR2Bookmark
     ) : SR2BookmarkEvent()

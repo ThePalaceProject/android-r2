@@ -306,11 +306,21 @@ internal class SR2Controller private constructor(
           bookProgress = this.currentBookProgress,
           uri = null
         )
-        val newBookmarks = this.bookmarks.toMutableList()
-        newBookmarks.removeAll { bookmark -> bookmark.type == LAST_READ }
-        newBookmarks.add(newBookmark)
-        this.bookmarks = newBookmarks.toList()
-        this.eventSubject.onNext(SR2BookmarkCreated(newBookmark))
+
+        this.eventSubject.onNext(
+          SR2BookmarkCreate(
+            newBookmark,
+            onBookmarkCreationCompleted = { createdBookmark ->
+              if (createdBookmark != null) {
+                val newBookmarks = this.bookmarks.toMutableList()
+                newBookmarks.removeAll { bookmark -> bookmark.type == LAST_READ }
+                newBookmarks.add(createdBookmark)
+                this.bookmarks = newBookmarks.toList()
+                this.eventSubject.onNext(SR2BookmarkCreated(createdBookmark))
+              }
+            }
+          )
+        )
       }
     }
   }

@@ -1,0 +1,16 @@
+#
+# This project follows Semantic Versioning.
+#
+# https://semver.org/spec/v2.0.0.html
+#
+# The Java packages listed in this file are NOT part of the public API and are subject
+# to change without warning. All other packages should be considered to be part of the
+# public API, and the current code can be analyzed to ensure it complies with semantic
+# versioning rules by executing:
+#
+#   ./gradlew verifySemanticVersioning
+#
+
+org.librarysimplified.r2.vanilla.internal
+org.librarysimplified.r2.views.internal
+org.librarysimplified.r2.demo

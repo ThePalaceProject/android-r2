@@ -1,7 +1,7 @@
 android-r2
 =====================
 
-[![Build Status](https://img.shields.io/github/workflow/status/ThePalaceProject/android-r2/Android%20CI%20(Authenticated)?style=flat-square)](https://github.com/ThePalaceProject/android-r2/actions?query=workflow%3A%22Android+CI+%28Authenticated%29%22)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/ThePalaceProject/android-r2/android-main.yml)](https://github.com/ThePalaceProject/android-r2/blob/main/.github/workflows/android-main.yml)
 [![Maven Central](https://img.shields.io/maven-central/v/org.thepalaceproject.r2/org.librarysimplified.r2.api?style=flat-square)](https://repo1.maven.org/maven2/org/thepalaceproject/r2/)
 [![Maven Central (snapshot)](https://img.shields.io/nexus/s/https/s01.oss.sonatype.org/org.thepalaceproject.r2/org.librarysimplified.r2.api.svg?style=flat-square)](https://s01.oss.sonatype.org/content/repositories/snapshots/org/thepalaceproject/r2/org.librarysimplified.r2.api/)
 
@@ -10,13 +10,6 @@ The [Palace Project](https://thepalaceproject.org/) Android Readium 2 navigator 
 ![r2](./src/site/resources/r2.jpg?raw=true)
 
 _Image by [Jose Antonio Alba](https://pixabay.com/users/josealbafotos-1624766/) from [Pixabay](https://pixabay.com/photos/leaves-books-color-coffee-cup-1076307/)_
-
-|Build|Status|
-|-----|------|
-|[Nightly, Authenticated, JDK 11](https://github.com/ThePalaceProject/android-r2/actions?query=workflow%3A%22Android+CI+%28Daily+Authenticated%2C+JDK+11%29%22)|[![Build Status](https://img.shields.io/github/workflow/status/ThePalaceProject/android-r2/Android%20CI%20(Daily%20Authenticated,%20JDK%2011)?style=flat-square)](https://github.com/ThePalaceProject/android-r2/actions?query=workflow%3A%22Android+CI+%28Daily+Authenticated%2C+JDK+11%29%22)|
-|[Nightly, Unauthenticated, JDK 11](https://github.com/ThePalaceProject/android-r2/actions?query=workflow%3A%22Android+CI+%28Daily+Unauthenticated%2C+JDK+11%29%22)|[![Build Status](https://img.shields.io/github/workflow/status/ThePalaceProject/android-r2/Android%20CI%20(Daily%20Unauthenticated,%20JDK%2011)?style=flat-square)](https://github.com/ThePalaceProject/android-r2/actions?query=workflow%3A%22Android+CI+%28Daily+Unauthenticated%2C+JDK+11%29%22)|
-|[Nightly, Unauthenticated, JDK 15](https://github.com/ThePalaceProject/android-r2/actions?query=workflow%3A%22Android+CI+%28Daily+Unauthenticated%2C+JDK+15%29%22)|[![Build Status](https://img.shields.io/github/workflow/status/ThePalaceProject/android-r2/Android%20CI%20(Daily%20Unauthenticated,%20JDK%2015)?style=flat-square)](https://github.com/ThePalaceProject/android-r2/actions?query=workflow%3A%22Android+CI+%28Daily+Unauthenticated%2C+JDK+15%29%22)|
-|[Last Commit](https://github.com/ThePalaceProject/android-r2/actions?query=workflow%3A%22Android+CI+%28Authenticated%29%22)|[![Build Status](https://img.shields.io/github/workflow/status/ThePalaceProject/android-r2/Android%20CI%20(Authenticated)?style=flat-square)](https://github.com/ThePalaceProject/android-r2/actions?query=workflow%3A%22Android+CI+%28Authenticated%29%22)|
 
 ### What Is This?
 

@@ -10,19 +10,19 @@ object SR2Books {
 
   fun makeMetadata(
     publication: Publication,
-    bookId: String
+    bookId: String,
   ): SR2BookMetadata {
     val startLocator =
       SR2Locator.SR2LocatorPercent(
         chapterHref = publication.readingOrder.first().href,
-        chapterProgress = 0.0
+        chapterProgress = 0.0,
       )
 
     return SR2BookMetadata(
       id = bookId,
       title = publication.metadata.title,
       tableOfContents = this.makeTableOfContents(publication),
-      start = startLocator
+      start = startLocator,
     )
   }
 
@@ -32,7 +32,7 @@ object SR2Books {
    */
 
   private fun makeTableOfContents(
-    publication: Publication
+    publication: Publication,
   ): List<SR2TOCEntry> {
     return if (publication.tableOfContents.isNotEmpty()) {
       this.flattenTOC(publication.tableOfContents)
@@ -42,7 +42,7 @@ object SR2Books {
   }
 
   private fun flattenTOC(
-    tableOfContents: List<Link>
+    tableOfContents: List<Link>,
   ): List<SR2TOCEntry> {
     val results = mutableListOf<SR2TOCEntry>()
     tableOfContents.forEach { node -> this.flattenTOCNode(node, 0, results) }
@@ -52,7 +52,7 @@ object SR2Books {
   private fun flattenTOCNode(
     link: Link,
     depth: Int,
-    results: MutableList<SR2TOCEntry>
+    results: MutableList<SR2TOCEntry>,
   ) {
     // Items in tableOfContents are unlikely to have no title because it makes no sense.
     val title = link.title?.takeUnless(String::isBlank) ?: link.href
@@ -63,7 +63,7 @@ object SR2Books {
   }
 
   private fun tocFromReadingOrder(
-    readingOrder: List<Link>
+    readingOrder: List<Link>,
   ): List<SR2TOCEntry> =
     readingOrder.mapIndexed { index, link ->
       val title = link.title?.takeUnless(String::isBlank) ?: "Chapter ${index + 1}"

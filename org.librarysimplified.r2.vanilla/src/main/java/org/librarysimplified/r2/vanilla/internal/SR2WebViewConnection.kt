@@ -27,7 +27,7 @@ internal class SR2WebViewConnection(
   private val webView: WebView,
   private val requestQueue: ExecutorService,
   private val uiExecutor: (f: () -> Unit) -> Unit,
-  private val commandQueue: SR2ControllerCommandQueueType
+  private val commandQueue: SR2ControllerCommandQueueType,
 ) : SR2WebViewConnectionType {
 
   private val logger =
@@ -41,9 +41,8 @@ internal class SR2WebViewConnection(
       uiExecutor: (f: () -> Unit) -> Unit,
       commandQueue: SR2ControllerCommandQueueType,
       scrollingMode: SR2ScrollingMode,
-      layout: EpubLayout
+      layout: EpubLayout,
     ): SR2WebViewConnectionType {
-
       val threadFactory = ThreadFactory { runnable ->
         val thread = Thread(runnable)
         thread.name = "org.librarysimplified.r2.vanilla.WebViewConnection[${thread.id}]"
@@ -80,8 +79,8 @@ internal class SR2WebViewConnection(
         when (scrollingMode) {
           SCROLLING_MODE_PAGINATED -> {
             /*
-           * Disable manual scrolling on the web view. Scrolling is controlled via the javascript API.
-           */
+             * Disable manual scrolling on the web view. Scrolling is controlled via the javascript API.
+             */
 
             webView.setOnTouchListener { v, event -> event.action == MotionEvent.ACTION_MOVE }
             webView.isVerticalScrollBarEnabled = false
@@ -99,13 +98,13 @@ internal class SR2WebViewConnection(
         webView = webView,
         requestQueue = requestQueue,
         uiExecutor = uiExecutor,
-        commandQueue = commandQueue
+        commandQueue = commandQueue,
       )
     }
   }
 
   override fun openURL(
-    location: String
+    location: String,
   ): ListenableFuture<*> {
     val id = UUID.randomUUID()
     val future = SettableFuture.create<Unit>()
@@ -137,7 +136,7 @@ internal class SR2WebViewConnection(
 
   private fun <T> waitOrFail(
     id: UUID,
-    future: SettableFuture<T>
+    future: SettableFuture<T>,
   ) {
     try {
       this.logger.debug("[{}]: waiting for request to complete", id)
@@ -153,7 +152,7 @@ internal class SR2WebViewConnection(
   }
 
   override fun executeJS(
-    function: (SR2JavascriptAPIType) -> ListenableFuture<*>
+    function: (SR2JavascriptAPIType) -> ListenableFuture<*>,
   ): ListenableFuture<Any> {
     val id = UUID.randomUUID()
     val future = SettableFuture.create<Any>()
@@ -180,7 +179,7 @@ internal class SR2WebViewConnection(
               future.setException(e)
             }
           },
-          MoreExecutors.directExecutor()
+          MoreExecutors.directExecutor(),
         )
       }
 

@@ -16,5 +16,5 @@ enum class SR2PublisherCSS {
    * Publisher default CSS is disabled.
    */
 
-  SR2_PUBLISHER_DEFAULT_CSS_DISABLED
+  SR2_PUBLISHER_DEFAULT_CSS_DISABLED,
 }

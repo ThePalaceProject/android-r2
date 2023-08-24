@@ -9,9 +9,8 @@ import org.readium.r2.shared.publication.Publication
 object SR2NavigationGraphs {
 
   fun create(
-    publication: Publication
+    publication: Publication,
   ): SR2NavigationGraph {
-
     val readingOrder =
       publication.readingOrder.mapIndexed { index, link ->
         this.makeReadingOrderNode(publication, index, link)
@@ -23,27 +22,27 @@ object SR2NavigationGraphs {
 
     return SR2NavigationGraph(
       readingOrder = readingOrder,
-      resources = resources
+      resources = resources,
     )
   }
 
   private fun makeResourceNode(
     publication: Publication,
-    link: Link
+    link: Link,
   ): SR2NavigationResourceNode {
     return SR2NavigationResourceNode(
-      navigationPoint = this.makeNavigationPoint(publication, link)
+      navigationPoint = this.makeNavigationPoint(publication, link),
     )
   }
 
   private fun makeReadingOrderNode(
     publication: Publication,
     index: Int,
-    link: Link
+    link: Link,
   ): SR2NavigationReadingOrderNode {
     return SR2NavigationReadingOrderNode(
       navigationPoint = this.makeNavigationPoint(publication, link),
-      index = index
+      index = index,
     )
   }
 
@@ -53,7 +52,8 @@ object SR2NavigationGraphs {
         ?: titleFromTOC(publication.tableOfContents, link)
         ?: ""
     return SR2NavigationPoint(
-      title, SR2Locator.SR2LocatorPercent(link.href, 0.0)
+      title,
+      SR2Locator.SR2LocatorPercent(link.href, 0.0),
     )
   }
 

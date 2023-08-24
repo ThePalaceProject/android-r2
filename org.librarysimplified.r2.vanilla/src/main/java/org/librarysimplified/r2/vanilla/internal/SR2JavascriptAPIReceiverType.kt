@@ -18,7 +18,7 @@ internal interface SR2JavascriptAPIReceiverType {
   fun onReadingPositionChanged(
     chapterProgress: Double,
     currentPage: Int,
-    pageCount: Int
+    pageCount: Int,
   )
 
   /** The center of the screen was tapped. */
@@ -62,6 +62,6 @@ internal interface SR2JavascriptAPIReceiverType {
   fun logError(
     message: String?,
     file: String?,
-    line: String?
+    line: String?,
   )
 }

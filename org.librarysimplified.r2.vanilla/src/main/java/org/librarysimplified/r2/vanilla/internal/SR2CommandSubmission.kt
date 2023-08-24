@@ -29,5 +29,5 @@ data class SR2CommandSubmission(
    * @see SR2Command
    */
 
-  val command: SR2Command
+  val command: SR2Command,
 )

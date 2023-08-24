@@ -16,5 +16,5 @@ enum class SR2PageNumberingMode {
    * Per book page numbering.
    */
 
-  WHOLE_BOOK
+  WHOLE_BOOK,
 }

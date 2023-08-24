@@ -60,7 +60,7 @@ import org.librarysimplified.r2.views.internal.SR2ViewModelBookEvent.SR2ViewMode
 import org.slf4j.LoggerFactory
 
 class SR2ReaderFragment private constructor(
-  private val parameters: SR2ReaderParameters
+  private val parameters: SR2ReaderParameters,
 ) : Fragment() {
 
   private val logger =
@@ -96,7 +96,7 @@ class SR2ReaderFragment private constructor(
   override fun onCreateView(
     inflater: LayoutInflater,
     container: ViewGroup?,
-    savedInstanceState: Bundle?
+    savedInstanceState: Bundle?,
   ): View? {
     val view =
       inflater.inflate(R.layout.sr2_reader, container, false)
@@ -214,7 +214,7 @@ class SR2ReaderFragment private constructor(
     SR2SettingsDialog.create(
       brightness = SR2BrightnessService(activity),
       context = activity,
-      controller = this.controller!!
+      controller = this.controller!!,
     )
   }
 
@@ -250,8 +250,8 @@ class SR2ReaderFragment private constructor(
         theme = this.parameters.theme,
         uiExecutor = SR2UIThread::runOnUIThread,
         scrollingMode = this.parameters.scrollingMode,
-        pageNumberingMode = this.parameters.pageNumberingMode
-      )
+        pageNumberingMode = this.parameters.pageNumberingMode,
+      ),
     )
 
     this.showOrHideReadingUI(true)
@@ -290,7 +290,10 @@ class SR2ReaderFragment private constructor(
       this.progressView.visibility = GONE
     } else {
       this.positionPercentView.text = this.getString(R.string.progress_percent, bookProgressPercent)
-      this.progressView.apply { this.max = 100; this.progress = bookProgressPercent }
+      this.progressView.apply {
+        this.max = 100
+        this.progress = bookProgressPercent
+      }
       this.positionPercentView.visibility = VISIBLE
       this.progressView.visibility = VISIBLE
     }
@@ -308,13 +311,13 @@ class SR2ReaderFragment private constructor(
         this.menuBookmarkItem.setIcon(R.drawable.sr2_bookmark_active)
         MenuItemCompat.setContentDescription(
           this.menuBookmarkItem,
-          this.resources.getString(R.string.readerAccessDeleteBookmark)
+          this.resources.getString(R.string.readerAccessDeleteBookmark),
         )
       } else {
         this.menuBookmarkItem.setIcon(R.drawable.sr2_bookmark_inactive)
         MenuItemCompat.setContentDescription(
           this.menuBookmarkItem,
-          this.resources.getString(R.string.readerAccessAddBookmark)
+          this.resources.getString(R.string.readerAccessAddBookmark),
         )
       }
       menuBookmarkItem.icon?.colorFilter = currentColorFilter
@@ -323,7 +326,7 @@ class SR2ReaderFragment private constructor(
 
   private fun findBookmarkForCurrentPage(
     controllerNow: SR2ControllerType,
-    currentPosition: SR2Locator
+    currentPosition: SR2Locator,
   ): SR2Bookmark? {
     return controllerNow.bookmarksNow()
       .find { bookmark -> this.locationMatchesBookmark(bookmark, currentPosition) }
@@ -331,7 +334,7 @@ class SR2ReaderFragment private constructor(
 
   private fun locationMatchesBookmark(
     bookmark: SR2Bookmark,
-    location: SR2Locator
+    location: SR2Locator,
   ): Boolean {
     return bookmark.type == EXPLICIT && location.compareTo(bookmark.locator) == 0
   }
@@ -345,7 +348,7 @@ class SR2ReaderFragment private constructor(
         this.logger.debug(
           "SR2LifecycleControllerBecameAvailable: {} first startup {}",
           newController,
-          event.reference.isFirstStartup
+          event.reference.isFirstStartup,
         )
         this.controller = newController
         newController.viewConnect(this.webView)
@@ -372,7 +375,8 @@ class SR2ReaderFragment private constructor(
       SR2BookmarksLoaded,
       is SR2BookmarkDeleted,
       is SR2BookmarkTryToDelete,
-      is SR2BookmarkCreated -> {
+      is SR2BookmarkCreated,
+      -> {
         this.onBookmarksChanged()
       }
 
@@ -383,8 +387,9 @@ class SR2ReaderFragment private constructor(
       SR2BookmarkFailedToBeDeleted -> {
         this.onBookmarksChanged()
         Toast.makeText(
-          requireContext(), R.string.tocBookmarkDeleteErrorMessage,
-          Toast.LENGTH_SHORT
+          requireContext(),
+          R.string.tocBookmarkDeleteErrorMessage,
+          Toast.LENGTH_SHORT,
         ).show()
       }
 
@@ -393,7 +398,8 @@ class SR2ReaderFragment private constructor(
       }
 
       is SR2ChapterNonexistent,
-      is SR2WebViewInaccessible -> {
+      is SR2WebViewInaccessible,
+      -> {
         // Nothing
       }
 
@@ -410,7 +416,8 @@ class SR2ReaderFragment private constructor(
       }
 
       is SR2CommandExecutionSucceeded,
-      is SR2CommandExecutionFailed -> {
+      is SR2CommandExecutionFailed,
+      -> {
         this.viewsHideLoading()
       }
 

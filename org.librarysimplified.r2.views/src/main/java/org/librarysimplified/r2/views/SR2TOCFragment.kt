@@ -15,7 +15,7 @@ import org.librarysimplified.r2.views.internal.SR2TOCChaptersFragment
 import org.librarysimplified.r2.views.internal.SR2TOCPage
 
 class SR2TOCFragment private constructor(
-  private val parameters: SR2ReaderParameters
+  private val parameters: SR2ReaderParameters,
 ) : Fragment() {
 
   companion object {
@@ -32,7 +32,7 @@ class SR2TOCFragment private constructor(
   override fun onCreateView(
     inflater: LayoutInflater,
     container: ViewGroup?,
-    savedInstanceState: Bundle?
+    savedInstanceState: Bundle?,
   ): View? {
     val view =
       inflater.inflate(R.layout.sr2_table_of_contents, container, false)
@@ -49,13 +49,13 @@ class SR2TOCFragment private constructor(
         pages = listOf(
           SR2TOCPage(
             title = this.resources.getString(R.string.tocTitle),
-            fragmentConstructor = { SR2TOCChaptersFragment.create(this.parameters) }
+            fragmentConstructor = { SR2TOCChaptersFragment.create(this.parameters) },
           ),
           SR2TOCPage(
             title = this.resources.getString(R.string.tocBookmarks),
-            fragmentConstructor = { SR2TOCBookmarksFragment.create(this.parameters) }
-          )
-        )
+            fragmentConstructor = { SR2TOCBookmarksFragment.create(this.parameters) },
+          ),
+        ),
       )
 
     this.viewPager.adapter = this.viewPagerAdapter

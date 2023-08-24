@@ -98,7 +98,7 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
   override fun onActivityResult(
     requestCode: Int,
     resultCode: Int,
-    data: Intent?
+    data: Intent?,
   ) {
     super.onActivityResult(requestCode, resultCode, data)
 
@@ -167,7 +167,7 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
           SR2PageNumberingMode.PER_CHAPTER
         } else {
           SR2PageNumberingMode.WHOLE_BOOK
-        }
+        },
       )
 
     this.readerFragmentFactory =
@@ -188,7 +188,7 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
     this.supportFragmentManager.beginTransaction()
       .replace(
         R.id.demoFragmentArea,
-        this.readerFragmentFactory.instantiate(this.classLoader, SR2ReaderFragment::class.java.name)
+        this.readerFragmentFactory.instantiate(this.classLoader, SR2ReaderFragment::class.java.name),
       )
       .commit()
   }
@@ -224,7 +224,7 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
     this.supportFragmentManager.beginTransaction()
       .replace(
         R.id.demoFragmentArea,
-        this.readerFragmentFactory.instantiate(this.classLoader, SR2TOCFragment::class.java.name)
+        this.readerFragmentFactory.instantiate(this.classLoader, SR2TOCFragment::class.java.name),
       )
       .addToBackStack(null)
       .commit()
@@ -264,7 +264,8 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
       is SR2CommandExecutionStarted,
       is SR2CommandExecutionRunningLong,
       is SR2CommandExecutionSucceeded,
-      is SR2CommandExecutionFailed -> {
+      is SR2CommandExecutionFailed,
+      -> {
         // Nothing
       }
     }
@@ -324,7 +325,7 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
   }
 
   private fun hashOf(
-    file: File
+    file: File,
   ): String {
     val digest = MessageDigest.getInstance("SHA-256")
 
@@ -355,7 +356,7 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
         this.putExtra(
           Intent.EXTRA_MIME_TYPES,
-          arrayOf("application/epub+zip")
+          arrayOf("application/epub+zip"),
         )
       }
     }

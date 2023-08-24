@@ -5,7 +5,7 @@ import androidx.viewpager2.adapter.FragmentStateAdapter
 
 internal class SR2TOCAdapter(
   fragment: Fragment,
-  private val pages: List<SR2TOCPage>
+  private val pages: List<SR2TOCPage>,
 ) : FragmentStateAdapter(fragment) {
 
   override fun getItemCount(): Int {

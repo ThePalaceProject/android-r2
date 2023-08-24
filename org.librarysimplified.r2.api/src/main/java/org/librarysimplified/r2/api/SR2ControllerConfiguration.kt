@@ -64,5 +64,5 @@ data class SR2ControllerConfiguration(
    * The pagination numbering mode.
    */
 
-  val pageNumberingMode: SR2PageNumberingMode
+  val pageNumberingMode: SR2PageNumberingMode,
 )

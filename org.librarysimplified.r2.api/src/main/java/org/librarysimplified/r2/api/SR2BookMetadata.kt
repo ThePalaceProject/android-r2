@@ -28,5 +28,5 @@ data class SR2BookMetadata(
    * A locator pointing at the first chapter.
    */
 
-  val start: SR2Locator
+  val start: SR2Locator,
 )

@@ -10,10 +10,10 @@ import org.librarysimplified.r2.views.SR2ControllerReference
 sealed class SR2ViewModelBookEvent {
 
   data class SR2ViewModelBookOpened(
-    val reference: SR2ControllerReference
+    val reference: SR2ControllerReference,
   ) : SR2ViewModelBookEvent()
 
   data class SR2ViewModelBookOpenFailed(
-    val exception: Throwable
+    val exception: Throwable,
   ) : SR2ViewModelBookEvent()
 }

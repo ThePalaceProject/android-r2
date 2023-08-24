@@ -33,7 +33,7 @@ sealed class SR2NavigationNode {
 
   data class SR2NavigationReadingOrderNode(
     override val navigationPoint: SR2NavigationPoint,
-    val index: Int
+    val index: Int,
   ) : SR2NavigationNode()
 
   /**
@@ -41,6 +41,6 @@ sealed class SR2NavigationNode {
    */
 
   data class SR2NavigationResourceNode(
-    override val navigationPoint: SR2NavigationPoint
+    override val navigationPoint: SR2NavigationPoint,
   ) : SR2NavigationNode()
 }

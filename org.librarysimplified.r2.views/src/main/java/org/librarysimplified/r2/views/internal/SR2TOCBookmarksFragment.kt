@@ -26,7 +26,7 @@ import org.librarysimplified.r2.views.SR2ReaderViewModelFactory
 import org.slf4j.LoggerFactory
 
 internal class SR2TOCBookmarksFragment private constructor(
-  private val parameters: SR2ReaderParameters
+  private val parameters: SR2ReaderParameters,
 ) : Fragment() {
 
   private val logger = LoggerFactory.getLogger(SR2TOCBookmarksFragment::class.java)
@@ -55,14 +55,14 @@ internal class SR2TOCBookmarksFragment private constructor(
         },
         onBookmarkDeleteRequested = {
           this.onBookmarkDeleteRequested(it)
-        }
+        },
       )
   }
 
   override fun onCreateView(
     inflater: LayoutInflater,
     container: ViewGroup?,
-    savedInstanceState: Bundle?
+    savedInstanceState: Bundle?,
   ): View? {
     val layout =
       inflater.inflate(R.layout.sr2_toc_bookmarks, container, false)
@@ -97,7 +97,7 @@ internal class SR2TOCBookmarksFragment private constructor(
 
     this.bookmarkSubscriptions.add(
       this.controller.events.ofType(SR2BookmarkEvent::class.java)
-        .subscribe { this.reloadBookmarks() }
+        .subscribe { this.reloadBookmarks() },
     )
 
     this.reloadBookmarks()
@@ -125,7 +125,7 @@ internal class SR2TOCBookmarksFragment private constructor(
         resources = this.resources,
         onBookmarkSelected = { },
         onBookmarkDeleteRequested = { },
-        bookmark = lastRead
+        bookmark = lastRead,
       )
     } else {
       this.lastReadItem.rootView.visibility = View.GONE
@@ -143,7 +143,7 @@ internal class SR2TOCBookmarksFragment private constructor(
 
     SR2UIThread.runOnUIThreadDelayed(
       Runnable { this.readerModel.publishViewEvent(SR2ReaderViewNavigationClose) },
-      SR2TOC.tocSelectionDelay()
+      SR2TOC.tocSelectionDelay(),
     )
   }
 

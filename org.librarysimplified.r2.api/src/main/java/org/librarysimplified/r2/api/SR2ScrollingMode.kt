@@ -16,5 +16,5 @@ enum class SR2ScrollingMode {
    * Continuous scrolling mode; book chapters are presented as a single scrollable region of text.
    */
 
-  SCROLLING_MODE_CONTINUOUS
+  SCROLLING_MODE_CONTINUOUS,
 }

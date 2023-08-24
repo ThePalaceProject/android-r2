@@ -7,7 +7,7 @@ package org.librarysimplified.r2.vanilla.internal
 
 data class SR2NavigationTarget(
   val node: SR2NavigationNode,
-  val extraFragment: String?
+  val extraFragment: String?,
 ) {
   init {
     if (this.extraFragment != null) {

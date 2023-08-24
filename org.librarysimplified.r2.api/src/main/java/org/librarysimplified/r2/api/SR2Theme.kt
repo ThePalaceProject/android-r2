@@ -12,7 +12,7 @@ data class SR2Theme(
   val colorScheme: SR2ColorScheme = DARK_TEXT_LIGHT_BACKGROUND,
   val font: SR2Font = FONT_SANS,
   val textSize: Double = 1.0,
-  val publisherCSS: SR2PublisherCSS = SR2_PUBLISHER_DEFAULT_CSS_DISABLED
+  val publisherCSS: SR2PublisherCSS = SR2_PUBLISHER_DEFAULT_CSS_DISABLED,
 ) {
   init {
     check(this.textSize >= TEXT_SIZE_MINIMUM_INCLUSIVE) {

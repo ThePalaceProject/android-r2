@@ -24,7 +24,9 @@ enum class SR2ColorScheme {
    * Dark text on a sepia background.
    */
 
-  DARK_TEXT_ON_SEPIA;
+  DARK_TEXT_ON_SEPIA,
+
+  ;
 
   /**
    * @return The foreground color as an integer color

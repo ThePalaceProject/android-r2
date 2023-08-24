@@ -18,5 +18,5 @@ data class SR2ControllerReference(
    * `true` if this is the first time the controller has been requested
    */
 
-  val isFirstStartup: Boolean
+  val isFirstStartup: Boolean,
 )

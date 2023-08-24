@@ -10,7 +10,7 @@ sealed class SR2Locator : Comparable<SR2Locator> {
 
   data class SR2LocatorPercent(
     override val chapterHref: String,
-    val chapterProgress: Double
+    val chapterProgress: Double,
   ) : SR2Locator() {
 
     init {

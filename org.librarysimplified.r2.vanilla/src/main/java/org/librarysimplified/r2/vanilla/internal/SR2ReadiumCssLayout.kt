@@ -6,12 +6,16 @@ import org.readium.r2.shared.publication.ReadingProgression
 internal enum class SR2ReadiumCssLayout(val cssId: String) {
   // Right to left
   RTL("rtl"),
+
   // Left to right
   LTR("ltr"),
+
   // Asian language, vertically laid out
   CJK_VERTICAL("cjk-vertical"),
+
   // Asian language, horizontally laid out
-  CJK_HORIZONTAL("cjk-horizontal");
+  CJK_HORIZONTAL("cjk-horizontal"),
+  ;
 
   val readiumCSSPath: String get() = when (this) {
     LTR -> ""
@@ -41,12 +45,18 @@ internal enum class SR2ReadiumCssLayout(val cssId: String) {
 
       return when (readingProgression) {
         ReadingProgression.RTL, ReadingProgression.BTT ->
-          if (isCjk) CJK_VERTICAL
-          else RTL
+          if (isCjk) {
+            CJK_VERTICAL
+          } else {
+            RTL
+          }
 
         ReadingProgression.LTR, ReadingProgression.TTB, ReadingProgression.AUTO ->
-          if (isCjk) CJK_HORIZONTAL
-          else LTR
+          if (isCjk) {
+            CJK_HORIZONTAL
+          } else {
+            LTR
+          }
       }
     }
   }

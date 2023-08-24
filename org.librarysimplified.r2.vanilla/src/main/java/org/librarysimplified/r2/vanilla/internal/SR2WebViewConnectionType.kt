@@ -10,10 +10,10 @@ import java.io.Closeable
 internal interface SR2WebViewConnectionType : Closeable {
 
   fun openURL(
-    location: String
+    location: String,
   ): ListenableFuture<*>
 
   fun executeJS(
-    f: (SR2JavascriptAPIType) -> ListenableFuture<*>
+    f: (SR2JavascriptAPIType) -> ListenableFuture<*>,
   ): ListenableFuture<Any>
 }

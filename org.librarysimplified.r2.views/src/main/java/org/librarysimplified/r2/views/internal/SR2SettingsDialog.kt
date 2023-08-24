@@ -7,8 +7,8 @@ import android.widget.SeekBar
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.res.ResourcesCompat
-import io.reactivex.disposables.CompositeDisposable
 import com.google.android.material.tabs.TabLayout
+import io.reactivex.disposables.CompositeDisposable
 import org.librarysimplified.r2.api.SR2ColorScheme
 import org.librarysimplified.r2.api.SR2Command
 import org.librarysimplified.r2.api.SR2ControllerType
@@ -25,7 +25,8 @@ internal class SR2SettingsDialog private constructor() {
     SANS,
     SERIF,
     DYSLEXIC,
-    PUB;
+    PUB,
+    ;
 
     fun toThemeUpdater(): (SR2Theme) -> SR2Theme = {
       val font = when (this) {
@@ -45,10 +46,12 @@ internal class SR2SettingsDialog private constructor() {
       fun fromTheme(theme: SR2Theme): FontSelectionTab =
         if (theme.publisherCSS == SR2_PUBLISHER_DEFAULT_CSS_ENABLED) {
           PUB
-        } else when (theme.font) {
-          SR2Font.FONT_SERIF -> SERIF
-          SR2Font.FONT_SANS -> SANS
-          SR2Font.FONT_OPEN_DYSLEXIC -> DYSLEXIC
+        } else {
+          when (theme.font) {
+            SR2Font.FONT_SERIF -> SERIF
+            SR2Font.FONT_SANS -> SANS
+            SR2Font.FONT_OPEN_DYSLEXIC -> DYSLEXIC
+          }
         }
     }
   }
@@ -56,7 +59,7 @@ internal class SR2SettingsDialog private constructor() {
   companion object {
     private fun updateTheme(
       controller: SR2ControllerType,
-      updater: (SR2Theme) -> SR2Theme
+      updater: (SR2Theme) -> SR2Theme,
     ) {
       controller.submitCommand(SR2Command.ThemeSet(updater.invoke(controller.themeNow())))
     }
@@ -64,7 +67,7 @@ internal class SR2SettingsDialog private constructor() {
     fun create(
       brightness: SR2BrightnessServiceType,
       context: Context,
-      controller: SR2ControllerType
+      controller: SR2ControllerType,
     ): SR2SettingsDialog {
       val eventSubscriptions = CompositeDisposable()
 
@@ -164,7 +167,7 @@ internal class SR2SettingsDialog private constructor() {
       eventSubscriptions.add(
         controller.events.ofType(SR2Event.SR2ThemeChanged::class.java).subscribe {
           updateSetText()
-        }
+        },
       )
 
       updateSetText()
@@ -176,7 +179,7 @@ internal class SR2SettingsDialog private constructor() {
         override fun onProgressChanged(
           seekBar: SeekBar,
           progress: Int,
-          fromUser: Boolean
+          fromUser: Boolean,
         ) {
           this.bright = progress / 100.0
         }

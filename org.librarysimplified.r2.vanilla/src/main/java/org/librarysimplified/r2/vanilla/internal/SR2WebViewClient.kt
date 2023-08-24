@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentHashMap
 internal class SR2WebViewClient(
   private val requestLocation: String,
   private val future: SettableFuture<Unit>,
-  private val commandQueue: SR2ControllerCommandQueueType
+  private val commandQueue: SR2ControllerCommandQueueType,
 ) : WebViewClient() {
 
   companion object {
@@ -39,7 +39,7 @@ internal class SR2WebViewClient(
 
   override fun shouldOverrideUrlLoading(
     view: WebView,
-    url: String
+    url: String,
   ): Boolean {
     this.logger.debug("shouldOverrideUrlLoading: {}", url)
     this.commandQueue.submitCommand(SR2Command.OpenLink(url))
@@ -48,7 +48,7 @@ internal class SR2WebViewClient(
 
   override fun shouldOverrideUrlLoading(
     view: WebView,
-    request: WebResourceRequest
+    request: WebResourceRequest,
   ): Boolean {
     this.logger.debug("shouldOverrideUrlLoading: {}", request.url)
     this.commandQueue.submitCommand(SR2Command.OpenLink(request.url.toString()))
@@ -57,7 +57,7 @@ internal class SR2WebViewClient(
 
   override fun shouldInterceptRequest(
     view: WebView?,
-    request: WebResourceRequest?
+    request: WebResourceRequest?,
   ): WebResourceResponse? {
     if (request != null) {
       val url = request.url?.toString() ?: ""
@@ -69,7 +69,7 @@ internal class SR2WebViewClient(
           200,
           "OK",
           null,
-          faviconData.inputStream()
+          faviconData.inputStream(),
         )
       }
     }
@@ -78,7 +78,7 @@ internal class SR2WebViewClient(
 
   override fun onLoadResource(
     view: WebView,
-    url: String
+    url: String,
   ) {
     this.logger.debug("onLoadResource: {}", url)
     super.onLoadResource(view, url)
@@ -86,7 +86,7 @@ internal class SR2WebViewClient(
 
   override fun onPageFinished(
     view: WebView,
-    url: String
+    url: String,
   ) {
     this.logger.debug("onPageFinished: {}", url)
 
@@ -99,7 +99,7 @@ internal class SR2WebViewClient(
         } else {
           this.logger.error("onPageFinished: {} failed with {} errors", url, this.errors.size)
           this.future.setException(
-            SR2WebViewLoadException("Failed to load $requestLocation", this.errors.toMap())
+            SR2WebViewLoadException("Failed to load $requestLocation", this.errors.toMap()),
           )
           return
         }
@@ -132,14 +132,14 @@ internal class SR2WebViewClient(
   override fun onReceivedError(
     view: WebView,
     request: WebResourceRequest,
-    error: WebResourceError
+    error: WebResourceError,
   ) {
     if (Build.VERSION.SDK_INT >= 23) {
       this.logger.error(
         "onReceivedError: {}: {} {}",
         request.url,
         error.errorCode,
-        error.description
+        error.description,
       )
     }
 
@@ -150,13 +150,13 @@ internal class SR2WebViewClient(
   override fun onReceivedHttpError(
     view: WebView,
     request: WebResourceRequest,
-    errorResponse: WebResourceResponse
+    errorResponse: WebResourceResponse,
   ) {
     this.logger.error(
       "onReceivedHttpError: {}: {} {}",
       request.url,
       errorResponse.statusCode,
-      errorResponse.reasonPhrase
+      errorResponse.reasonPhrase,
     )
 
     this.errors[request.url.toString()] = "${errorResponse.statusCode} ${errorResponse.reasonPhrase}"
@@ -167,13 +167,13 @@ internal class SR2WebViewClient(
     view: WebView,
     errorCode: Int,
     description: String,
-    failingUrl: String
+    failingUrl: String,
   ) {
     this.logger.error(
       "onReceivedError: {}: {} {}",
       failingUrl,
       errorCode,
-      description
+      description,
     )
 
     this.errors[failingUrl] = "$errorCode $description"

@@ -18,7 +18,7 @@ sealed class SR2Event {
 
     data class SR2ChapterNonexistent(
       val chapterHref: String,
-      val message: String
+      val message: String,
     ) : SR2Error()
 
     /**
@@ -27,7 +27,7 @@ sealed class SR2Event {
      */
 
     data class SR2WebViewInaccessible(
-      val message: String
+      val message: String,
     ) : SR2Error()
   }
 
@@ -40,7 +40,7 @@ sealed class SR2Event {
    */
 
   class SR2OnCenterTapped(
-    val uiVisible: Boolean
+    val uiVisible: Boolean,
   ) : SR2Event()
 
   /**
@@ -53,7 +53,7 @@ sealed class SR2Event {
     val chapterTitle: String?,
     val currentPage: Int?,
     val pageCount: Int?,
-    val bookProgress: Double?
+    val bookProgress: Double?,
   ) : SR2Event() {
 
     init {
@@ -83,7 +83,7 @@ sealed class SR2Event {
      */
     data class SR2BookmarkCreate(
       val bookmark: SR2Bookmark,
-      val onBookmarkCreationCompleted: (SR2Bookmark?) -> Unit
+      val onBookmarkCreationCompleted: (SR2Bookmark?) -> Unit,
     ) : SR2BookmarkEvent()
 
     /**
@@ -92,7 +92,7 @@ sealed class SR2Event {
 
     @Deprecated("This event will stop being published soon.")
     data class SR2BookmarkCreated(
-      val bookmark: SR2Bookmark
+      val bookmark: SR2Bookmark,
     ) : SR2BookmarkEvent()
 
     /**
@@ -101,7 +101,7 @@ sealed class SR2Event {
 
     @Deprecated("This event will stop being published soon.")
     data class SR2BookmarkDeleted(
-      val bookmark: SR2Bookmark
+      val bookmark: SR2Bookmark,
     ) : SR2BookmarkEvent()
 
     /**
@@ -116,7 +116,7 @@ sealed class SR2Event {
 
     data class SR2BookmarkTryToDelete(
       val bookmark: SR2Bookmark,
-      val onDeleteOperationFinished: (Boolean) -> Unit
+      val onDeleteOperationFinished: (Boolean) -> Unit,
     ) : SR2BookmarkEvent()
 
     /**
@@ -134,7 +134,7 @@ sealed class SR2Event {
    */
 
   data class SR2ExternalLinkSelected(
-    val link: String
+    val link: String,
   ) : SR2Event()
 
   /**
@@ -142,7 +142,7 @@ sealed class SR2Event {
    */
 
   data class SR2ThemeChanged(
-    val theme: SR2Theme
+    val theme: SR2Theme,
   ) : SR2Event()
 
   /**
@@ -162,7 +162,7 @@ sealed class SR2Event {
      */
 
     data class SR2CommandExecutionStarted(
-      override val command: SR2Command
+      override val command: SR2Command,
     ) : SR2CommandEvent()
 
     /**
@@ -171,7 +171,7 @@ sealed class SR2Event {
      */
 
     data class SR2CommandExecutionRunningLong(
-      override val command: SR2Command
+      override val command: SR2Command,
     ) : SR2CommandEvent()
 
     /**
@@ -185,7 +185,7 @@ sealed class SR2Event {
        */
 
       data class SR2CommandExecutionSucceeded(
-        override val command: SR2Command
+        override val command: SR2Command,
       ) : SR2CommandEventCompleted()
 
       /**
@@ -194,7 +194,7 @@ sealed class SR2Event {
 
       data class SR2CommandExecutionFailed(
         override val command: SR2Command,
-        val exception: Exception
+        val exception: Exception,
       ) : SR2CommandEventCompleted()
     }
   }

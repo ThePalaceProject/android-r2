@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory
 
 internal class SR2JavascriptAPI(
   private val webView: WebView,
-  private val commandQueue: SR2ControllerCommandQueueType
+  private val commandQueue: SR2ControllerCommandQueueType,
 ) : SR2JavascriptAPIType {
 
   private val logger =
@@ -36,7 +36,7 @@ internal class SR2JavascriptAPI(
 
   @UiThread
   private fun executeJavascript(
-    script: String
+    script: String,
   ): ListenableFuture<String> {
     SR2UIThread.checkIsUIThread()
 
@@ -65,7 +65,7 @@ internal class SR2JavascriptAPI(
           }
         }
       },
-      MoreExecutors.directExecutor()
+      MoreExecutors.directExecutor(),
     )
     return future
   }
@@ -83,7 +83,7 @@ internal class SR2JavascriptAPI(
           }
         }
       },
-      MoreExecutors.directExecutor()
+      MoreExecutors.directExecutor(),
     )
     return future
   }
@@ -97,7 +97,7 @@ internal class SR2JavascriptAPI(
   override fun setFontFamily(value: String): ListenableFuture<*> {
     return Futures.allAsList(
       this.setUserProperty("fontFamily", value),
-      this.setUserProperty("fontOverride", "readium-font-on")
+      this.setUserProperty("fontOverride", "readium-font-on"),
     )
   }
 
@@ -134,7 +134,7 @@ internal class SR2JavascriptAPI(
       value = when (mode) {
         SCROLLING_MODE_PAGINATED -> "readium-scroll-off"
         SCROLLING_MODE_CONTINUOUS -> "readium-scroll-on"
-      }
+      },
     )
   }
 
@@ -145,18 +145,18 @@ internal class SR2JavascriptAPI(
 
   @UiThread
   override fun setPublisherCSS(
-    css: SR2PublisherCSS
+    css: SR2PublisherCSS,
   ): ListenableFuture<*> {
     return when (css) {
       SR2_PUBLISHER_DEFAULT_CSS_ENABLED ->
         Futures.allAsList(
           this.setUserProperty("advancedSettings", ""),
-          this.setUserProperty("fontOverride", "")
+          this.setUserProperty("fontOverride", ""),
         )
       SR2_PUBLISHER_DEFAULT_CSS_DISABLED ->
         Futures.allAsList(
           this.setUserProperty("advancedSettings", "readium-advanced-on"),
-          this.setUserProperty("fontOverride", "readium-font-on")
+          this.setUserProperty("fontOverride", "readium-font-on"),
         )
     }
   }
@@ -164,7 +164,7 @@ internal class SR2JavascriptAPI(
   @UiThread
   fun setUserProperty(
     name: String,
-    value: String
+    value: String,
   ): ListenableFuture<String> {
     return this.executeJavascript("readium.setProperty(\"--USER__${name}\", \"${value}\");")
   }

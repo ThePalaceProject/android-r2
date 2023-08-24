@@ -8,5 +8,5 @@ import org.librarysimplified.r2.api.SR2Locator
 
 data class SR2NavigationPoint(
   val title: String,
-  val locator: SR2Locator
+  val locator: SR2Locator,
 )

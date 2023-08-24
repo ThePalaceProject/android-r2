@@ -114,7 +114,7 @@ internal class SR2Controller private constructor(
      */
 
     fun create(
-      configuration: SR2ControllerConfiguration
+      configuration: SR2ControllerConfiguration,
     ): SR2ControllerType {
       val bookFile = configuration.bookFile
       this.logger.debug("creating controller for {}", bookFile)
@@ -129,7 +129,7 @@ internal class SR2Controller private constructor(
           onCreatePublication = onCreatePublication,
           parsers = listOf(EpubParser()),
           contentProtections = configuration.contentProtections,
-          ignoreDefaultParsers = true
+          ignoreDefaultParsers = true,
         )
 
       val publication = runBlocking {
@@ -159,7 +159,7 @@ internal class SR2Controller private constructor(
         val epubName = "/${bookFile.name}"
         val baseUrl = server.addPublication(
           publication = publication,
-          userPropertiesFile = null
+          userPropertiesFile = null,
         )
 
         this.logger.debug("publication uri: {}", baseUrl)
@@ -174,7 +174,7 @@ internal class SR2Controller private constructor(
           baseUrl = baseUrl.toURI(),
           port = port,
           publication = publication,
-          server = server
+          server = server,
         )
       } catch (e: Exception) {
         try {
@@ -224,7 +224,7 @@ internal class SR2Controller private constructor(
   override val bookMetadata: SR2BookMetadata =
     SR2Books.makeMetadata(
       publication = this.publication,
-      bookId = this.configuration.bookId
+      bookId = this.configuration.bookId,
     )
 
   private val navigationGraph: SR2NavigationGraph =
@@ -248,13 +248,13 @@ internal class SR2Controller private constructor(
 
   init {
     this.subscriptions.add(
-      this.eventSubject.subscribe { event -> this.logger.trace("event: {}", event) }
+      this.eventSubject.subscribe { event -> this.logger.trace("event: {}", event) },
     )
     this.subscriptions.add(
       this.eventSubject.ofType(SR2ReadingPositionChanged::class.java)
         .distinctUntilChanged()
         .throttleLast(1, TimeUnit.SECONDS)
-        .subscribe(this::updateBookmarkLastRead)
+        .subscribe(this::updateBookmarkLastRead),
     )
 
     // Pre-compute positions
@@ -262,7 +262,7 @@ internal class SR2Controller private constructor(
   }
 
   private fun serverLocationOfTarget(
-    target: SR2NavigationTarget
+    target: SR2NavigationTarget,
   ): String {
     val href = target.node.navigationPoint.locator.chapterHref.replace("^/+".toRegex(), "")
     return when (target.extraFragment) {
@@ -281,9 +281,8 @@ internal class SR2Controller private constructor(
   }
 
   private fun updateBookmarkLastRead(
-    position: SR2ReadingPositionChanged
+    position: SR2ReadingPositionChanged,
   ) {
-
     /*
      * This is pure paranoia; we only update the last-read location if the new position
      * doesn't appear to point to the very start of the book. This is to defend against
@@ -304,7 +303,7 @@ internal class SR2Controller private constructor(
           title = position.chapterTitle ?: "",
           locator = position.locator,
           bookProgress = this.currentBookProgress,
-          uri = null
+          uri = null,
         )
 
         this.eventSubject.onNext(
@@ -318,15 +317,15 @@ internal class SR2Controller private constructor(
                 this.bookmarks = newBookmarks.toList()
                 this.eventSubject.onNext(SR2BookmarkCreated(createdBookmark))
               }
-            }
-          )
+            },
+          ),
         )
       }
     }
   }
 
   private fun executeInternalCommand(
-    command: SR2CommandSubmission
+    command: SR2CommandSubmission,
   ): ListenableFuture<*> {
     this.logger.debug("executing {}", command)
 
@@ -339,7 +338,7 @@ internal class SR2Controller private constructor(
   }
 
   private fun executeCommandSubmission(
-    command: SR2CommandSubmission
+    command: SR2CommandSubmission,
   ): ListenableFuture<*> {
     return when (val apiCommand = command.command) {
       is SR2Command.OpenChapter ->
@@ -373,7 +372,7 @@ internal class SR2Controller private constructor(
 
   private fun executeCommandThemeSet(
     command: SR2CommandSubmission,
-    apiCommand: SR2Command.ThemeSet
+    apiCommand: SR2Command.ThemeSet,
   ): ListenableFuture<*> {
     this.publishCommmandRunningLong(command)
     return this.executeThemeSet(this.waitForWebViewAvailability(), apiCommand.theme)
@@ -381,25 +380,25 @@ internal class SR2Controller private constructor(
 
   private fun executeThemeSet(
     viewConnection: SR2WebViewConnectionType,
-    theme: SR2Theme
+    theme: SR2Theme,
   ): ListenableFuture<*> {
     this.themeMostRecent = theme
 
     val tasks = mutableListOf<ListenableFuture<Any>>()
     tasks.add(
-      viewConnection.executeJS { js -> js.setFontFamily(SR2Fonts.fontFamilyStringOf(theme.font)) }
+      viewConnection.executeJS { js -> js.setFontFamily(SR2Fonts.fontFamilyStringOf(theme.font)) },
     )
     tasks.add(
-      viewConnection.executeJS { js -> js.setTheme(SR2ReadiumInternalTheme.from(theme.colorScheme)) }
+      viewConnection.executeJS { js -> js.setTheme(SR2ReadiumInternalTheme.from(theme.colorScheme)) },
     )
     tasks.add(
-      viewConnection.executeJS { js -> js.setFontSize(theme.textSize) }
+      viewConnection.executeJS { js -> js.setFontSize(theme.textSize) },
     )
     tasks.add(
-      viewConnection.executeJS { js -> js.setPublisherCSS(theme.publisherCSS) }
+      viewConnection.executeJS { js -> js.setPublisherCSS(theme.publisherCSS) },
     )
     tasks.add(
-      viewConnection.executeJS { js -> js.broadcastReadingPosition() }
+      viewConnection.executeJS { js -> js.broadcastReadingPosition() },
     )
 
     val allFutures = Futures.allAsList(tasks)
@@ -409,7 +408,7 @@ internal class SR2Controller private constructor(
         this.eventSubject.onNext(SR2Event.SR2ThemeChanged(theme))
         setFuture.set(Unit)
       },
-      MoreExecutors.directExecutor()
+      MoreExecutors.directExecutor(),
     )
     return setFuture
   }
@@ -423,11 +422,11 @@ internal class SR2Controller private constructor(
    */
 
   private fun executeCommandBookmarkDelete(
-    apiCommand: SR2Command.BookmarkDelete
+    apiCommand: SR2Command.BookmarkDelete,
   ): ListenableFuture<*> {
     this.bookmarks = this.bookmarks.map { bookmark ->
       bookmark.copy(
-        isBeingDeleted = bookmark == apiCommand.bookmark
+        isBeingDeleted = bookmark == apiCommand.bookmark,
       )
     }
     this.eventSubject.onNext(
@@ -446,13 +445,13 @@ internal class SR2Controller private constructor(
                   false
                 } else {
                   bookmark.isBeingDeleted
-                }
+                },
               )
             }
             this.eventSubject.onNext(SR2BookmarkFailedToBeDeleted)
           }
-        }
-      )
+        },
+      ),
     )
     return Futures.immediateFuture(Unit)
   }
@@ -469,10 +468,10 @@ internal class SR2Controller private constructor(
         title = this.currentTarget.node.title,
         locator = SR2LocatorPercent(
           this.currentTarget.node.navigationPoint.locator.chapterHref,
-          this.currentTargetProgress
+          this.currentTargetProgress,
         ),
         bookProgress = this.currentBookProgress,
-        uri = null
+        uri = null,
       )
 
     this.eventSubject.onNext(
@@ -485,8 +484,8 @@ internal class SR2Controller private constructor(
             this.bookmarks = newBookmarks.toList()
             this.eventSubject.onNext(SR2BookmarkCreated(createdBookmark))
           }
-        }
-      )
+        },
+      ),
     )
 
     return Futures.immediateFuture(Unit)
@@ -497,14 +496,14 @@ internal class SR2Controller private constructor(
    */
 
   private fun executeCommandRefresh(
-    command: SR2CommandSubmission
+    command: SR2CommandSubmission,
   ): ListenableFuture<*> {
     return this.openNodeForLocator(
       command,
       SR2LocatorPercent(
         chapterHref = this.currentTarget.node.navigationPoint.locator.chapterHref,
-        chapterProgress = this.currentTargetProgress
-      )
+        chapterProgress = this.currentTargetProgress,
+      ),
     )
   }
 
@@ -513,7 +512,7 @@ internal class SR2Controller private constructor(
    */
 
   private fun executeCommandBookmarksLoad(
-    apiCommand: SR2Command.BookmarksLoad
+    apiCommand: SR2Command.BookmarksLoad,
   ): ListenableFuture<*> {
     val newBookmarks = this.bookmarks.toMutableList()
     newBookmarks.addAll(apiCommand.bookmarks)
@@ -527,7 +526,7 @@ internal class SR2Controller private constructor(
    */
 
   private fun executeCommandOpenChapterPrevious(
-    command: SR2CommandSubmission
+    command: SR2CommandSubmission,
   ): ListenableFuture<*> {
     val previousNode =
       this.navigationGraph.findPreviousNode(this.currentTarget.node)
@@ -535,7 +534,7 @@ internal class SR2Controller private constructor(
 
     return this.openNodeForLocator(
       command,
-      SR2LocatorChapterEnd(chapterHref = previousNode.navigationPoint.locator.chapterHref)
+      SR2LocatorChapterEnd(chapterHref = previousNode.navigationPoint.locator.chapterHref),
     )
   }
 
@@ -544,7 +543,7 @@ internal class SR2Controller private constructor(
    */
 
   private fun executeCommandOpenChapterNext(
-    command: SR2CommandSubmission
+    command: SR2CommandSubmission,
   ): ListenableFuture<*> {
     val nextNode =
       this.navigationGraph.findNextNode(this.currentTarget.node)
@@ -554,8 +553,8 @@ internal class SR2Controller private constructor(
       command,
       SR2LocatorPercent(
         chapterHref = nextNode.navigationPoint.locator.chapterHref,
-        chapterProgress = 0.0
-      )
+        chapterProgress = 0.0,
+      ),
     )
   }
 
@@ -581,7 +580,7 @@ internal class SR2Controller private constructor(
 
   private fun executeCommandOpenChapter(
     command: SR2CommandSubmission,
-    apiCommand: SR2Command.OpenChapter
+    apiCommand: SR2Command.OpenChapter,
   ): ListenableFuture<*> {
     return this.openNodeForLocator(command, apiCommand.locator)
   }
@@ -591,10 +590,9 @@ internal class SR2Controller private constructor(
    */
 
   private fun executeCommandOpenLink(
-    apiCommand: SR2Command.OpenLink
+    apiCommand: SR2Command.OpenLink,
   ): ListenableFuture<*> {
     try {
-
       /*
        * Determine if the link is an internal EPUB link. If it is, translate it to an "open chapter"
        * command. This may not be completely precise if the link contains an optional '#' fragment.
@@ -615,8 +613,8 @@ internal class SR2Controller private constructor(
       this.eventSubject.onNext(
         SR2Event.SR2Error.SR2ChapterNonexistent(
           chapterHref = apiCommand.link,
-          message = e.message ?: "Unable to open chapter ${apiCommand.link}"
-        )
+          message = e.message ?: "Unable to open chapter ${apiCommand.link}",
+        ),
       )
       val future = SettableFuture.create<Unit>()
       future.setException(e)
@@ -630,7 +628,7 @@ internal class SR2Controller private constructor(
 
   private fun openNodeForLocator(
     command: SR2CommandSubmission,
-    locator: SR2Locator
+    locator: SR2Locator,
   ): ListenableFuture<*> {
     val previousNode = this.currentTarget
 
@@ -654,21 +652,21 @@ internal class SR2Controller private constructor(
         Futures.transformAsync(
           openFuture,
           AsyncFunction { this.executeThemeSet(connection, this.themeMostRecent) },
-          MoreExecutors.directExecutor()
+          MoreExecutors.directExecutor(),
         )
 
       val scrollModeFuture =
         Futures.transformAsync(
           themeFuture,
           AsyncFunction { connection.executeJS { js -> js.setScrollMode(this.configuration.scrollingMode) } },
-          MoreExecutors.directExecutor()
+          MoreExecutors.directExecutor(),
         )
 
       val moveFuture =
         Futures.transformAsync(
           scrollModeFuture,
           AsyncFunction { this.executeLocatorSet(connection, locator) },
-          MoreExecutors.directExecutor()
+          MoreExecutors.directExecutor(),
         )
 
       /*
@@ -682,7 +680,7 @@ internal class SR2Controller private constructor(
           Futures.transformAsync(
             moveFuture,
             AsyncFunction { connection.executeJS { js -> js.scrollToId(fragment) } },
-            MoreExecutors.directExecutor()
+            MoreExecutors.directExecutor(),
           )
       }
     } catch (e: Exception) {
@@ -691,8 +689,8 @@ internal class SR2Controller private constructor(
       this.eventSubject.onNext(
         SR2Event.SR2Error.SR2ChapterNonexistent(
           chapterHref = locator.chapterHref,
-          message = e.message ?: "Unable to open chapter ${locator.chapterHref}"
-        )
+          message = e.message ?: "Unable to open chapter ${locator.chapterHref}",
+        ),
       )
       val future = SettableFuture.create<Unit>()
       future.setException(e)
@@ -702,7 +700,7 @@ internal class SR2Controller private constructor(
 
   private fun executeLocatorSet(
     connection: SR2WebViewConnectionType,
-    locator: SR2Locator
+    locator: SR2Locator,
   ): ListenableFuture<*> =
     when (locator) {
       is SR2LocatorPercent -> {
@@ -770,7 +768,7 @@ internal class SR2Controller private constructor(
    */
 
   private inner class JavascriptAPIReceiver(
-    private val webView: WebView
+    private val webView: WebView,
   ) : SR2JavascriptAPIReceiverType {
 
     private val logger =
@@ -780,7 +778,7 @@ internal class SR2Controller private constructor(
     override fun onReadingPositionChanged(
       chapterProgress: Double,
       currentPage: Int,
-      pageCount: Int
+      pageCount: Int,
     ) {
       this@SR2Controller.coroutineScope.launch {
         this@SR2Controller.currentBookProgress =
@@ -804,8 +802,8 @@ internal class SR2Controller private constructor(
             chapterProgress = chapterProgress,
             currentPage = currentPage,
             pageCount = pageCount,
-            bookProgress = this@SR2Controller.currentBookProgress
-          )
+            bookProgress = this@SR2Controller.currentBookProgress,
+          ),
         )
       }
     }
@@ -879,14 +877,14 @@ internal class SR2Controller private constructor(
     override fun logError(
       message: String?,
       file: String?,
-      line: String?
+      line: String?,
     ) {
       this.logger.error("logError: {}:{}: {}", file, line, message)
     }
   }
 
   private fun submitCommandActual(
-    command: SR2CommandSubmission
+    command: SR2CommandSubmission,
   ) {
     this.logger.debug("submitCommand: {}", command)
 
@@ -925,7 +923,7 @@ internal class SR2Controller private constructor(
 
   private fun publishCommmandFailed(
     command: SR2CommandSubmission,
-    exception: Exception
+    exception: Exception,
   ) {
     this.eventSubject.onNext(SR2CommandExecutionFailed(command.command, exception))
   }
@@ -946,7 +944,7 @@ internal class SR2Controller private constructor(
   override fun positionNow(): SR2Locator {
     return SR2LocatorPercent(
       this.currentTarget.node.navigationPoint.locator.chapterHref,
-      this.currentTargetProgress
+      this.currentTargetProgress,
     )
   }
 
@@ -968,7 +966,7 @@ internal class SR2Controller private constructor(
         commandQueue = this,
         uiExecutor = this.configuration.uiExecutor,
         scrollingMode = this.configuration.scrollingMode,
-        layout = this.publication.metadata.presentation.layout ?: REFLOWABLE
+        layout = this.publication.metadata.presentation.layout ?: REFLOWABLE,
       )
 
     synchronized(this.webViewConnectionLock) {

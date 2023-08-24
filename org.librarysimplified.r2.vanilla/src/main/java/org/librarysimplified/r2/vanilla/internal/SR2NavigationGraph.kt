@@ -20,7 +20,7 @@ data class SR2NavigationGraph(
    * The book's list of extra resources.
    */
 
-  val resources: List<SR2NavigationResourceNode>
+  val resources: List<SR2NavigationResourceNode>,
 ) {
   init {
     require(this.readingOrder.sortedBy { it.index } == this.readingOrder) {
@@ -38,7 +38,7 @@ data class SR2NavigationGraph(
   fun start(): SR2NavigationTarget {
     return SR2NavigationTarget(
       node = this.readingOrder.first(),
-      extraFragment = null
+      extraFragment = null,
     )
   }
 
@@ -82,7 +82,7 @@ data class SR2NavigationGraph(
     if (exact != null) {
       return SR2NavigationTarget(
         node = exact,
-        extraFragment = null
+        extraFragment = null,
       )
     }
 

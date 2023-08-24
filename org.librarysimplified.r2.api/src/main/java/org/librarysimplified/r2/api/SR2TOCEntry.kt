@@ -7,7 +7,7 @@ package org.librarysimplified.r2.api
 data class SR2TOCEntry(
   val title: String,
   val href: String,
-  val depth: Int
+  val depth: Int,
 ) {
   init {
     check(depth >= 0) {

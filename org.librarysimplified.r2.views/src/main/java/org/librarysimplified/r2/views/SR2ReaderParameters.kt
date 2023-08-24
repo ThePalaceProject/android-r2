@@ -61,5 +61,5 @@ data class SR2ReaderParameters(
    * The pagination numbering mode.
    */
 
-  val pageNumberingMode: SR2PageNumberingMode
+  val pageNumberingMode: SR2PageNumberingMode,
 )

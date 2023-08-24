@@ -16,8 +16,8 @@ import org.librarysimplified.r2.api.SR2ControllerConfiguration
 import org.librarysimplified.r2.api.SR2ControllerType
 import org.librarysimplified.r2.api.SR2Event
 import org.librarysimplified.r2.views.internal.SR2ViewModelBookEvent
-import org.librarysimplified.r2.views.internal.SR2ViewModelBookEvent.SR2ViewModelBookOpened
 import org.librarysimplified.r2.views.internal.SR2ViewModelBookEvent.SR2ViewModelBookOpenFailed
+import org.librarysimplified.r2.views.internal.SR2ViewModelBookEvent.SR2ViewModelBookOpened
 import org.slf4j.LoggerFactory
 import java.util.concurrent.Executors
 
@@ -26,7 +26,7 @@ import java.util.concurrent.Executors
  */
 
 class SR2ReaderViewModel(
-  private val parameters: SR2ReaderParameters
+  private val parameters: SR2ReaderParameters,
 ) : ViewModel() {
 
   private val logger =
@@ -126,7 +126,7 @@ class SR2ReaderViewModel(
         val thread = Thread(runnable)
         thread.name = "org.librarysimplified.r2.io"
         thread
-      }
+      },
     )
 
   override fun onCleared() {
@@ -150,9 +150,8 @@ class SR2ReaderViewModel(
   }
 
   fun createOrGet(
-    configuration: SR2ControllerConfiguration
+    configuration: SR2ControllerConfiguration,
   ): ListenableFuture<SR2ControllerReference> {
-
     /*
      * If there's an existing controller, then return it.
      */
@@ -185,7 +184,7 @@ class SR2ReaderViewModel(
             this.subscriptions.clear()
             this.subscriptions.add(
               newController.events.observeOn(AndroidSchedulers.mainThread())
-                .subscribe(this.controllerEventsUnicast::onNext)
+                .subscribe(this.controllerEventsUnicast::onNext),
             )
           }
 
@@ -200,7 +199,7 @@ class SR2ReaderViewModel(
           refFuture.setException(e)
         }
       },
-      MoreExecutors.directExecutor()
+      MoreExecutors.directExecutor(),
     )
 
     return refFuture

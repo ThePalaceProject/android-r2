@@ -104,7 +104,7 @@ class SR2NavigationGraphsTest {
     val publication =
       TestPublication.loadPublication(
         "epubs/charles-dickens_great-expectations.epub",
-        this.directory
+        this.directory,
       )
     val graph =
       SR2NavigationGraphs.create(publication)

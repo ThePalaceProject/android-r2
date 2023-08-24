@@ -11,12 +11,12 @@ import org.librarysimplified.r2.views.internal.SR2DiffUtils.bookmarkDiffCallback
 internal class SR2TOCBookmarkAdapter(
   private val resources: Resources,
   private val onBookmarkSelected: (SR2Bookmark) -> Unit,
-  private val onBookmarkDeleteRequested: (SR2Bookmark) -> Unit
+  private val onBookmarkDeleteRequested: (SR2Bookmark) -> Unit,
 ) : ListAdapter<SR2Bookmark, SR2TOCBookmarkViewHolder>(bookmarkDiffCallback) {
 
   override fun onCreateViewHolder(
     parent: ViewGroup,
-    viewType: Int
+    viewType: Int,
   ): SR2TOCBookmarkViewHolder {
     val inflater =
       LayoutInflater.from(parent.context)
@@ -27,13 +27,13 @@ internal class SR2TOCBookmarkAdapter(
 
   override fun onBindViewHolder(
     holder: SR2TOCBookmarkViewHolder,
-    position: Int
+    position: Int,
   ) {
     holder.bindTo(
       resources = this.resources,
       onBookmarkSelected = this.onBookmarkSelected,
       onBookmarkDeleteRequested = this.onBookmarkDeleteRequested,
-      bookmark = this.getItem(position)
+      bookmark = this.getItem(position),
     )
   }
 

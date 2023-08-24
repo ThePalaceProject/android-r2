@@ -13,12 +13,12 @@ import org.readium.r2.shared.publication.presentation.presentation
 internal class SR2HtmlInjector(private val manifest: Manifest) {
 
   fun transform(resource: Resource): Resource = LazyResource {
-
     val link = resource.link()
-    if (link.mediaType.isHtml)
+    if (link.mediaType.isHtml) {
       inject(resource)
-    else
+    } else {
       resource
+    }
   }
 
   private suspend fun inject(resource: Resource): Resource = object : TransformingResource(resource) {
@@ -26,10 +26,11 @@ internal class SR2HtmlInjector(private val manifest: Manifest) {
     override suspend fun transform(data: ResourceTry<ByteArray>): ResourceTry<ByteArray> =
       resource.read().mapCatching {
         val trimmedText = it.toString(link().mediaType.charset ?: Charsets.UTF_8).trim()
-        val res = if (manifest.metadata.presentation.layoutOf(link()) == EpubLayout.REFLOWABLE)
+        val res = if (manifest.metadata.presentation.layoutOf(link()) == EpubLayout.REFLOWABLE) {
           injectReflowableHtml(trimmedText)
-        else
+        } else {
           injectFixedLayoutHtml(trimmedText)
+        }
         res.toByteArray()
       }
   }
@@ -40,8 +41,9 @@ internal class SR2HtmlInjector(private val manifest: Manifest) {
     val head = regexForOpeningHTMLTag("head").find(resourceHtml, 0)
     var beginHeadIndex = resourceHtml.indexOf("<head>", 0, false) + 6
     var endHeadIndex = resourceHtml.indexOf("</head>", 0, true)
-    if (endHeadIndex == -1)
+    if (endHeadIndex == -1) {
       return content
+    }
 
     val layout = SR2ReadiumCssLayout(manifest.metadata)
 
@@ -104,8 +106,9 @@ internal class SR2HtmlInjector(private val manifest: Manifest) {
   private fun injectFixedLayoutHtml(content: String): String {
     var resourceHtml = content
     val endHeadIndex = resourceHtml.indexOf("</head>", 0, true)
-    if (endHeadIndex == -1)
+    if (endHeadIndex == -1) {
       return content
+    }
     val includes = mutableListOf<String>()
     includes.add(getHtmlScript("/assets/scripts/gestures.js"))
     includes.add(getHtmlScript("/assets/scripts/utils.js"))

@@ -14,12 +14,12 @@ interface SR2ControllerProviderType {
    */
 
   fun create(
-    configuration: SR2ControllerConfiguration
+    configuration: SR2ControllerConfiguration,
   ): ListenableFuture<SR2ControllerType> {
     return configuration.ioExecutor.submit(
       Callable {
         this.createHere(configuration)
-      }
+      },
     )
   }
 
@@ -31,6 +31,6 @@ interface SR2ControllerProviderType {
    */
 
   fun createHere(
-    configuration: SR2ControllerConfiguration
+    configuration: SR2ControllerConfiguration,
   ): SR2ControllerType
 }

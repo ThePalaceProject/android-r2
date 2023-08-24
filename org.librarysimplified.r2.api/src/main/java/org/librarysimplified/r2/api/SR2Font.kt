@@ -22,5 +22,5 @@ enum class SR2Font {
    * The Open Dyslexic font.
    */
 
-  FONT_OPEN_DYSLEXIC
+  FONT_OPEN_DYSLEXIC,
 }

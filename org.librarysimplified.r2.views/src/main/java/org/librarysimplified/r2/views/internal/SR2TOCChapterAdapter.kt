@@ -15,11 +15,11 @@ import org.librarysimplified.r2.views.internal.SR2TOCChapterAdapter.SR2TOCEntryV
 
 internal class SR2TOCChapterAdapter(
   private val resources: Resources,
-  private val onTOCEntrySelected: (SR2TOCEntry) -> Unit
+  private val onTOCEntrySelected: (SR2TOCEntry) -> Unit,
 ) : ListAdapter<SR2TOCEntry, SR2TOCEntryViewHolder>(tocEntryCallback) {
 
   class SR2TOCEntryViewHolder(
-    val rootView: View
+    val rootView: View,
   ) : RecyclerView.ViewHolder(rootView) {
     val chapterIcon: ImageView =
       this.rootView.findViewById(R.id.chapterIcon)
@@ -29,7 +29,7 @@ internal class SR2TOCChapterAdapter(
 
   override fun onCreateViewHolder(
     parent: ViewGroup,
-    viewType: Int
+    viewType: Int,
   ): SR2TOCEntryViewHolder {
     val inflater =
       LayoutInflater.from(parent.context)
@@ -40,7 +40,7 @@ internal class SR2TOCChapterAdapter(
 
   override fun onBindViewHolder(
     holder: SR2TOCEntryViewHolder,
-    position: Int
+    position: Int,
   ) {
     val chapter = this.getItem(position)
     holder.rootView.setOnClickListener {

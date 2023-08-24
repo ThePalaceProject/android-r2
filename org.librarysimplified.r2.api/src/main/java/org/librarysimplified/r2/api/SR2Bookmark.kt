@@ -49,7 +49,7 @@ data class SR2Bookmark(
    * A flag that indicates if the bookmark is being deleted or not.
    */
 
-  var isBeingDeleted: Boolean = false
+  var isBeingDeleted: Boolean = false,
 ) {
 
   init {
@@ -100,6 +100,6 @@ data class SR2Bookmark(
      * The bookmark is a last-read location.
      */
 
-    LAST_READ
+    LAST_READ,
   }
 }

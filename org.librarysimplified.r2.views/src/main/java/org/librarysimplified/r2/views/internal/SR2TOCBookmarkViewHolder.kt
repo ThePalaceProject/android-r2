@@ -16,7 +16,7 @@ import org.librarysimplified.r2.api.SR2Locator
 import org.librarysimplified.r2.views.R
 
 internal class SR2TOCBookmarkViewHolder(
-  val rootView: View
+  val rootView: View,
 ) : RecyclerView.ViewHolder(rootView) {
 
   private val bookmarkIcon: ImageView =
@@ -53,7 +53,7 @@ internal class SR2TOCBookmarkViewHolder(
     resources: Resources,
     onBookmarkSelected: (SR2Bookmark) -> Unit,
     onBookmarkDeleteRequested: (SR2Bookmark) -> Unit,
-    bookmark: SR2Bookmark
+    bookmark: SR2Bookmark,
   ) {
     when (bookmark.type) {
       EXPLICIT -> {
@@ -91,7 +91,7 @@ internal class SR2TOCBookmarkViewHolder(
 
   private fun openDeleteDialog(
     bookmark: SR2Bookmark,
-    onBookmarkDeleteRequested: (SR2Bookmark) -> Unit
+    onBookmarkDeleteRequested: (SR2Bookmark) -> Unit,
   ) {
     AlertDialog.Builder(this.rootView.context)
       .setMessage(R.string.tocBookmarkDeleteMessage)

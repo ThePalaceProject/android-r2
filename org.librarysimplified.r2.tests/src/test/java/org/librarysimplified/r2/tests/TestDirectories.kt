@@ -9,7 +9,7 @@ object TestDirectories {
   @Throws(IOException::class)
   fun temporaryFileOf(
     name: String,
-    data: String
+    data: String,
   ): File {
     val file = File(temporaryDirectory(), name)
     file.writeText(data)

@@ -17,7 +17,7 @@ interface SR2UIThreadServiceType {
     check(isUIThread() != false) {
       String.format(
         "Current thread '%s' is not the Android UI thread",
-        Thread.currentThread()
+        Thread.currentThread(),
       )
     }
   }
@@ -52,7 +52,7 @@ interface SR2UIThreadServiceType {
     this.runOnUIThread(
       Runnable {
         f.invoke()
-      }
+      },
     )
 
   /**
@@ -64,7 +64,7 @@ interface SR2UIThreadServiceType {
 
   fun runOnUIThreadDelayed(
     r: Runnable,
-    ms: Long
+    ms: Long,
   ) {
     val looper = Looper.getMainLooper()
     val h = Handler(looper)

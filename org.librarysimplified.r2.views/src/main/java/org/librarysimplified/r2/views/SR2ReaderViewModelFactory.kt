@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 
 class SR2ReaderViewModelFactory constructor(
-  private val parameters: SR2ReaderParameters
+  private val parameters: SR2ReaderParameters,
 ) : ViewModelProvider.Factory {
 
   override fun <T : ViewModel> create(modelClass: Class<T>): T {

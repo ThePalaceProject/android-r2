@@ -22,7 +22,7 @@ import org.librarysimplified.r2.views.SR2ReaderViewModel
 import org.librarysimplified.r2.views.SR2ReaderViewModelFactory
 
 internal class SR2TOCChaptersFragment private constructor(
-  private val parameters: SR2ReaderParameters
+  private val parameters: SR2ReaderParameters,
 ) : Fragment() {
 
   companion object {
@@ -41,14 +41,14 @@ internal class SR2TOCChaptersFragment private constructor(
     this.chapterAdapter =
       SR2TOCChapterAdapter(
         resources = this.resources,
-        onTOCEntrySelected = { this.onTOCEntrySelected(it) }
+        onTOCEntrySelected = { this.onTOCEntrySelected(it) },
       )
   }
 
   override fun onCreateView(
     inflater: LayoutInflater,
     container: ViewGroup?,
-    savedInstanceState: Bundle?
+    savedInstanceState: Bundle?,
   ): View? {
     val layout =
       inflater.inflate(R.layout.sr2_toc_chapters, container, false)
@@ -85,14 +85,14 @@ internal class SR2TOCChaptersFragment private constructor(
       SR2Command.OpenChapter(
         SR2LocatorPercent(
           chapterHref = entry.href,
-          chapterProgress = 0.0
-        )
-      )
+          chapterProgress = 0.0,
+        ),
+      ),
     )
 
     SR2UIThread.runOnUIThreadDelayed(
       { this.readerModel.publishViewEvent(SR2ReaderViewNavigationClose) },
-      SR2TOC.tocSelectionDelay()
+      SR2TOC.tocSelectionDelay(),
     )
   }
 }

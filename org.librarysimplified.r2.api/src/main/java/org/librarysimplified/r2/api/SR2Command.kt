@@ -24,7 +24,7 @@ sealed class SR2Command {
    */
 
   data class OpenChapter(
-    val locator: SR2Locator
+    val locator: SR2Locator,
   ) : SR2Command()
 
   /**
@@ -72,7 +72,7 @@ sealed class SR2Command {
    */
 
   data class OpenChapterPrevious(
-    val atEnd: Boolean
+    val atEnd: Boolean,
   ) : SR2Command()
 
   /**
@@ -82,7 +82,7 @@ sealed class SR2Command {
    */
 
   data class OpenLink(
-    val link: String
+    val link: String,
   ) : SR2Command()
 
   /**
@@ -92,7 +92,7 @@ sealed class SR2Command {
    */
 
   data class BookmarksLoad(
-    val bookmarks: List<SR2Bookmark>
+    val bookmarks: List<SR2Bookmark>,
   ) : SR2Command()
 
   /**
@@ -109,7 +109,7 @@ sealed class SR2Command {
    */
 
   data class BookmarkDelete(
-    val bookmark: SR2Bookmark
+    val bookmark: SR2Bookmark,
   ) : SR2Command()
 
   /**
@@ -117,6 +117,6 @@ sealed class SR2Command {
    */
 
   data class ThemeSet(
-    val theme: SR2Theme
+    val theme: SR2Theme,
   ) : SR2Command()
 }

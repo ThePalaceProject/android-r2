@@ -7,11 +7,12 @@ internal enum class SR2ReadiumInternalTheme {
   DARK,
   DAY,
   NIGHT,
-  SEPIA;
+  SEPIA,
+  ;
 
   companion object {
     fun from(
-      colorScheme: SR2ColorScheme
+      colorScheme: SR2ColorScheme,
     ): SR2ReadiumInternalTheme {
       return when (colorScheme) {
         SR2ColorScheme.DARK_TEXT_LIGHT_BACKGROUND ->

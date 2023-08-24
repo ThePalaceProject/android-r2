@@ -18,7 +18,7 @@ internal class SR2WebChromeClient : WebChromeClient() {
       "onConsoleMessage: {}:{}: {}",
       consoleMessage.sourceId(),
       consoleMessage.lineNumber(),
-      consoleMessage.message()
+      consoleMessage.message(),
     )
     return super.onConsoleMessage(consoleMessage)
   }
@@ -26,7 +26,7 @@ internal class SR2WebChromeClient : WebChromeClient() {
   override fun onConsoleMessage(
     message: String,
     lineNumber: Int,
-    sourceID: String
+    sourceID: String,
   ) {
     this.logger.debug("onConsoleMessage: {}:{}: {}", sourceID, lineNumber, message)
     super.onConsoleMessage(message, lineNumber, sourceID)

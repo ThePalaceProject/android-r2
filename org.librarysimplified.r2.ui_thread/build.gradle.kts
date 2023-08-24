@@ -1,6 +1,6 @@
 dependencies {
-  api(libs.kotlin.stdlib)
+    api(libs.kotlin.stdlib)
 
-  implementation(libs.androidx.annotation)
-  implementation(libs.slf4j)
+    implementation(libs.androidx.annotation)
+    implementation(libs.slf4j)
 }

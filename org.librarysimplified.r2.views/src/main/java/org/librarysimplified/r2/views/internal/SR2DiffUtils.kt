@@ -10,13 +10,13 @@ internal object SR2DiffUtils {
     object : DiffUtil.ItemCallback<SR2Bookmark>() {
       override fun areItemsTheSame(
         oldItem: SR2Bookmark,
-        newItem: SR2Bookmark
+        newItem: SR2Bookmark,
       ): Boolean =
         oldItem == newItem
 
       override fun areContentsTheSame(
         oldItem: SR2Bookmark,
-        newItem: SR2Bookmark
+        newItem: SR2Bookmark,
       ): Boolean =
         oldItem == newItem && oldItem.isBeingDeleted == newItem.isBeingDeleted
     }
@@ -25,13 +25,13 @@ internal object SR2DiffUtils {
     object : DiffUtil.ItemCallback<SR2TOCEntry>() {
       override fun areItemsTheSame(
         oldItem: SR2TOCEntry,
-        newItem: SR2TOCEntry
+        newItem: SR2TOCEntry,
       ): Boolean =
         oldItem == newItem
 
       override fun areContentsTheSame(
         oldItem: SR2TOCEntry,
-        newItem: SR2TOCEntry
+        newItem: SR2TOCEntry,
       ): Boolean =
         oldItem == newItem
     }

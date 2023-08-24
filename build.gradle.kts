@@ -9,7 +9,7 @@ val gradleVersionReceived = gradle.gradleVersion
 
 if (gradleVersionRequired != gradleVersionReceived) {
     throw GradleException(
-        "Gradle version $gradleVersionRequired is required to run this build. You are using Gradle $gradleVersionReceived"
+        "Gradle version $gradleVersionRequired is required to run this build. You are using Gradle $gradleVersionReceived",
     )
 }
 

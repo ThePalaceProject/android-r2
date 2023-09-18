@@ -3,6 +3,7 @@ import com.android.build.gradle.LibraryExtension
 import org.jetbrains.kotlin.de.undercouch.gradle.tasks.download.Download
 import org.jetbrains.kotlin.de.undercouch.gradle.tasks.download.Verify
 import org.jetbrains.kotlin.gradle.dsl.KotlinAndroidProjectExtension
+import org.jetbrains.kotlin.gradle.dsl.KotlinProjectExtension
 
 val gradleVersionRequired = "8.2.1"
 val gradleVersionReceived = gradle.gradleVersion
@@ -20,6 +21,16 @@ plugins {
 
     id("org.jetbrains.kotlin.android")
         .version("1.9.0")
+        .apply(false)
+
+    /*
+     * The AndroidX plugin for navigation (including view binding generation).
+     *
+     * https://developer.android.com/jetpack/androidx/releases/navigation
+     */
+
+    id("androidx.navigation.safeargs.kotlin")
+        .version("2.7.1")
         .apply(false)
 
     id("com.android.library")
@@ -48,6 +59,22 @@ plugins {
 
     id("de.undercouch.download")
         .version("5.4.0")
+        .apply(false)
+
+    /*
+     * https://developers.google.com/android/guides/google-services-plugin
+     */
+
+    id("com.google.gms.google-services")
+        .version("4.3.15")
+        .apply(false)
+
+    /*
+     * https://firebase.google.com/docs/crashlytics/get-started?platform=android
+     */
+
+    id("com.google.firebase.crashlytics")
+        .version("2.9.9")
         .apply(false)
 
     id("maven-publish")
@@ -439,8 +466,10 @@ allprojects {
     this.version =
         property(this, "VERSION_NAME")
 
-    val produceBytecodeForJDK =
-        propertyInt(this, "org.thepalaceproject.build.produceBytecodeForJDK")
+    val jdkBuild =
+        propertyInt(this, "org.thepalaceproject.build.jdkBuild")
+    val jdkBytecodeTarget =
+        propertyInt(this, "org.thepalaceproject.build.jdkBytecodeTarget")
 
     /*
      * Configure builds and tests for various project types.
@@ -463,8 +492,11 @@ allprojects {
 
             val kotlin: KotlinAndroidProjectExtension =
                 this.extensions["kotlin"] as KotlinAndroidProjectExtension
+            val java: JavaPluginExtension =
+                this.extensions["java"] as JavaPluginExtension
 
-            kotlin.jvmToolchain(produceBytecodeForJDK)
+            kotlin.jvmToolchain(jdkBuild)
+            java.toolchain.languageVersion.set(JavaLanguageVersion.of(jdkBuild))
 
             /*
              * Configure the various required Android properties.
@@ -479,20 +511,32 @@ allprojects {
                 propertyInt(this, "org.thepalaceproject.build.androidSDKCompile")
 
             android.defaultConfig {
-                multiDexEnabled = true
+                versionName =
+                    property(this@allprojects, "VERSION_NAME")
+                multiDexEnabled =
+                    true
+                targetSdk =
+                    propertyInt(this@allprojects, "org.thepalaceproject.build.androidSDKTarget")
                 minSdk =
                     propertyInt(this@allprojects, "org.thepalaceproject.build.androidSDKMinimum")
-                testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+                testInstrumentationRunner =
+                    "androidx.test.runner.AndroidJUnitRunner"
             }
 
             /*
              * Produce JDK bytecode of the correct version.
              */
 
+            tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+                kotlinOptions.jvmTarget = jdkBytecodeTarget.toString()
+            }
+            java.sourceCompatibility = JavaVersion.toVersion(jdkBytecodeTarget)
+            java.targetCompatibility = JavaVersion.toVersion(jdkBytecodeTarget)
+
             android.compileOptions {
                 encoding = "UTF-8"
-                sourceCompatibility = JavaVersion.toVersion(produceBytecodeForJDK)
-                targetCompatibility = JavaVersion.toVersion(produceBytecodeForJDK)
+                sourceCompatibility = JavaVersion.toVersion(jdkBytecodeTarget)
+                targetCompatibility = JavaVersion.toVersion(jdkBytecodeTarget)
             }
         }
 
@@ -509,8 +553,11 @@ allprojects {
 
             val kotlin: KotlinAndroidProjectExtension =
                 this.extensions["kotlin"] as KotlinAndroidProjectExtension
+            val java: JavaPluginExtension =
+                this.extensions["java"] as JavaPluginExtension
 
-            kotlin.jvmToolchain(produceBytecodeForJDK)
+            kotlin.jvmToolchain(jdkBuild)
+            java.toolchain.languageVersion.set(JavaLanguageVersion.of(jdkBuild))
 
             /*
              * Configure the various required Android properties.
@@ -535,10 +582,16 @@ allprojects {
              * Produce JDK bytecode of the correct version.
              */
 
+            tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+                kotlinOptions.jvmTarget = jdkBytecodeTarget.toString()
+            }
+            java.sourceCompatibility = JavaVersion.toVersion(jdkBytecodeTarget)
+            java.targetCompatibility = JavaVersion.toVersion(jdkBytecodeTarget)
+
             android.compileOptions {
                 encoding = "UTF-8"
-                sourceCompatibility = JavaVersion.toVersion(produceBytecodeForJDK)
-                targetCompatibility = JavaVersion.toVersion(produceBytecodeForJDK)
+                sourceCompatibility = JavaVersion.toVersion(jdkBytecodeTarget)
+                targetCompatibility = JavaVersion.toVersion(jdkBytecodeTarget)
             }
 
             android.testOptions {
@@ -551,7 +604,10 @@ allprojects {
 
                 unitTests {
                     isIncludeAndroidResources = true
+
                     all { test ->
+                        // Required for the Mockito ByteBuddy agent on modern VMs.
+                        test.systemProperty("jdk.attach.allowAttachSelf", "true")
                         test.reports.html.required = true
                         test.reports.junitXml.required = true
                     }
@@ -583,7 +639,30 @@ allprojects {
         "jar" -> {
             logger.info("Configuring ${this.project} $version as a jar project")
 
+            apply(plugin = "java-library")
             apply(plugin = "org.jetbrains.kotlin.jvm")
+
+            /*
+             * Configure the JVM toolchain versions that we want to use for Kotlin and Java.
+             */
+
+            val kotlin: KotlinProjectExtension =
+                this.extensions["kotlin"] as KotlinProjectExtension
+            val java: JavaPluginExtension =
+                this.extensions["java"] as JavaPluginExtension
+
+            kotlin.jvmToolchain(jdkBuild)
+            java.toolchain.languageVersion.set(JavaLanguageVersion.of(jdkBuild))
+
+            /*
+             * Produce JDK bytecode of the correct version.
+             */
+
+            tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+                kotlinOptions.jvmTarget = jdkBytecodeTarget.toString()
+            }
+            java.sourceCompatibility = JavaVersion.toVersion(jdkBytecodeTarget)
+            java.targetCompatibility = JavaVersion.toVersion(jdkBytecodeTarget)
 
             /*
              * Configure JUnit tests.
@@ -591,6 +670,9 @@ allprojects {
 
             tasks.named<Test>("test") {
                 useJUnitPlatform()
+
+                // Required for the Mockito ByteBuddy agent on modern VMs.
+                systemProperty("jdk.attach.allowAttachSelf", "true")
 
                 testLogging {
                     events("passed")
@@ -617,10 +699,100 @@ allprojects {
     }
 
     /*
+     * Configure some aggressive version resolution behaviour. The listed configurations have
+     * transitive dependency resolution enabled; all other configurations do not. This forces
+     * projects to be extremely explicit about what is imported.
+     */
+
+    val transitiveConfigurations = setOf(
+        "androidTestDebugImplementation",
+        "androidTestDebugImplementationDependenciesMetadata",
+        "androidTestImplementation",
+        "androidTestImplementationDependenciesMetadata",
+        "androidTestReleaseImplementation",
+        "androidTestReleaseImplementationDependenciesMetadata",
+        "annotationProcessor",
+        "debugAndroidTestCompilationImplementation",
+        "debugAndroidTestImplementation",
+        "debugAndroidTestImplementationDependenciesMetadata",
+        "debugAnnotationProcessor",
+        "debugAnnotationProcessorClasspath",
+        "debugUnitTestCompilationImplementation",
+        "debugUnitTestImplementation",
+        "debugUnitTestImplementationDependenciesMetadata",
+        "kotlinBuildToolsApiClasspath",
+        "kotlinCompilerClasspath",
+        "kotlinCompilerPluginClasspath",
+        "kotlinCompilerPluginClasspathDebug",
+        "kotlinCompilerPluginClasspathDebugAndroidTest",
+        "kotlinCompilerPluginClasspathDebugUnitTest",
+        "kotlinCompilerPluginClasspathMain",
+        "kotlinCompilerPluginClasspathRelease",
+        "kotlinCompilerPluginClasspathReleaseUnitTest",
+        "kotlinCompilerPluginClasspathTest",
+        "kotlinKlibCommonizerClasspath",
+        "kotlinNativeCompilerPluginClasspath",
+        "kotlinScriptDef",
+        "kotlinScriptDefExtensions",
+        "mainSourceElements",
+        "releaseAnnotationProcessor",
+        "releaseAnnotationProcessorClasspath",
+        "releaseUnitTestCompilationImplementation",
+        "releaseUnitTestImplementation",
+        "releaseUnitTestImplementationDependenciesMetadata",
+        "testDebugImplementation",
+        "testDebugImplementationDependenciesMetadata",
+        "testFixturesDebugImplementation",
+        "testFixturesDebugImplementationDependenciesMetadata",
+        "testFixturesImplementation",
+        "testFixturesImplementationDependenciesMetadata",
+        "testFixturesReleaseImplementation",
+        "testFixturesReleaseImplementationDependenciesMetadata",
+        "testImplementation",
+        "testImplementationDependenciesMetadata",
+        "testReleaseImplementation",
+        "testReleaseImplementationDependenciesMetadata",
+    )
+
+    /*
+     * Write the set of available configurations to files, for debugging purposes. Plugins can
+     * add new configurations at any time, and so it's nice to have a list of the available
+     * configurations visible.
+     */
+
+    val configurationsActual = mutableSetOf<String>()
+    afterEvaluate {
+        configurations.all {
+            configurationsActual.add(this.name)
+        }
+        File("configurations.txt").writeText(configurationsActual.joinToString("\n"))
+    }
+
+    afterEvaluate {
+        configurations.all {
+            isTransitive = transitiveConfigurations.contains(name)
+            // resolutionStrategy.failOnVersionConflict()
+        }
+    }
+
+    /*
      * Configure all "clean" tasks to depend upon the global Maven deployment directory cleaning
      * task.
      */
 
-    tasks.matching { task -> task.name == "clean" }
-        .forEach { task -> task.dependsOn(cleanTask) }
+    afterEvaluate {
+        tasks.matching { task -> task.name == "clean" }
+            .forEach { task -> task.dependsOn(cleanTask) }
+    }
+
+    /*
+     * Configure all "test" tasks to be disabled. The tests are enabled only in those modules
+     * that specifically ask for them. Why do this? Because the Android plugins do lots of
+     * expensive per-module configuration for tests that don't exist.
+     */
+
+    afterEvaluate {
+        tasks.matching { task -> task.name.contains("UnitTest") }
+            .forEach { task -> task.enabled = false }
+    }
 }

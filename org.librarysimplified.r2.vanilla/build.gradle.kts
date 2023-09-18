@@ -1,17 +1,21 @@
 dependencies {
-    api(libs.kotlin.stdlib)
-    api(libs.kotlin.coroutines)
-    api(libs.kotlin.coroutines.android)
-    api(libs.nano.httpd)
-    api(libs.nano.httpd.nanolets)
-    api(libs.r2.shared)
-    api(libs.r2.streamer)
+    implementation(project(":org.librarysimplified.r2.api"))
+    implementation(project(":org.librarysimplified.r2.ui_thread"))
 
     implementation(libs.androidx.annotation)
+    implementation(libs.google.failureaccess)
+    implementation(libs.google.guava)
+    implementation(libs.jcip.annotations)
+    implementation(libs.joda.time)
+    implementation(libs.kotlin.stdlib)
+    implementation(libs.kotlinx.coroutines)
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.nano.httpd)
+    implementation(libs.nano.httpd.nanolets)
+    implementation(libs.r2.shared)
+    implementation(libs.r2.streamer)
+    implementation(libs.rxjava2)
     implementation(libs.slf4j)
-
-    api(project(":org.librarysimplified.r2.api"))
-    api(project(":org.librarysimplified.r2.ui_thread"))
 }
 
 android {

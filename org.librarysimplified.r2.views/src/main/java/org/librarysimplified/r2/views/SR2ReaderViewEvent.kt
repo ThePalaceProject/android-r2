@@ -16,6 +16,11 @@ sealed class SR2ReaderViewEvent {
       override fun toString(): String =
         "[SR2ReaderViewNavigationOpenTOC]"
     }
+
+    object SR2ReaderViewNavigationOpenSearch : SR2ReaderViewNavigationEvent() {
+      override fun toString(): String =
+        "[SR2ReaderViewNavigationOpenSearch]"
+    }
   }
 
   sealed class SR2ReaderViewControllerEvent : SR2ReaderViewEvent() {

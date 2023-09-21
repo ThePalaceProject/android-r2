@@ -1,6 +1,12 @@
 package org.librarysimplified.r2.views
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import androidx.paging.InvalidatingPagingSourceFactory
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.ListeningExecutorService
@@ -10,14 +16,27 @@ import hu.akarnokd.rxjava2.subjects.UnicastWorkSubject
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.subjects.BehaviorSubject
 import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.Subject
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import org.librarysimplified.r2.api.SR2ControllerConfiguration
 import org.librarysimplified.r2.api.SR2ControllerType
 import org.librarysimplified.r2.api.SR2Event
+import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandSearchResults
 import org.librarysimplified.r2.views.internal.SR2ViewModelBookEvent
 import org.librarysimplified.r2.views.internal.SR2ViewModelBookEvent.SR2ViewModelBookOpenFailed
 import org.librarysimplified.r2.views.internal.SR2ViewModelBookEvent.SR2ViewModelBookOpened
+import org.librarysimplified.r2.views.search.SR2SearchPagingSource
+import org.librarysimplified.r2.views.search.SR2SearchPagingSourceListener
+import org.readium.r2.shared.Search
+import org.readium.r2.shared.publication.Locator
+import org.readium.r2.shared.publication.LocatorCollection
+import org.readium.r2.shared.publication.services.search.SearchIterator
+import org.readium.r2.shared.publication.services.search.SearchTry
+import org.readium.r2.shared.util.Try
 import org.slf4j.LoggerFactory
 import java.util.concurrent.Executors
 
@@ -25,6 +44,7 @@ import java.util.concurrent.Executors
  * The view model shared between all SR2 fragments and the hosting activity.
  */
 
+@OptIn(Search::class)
 class SR2ReaderViewModel(
   private val parameters: SR2ReaderParameters,
 ) : ViewModel() {
@@ -34,6 +54,7 @@ class SR2ReaderViewModel(
 
   private val controllerLock = Any()
   private var controller: SR2ControllerType? = null
+  private var searchIterator: SearchIterator? = null
 
   /*
    * An event subject that can receive events from any thread, and an event subscription that
@@ -63,11 +84,28 @@ class SR2ReaderViewModel(
     this.bookEventsSubject.observeOn(AndroidSchedulers.mainThread())
       .subscribe(this.bookEventsUnicast::onNext)
 
-  private val controllerEventsUnicast: UnicastWorkSubject<SR2Event> =
-    UnicastWorkSubject.create()
-
   private val subscriptions =
     CompositeDisposable()
+
+  private val pagingSourceFactory = InvalidatingPagingSourceFactory {
+    SR2SearchPagingSource(object : SR2SearchPagingSourceListener {
+      override suspend fun getIteratorNext(): SearchTry<LocatorCollection?> {
+        val iterator = searchIterator ?: return Try.success(null)
+        return iterator.next().onSuccess {
+          mutableSearchLocators.value += (it?.locators.orEmpty())
+        }
+      }
+    })
+  }
+
+  private val mutableSearchLocators = MutableStateFlow<List<Locator>>(emptyList())
+
+  val searchLocators: StateFlow<List<Locator>> = mutableSearchLocators
+
+  val searchResult: Flow<PagingData<Locator>> =
+    Pager(PagingConfig(pageSize = 20), pagingSourceFactory = pagingSourceFactory)
+      .flow
+      .cachedIn(viewModelScope)
 
   init {
     this.logger.debug("{}: initialized", this)
@@ -90,13 +128,9 @@ class SR2ReaderViewModel(
   /**
    * Events published by the controller. This event stream is always observed upon the
    * Android UI thread.
-   *
-   * Note: This observable may only have a single observer at any given time, and is expected
-   * to be used only by the reader fragment.
    */
 
-  val controllerEvents: Observable<SR2Event> =
-    this.controllerEventsUnicast
+  val controllerEvents: BehaviorSubject<SR2Event> = BehaviorSubject.create()
 
   /**
    * Events published by the controller's lifecycle. This event stream is always observed upon the
@@ -184,7 +218,7 @@ class SR2ReaderViewModel(
             this.subscriptions.clear()
             this.subscriptions.add(
               newController.events.observeOn(AndroidSchedulers.mainThread())
-                .subscribe(this.controllerEventsUnicast::onNext),
+                .subscribe(this.controllerEvents::onNext),
             )
           }
 
@@ -203,5 +237,10 @@ class SR2ReaderViewModel(
     )
 
     return refFuture
+  }
+
+  fun extractResults(event: SR2CommandSearchResults) {
+    searchIterator = event.searchIterator
+    pagingSourceFactory.invalidate()
   }
 }

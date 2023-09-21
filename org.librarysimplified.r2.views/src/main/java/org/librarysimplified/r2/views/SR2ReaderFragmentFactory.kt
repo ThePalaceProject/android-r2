@@ -4,6 +4,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentFactory
 import org.librarysimplified.r2.views.internal.SR2TOCBookmarksFragment
 import org.librarysimplified.r2.views.internal.SR2TOCChaptersFragment
+import org.librarysimplified.r2.views.search.SR2SearchFragment
 
 class SR2ReaderFragmentFactory(
   private val parameters: SR2ReaderParameters,
@@ -22,6 +23,8 @@ class SR2ReaderFragmentFactory(
         SR2TOCBookmarksFragment.create(this.parameters)
       SR2TOCChaptersFragment::class.java ->
         SR2TOCChaptersFragment.create(this.parameters)
+      SR2SearchFragment::class.java ->
+        SR2SearchFragment.create(this.parameters)
       else ->
         super.instantiate(classLoader, className)
     }

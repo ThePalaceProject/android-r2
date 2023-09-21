@@ -1,5 +1,8 @@
 package org.librarysimplified.r2.api
 
+import org.readium.r2.shared.Search
+import org.readium.r2.shared.publication.services.search.SearchIterator
+
 /**
  * The type of events published by R2 controllers.
  */
@@ -173,6 +176,16 @@ sealed class SR2Event {
     data class SR2CommandExecutionRunningLong(
       override val command: SR2Command,
     ) : SR2CommandEvent()
+
+    /**
+     * The searching command is finished and returns a search iterator containing the results
+     */
+
+    @OptIn(Search::class)
+    data class SR2CommandSearchResults constructor(
+      override val command: SR2Command,
+      val searchIterator: SearchIterator?,
+    ) : SR2CommandEventCompleted()
 
     /**
      * The execution of a command finished.

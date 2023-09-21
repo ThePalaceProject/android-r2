@@ -86,6 +86,20 @@ sealed class SR2Command {
   ) : SR2Command()
 
   /**
+   * Perform a search on an EPUB to find the occurrences of a given query string.
+   */
+
+  data class Search(
+    val searchQuery: String,
+  ) : SR2Command()
+
+  /**
+   * Cancel a possible ongoing search.
+   */
+
+  data object CancelSearch : SR2Command()
+
+  /**
    * Load a set of bookmarks into the controller. This merely has the effect of making
    * the bookmarks available to the table of contents; it does not trigger any changes
    * in navigation.

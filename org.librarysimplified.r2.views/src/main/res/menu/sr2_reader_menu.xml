@@ -3,21 +3,27 @@
 <menu xmlns:app="http://schemas.android.com/apk/res-auto"
   xmlns:android="http://schemas.android.com/apk/res/android">
   <item
+    android:id="@+id/readerMenuSearch"
+    android:contentDescription="@string/readerAccessSearch"
+    android:icon="@drawable/search"
+    android:title="@string/readerSearch"
+    app:showAsAction="always" />
+  <item
     android:id="@+id/readerMenuTOC"
     android:contentDescription="@string/readerAccessTOC"
     android:icon="@drawable/sr2_toc"
     android:title="@string/readerTableOfContents"
-    app:showAsAction="ifRoom" />
+    app:showAsAction="always" />
   <item
     android:id="@+id/readerMenuSettings"
     android:icon="@drawable/sr2_settings"
     android:contentDescription="@string/readerAccessSettings"
     android:title="@string/readerSettings"
-    app:showAsAction="ifRoom" />
+    app:showAsAction="always" />
   <item
     android:id="@+id/readerMenuAddBookmark"
     android:icon="@drawable/sr2_bookmark_inactive"
     android:contentDescription="@string/readerAccessAddBookmark"
     android:title="@string/readerAddBookmark"
-    app:showAsAction="ifRoom" />
+    app:showAsAction="always" />
 </menu>

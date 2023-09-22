@@ -34,6 +34,7 @@ import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandEventComp
 import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandEventCompleted.SR2CommandExecutionSucceeded
 import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandExecutionRunningLong
 import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandExecutionStarted
+import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandSearchResults
 import org.librarysimplified.r2.api.SR2Event.SR2ExternalLinkSelected
 import org.librarysimplified.r2.api.SR2Event.SR2OnCenterTapped
 import org.librarysimplified.r2.api.SR2Event.SR2ReadingPositionChanged
@@ -42,6 +43,7 @@ import org.librarysimplified.r2.api.SR2Locator.SR2LocatorChapterEnd
 import org.librarysimplified.r2.api.SR2Locator.SR2LocatorPercent
 import org.librarysimplified.r2.api.SR2PageNumberingMode
 import org.librarysimplified.r2.api.SR2Theme
+import org.readium.r2.shared.Search
 import org.readium.r2.shared.fetcher.TransformingFetcher
 import org.readium.r2.shared.publication.Publication
 import org.readium.r2.shared.publication.epub.EpubLayout.FIXED
@@ -50,6 +52,8 @@ import org.readium.r2.shared.publication.presentation.presentation
 import org.readium.r2.shared.publication.services.isRestricted
 import org.readium.r2.shared.publication.services.positionsByReadingOrder
 import org.readium.r2.shared.publication.services.protectionError
+import org.readium.r2.shared.publication.services.search.SearchIterator
+import org.readium.r2.shared.publication.services.search.search
 import org.readium.r2.shared.util.getOrElse
 import org.readium.r2.streamer.Streamer
 import org.readium.r2.streamer.parser.epub.EpubParser
@@ -69,6 +73,7 @@ import kotlin.math.round
  * The default R2 controller implementation.
  */
 
+@OptIn(Search::class)
 internal class SR2Controller private constructor(
   private val configuration: SR2ControllerConfiguration,
   private val port: Int,
@@ -208,6 +213,8 @@ internal class SR2Controller private constructor(
 
   private val closed = AtomicBoolean(false)
 
+  private var searchIterator: SearchIterator? = null
+
   @Volatile
   private var themeMostRecent: SR2Theme =
     this.configuration.theme
@@ -245,6 +252,8 @@ internal class SR2Controller private constructor(
 
   @Volatile
   private var uiVisible: Boolean = true
+
+  private var lastQuery = ""
 
   init {
     this.subscriptions.add(
@@ -300,7 +309,7 @@ internal class SR2Controller private constructor(
         val newBookmark = SR2Bookmark(
           date = DateTime.now(),
           type = LAST_READ,
-          title = position.chapterTitle ?: "",
+          title = position.chapterTitle.orEmpty(),
           locator = position.locator,
           bookProgress = this.currentBookProgress,
           uri = null,
@@ -343,26 +352,42 @@ internal class SR2Controller private constructor(
     return when (val apiCommand = command.command) {
       is SR2Command.OpenChapter ->
         this.executeCommandOpenChapter(command, apiCommand)
+
       SR2Command.OpenPageNext ->
         this.executeCommandOpenPageNext()
+
       SR2Command.OpenChapterNext ->
         this.executeCommandOpenChapterNext(command)
+
       SR2Command.OpenPagePrevious ->
         this.executeCommandOpenPagePrevious()
+
       is SR2Command.OpenChapterPrevious ->
         this.executeCommandOpenChapterPrevious(command)
+
       is SR2Command.BookmarksLoad ->
         this.executeCommandBookmarksLoad(apiCommand)
+
       SR2Command.Refresh ->
         this.executeCommandRefresh(command)
+
       SR2Command.BookmarkCreate ->
         this.executeCommandBookmarkCreate()
+
       is SR2Command.BookmarkDelete ->
         this.executeCommandBookmarkDelete(apiCommand)
+
       is SR2Command.ThemeSet ->
         this.executeCommandThemeSet(command, apiCommand)
+
       is SR2Command.OpenLink ->
         this.executeCommandOpenLink(apiCommand)
+
+      is SR2Command.Search ->
+        this.executeCommandSearch(apiCommand)
+
+      is SR2Command.CancelSearch ->
+        this.executeCommandCancelSearch()
     }
   }
 
@@ -411,10 +436,6 @@ internal class SR2Controller private constructor(
       MoreExecutors.directExecutor(),
     )
     return setFuture
-  }
-
-  private fun executeCommandThemeRefresh(): ListenableFuture<*> {
-    return this.executeThemeSet(this.waitForWebViewAvailability(), this.themeMostRecent)
   }
 
   /**
@@ -622,6 +643,37 @@ internal class SR2Controller private constructor(
     }
   }
 
+  private fun executeCommandSearch(
+    command: SR2Command.Search,
+  ): ListenableFuture<*> {
+    val searchQuery = command.searchQuery
+
+    if (searchQuery != lastQuery) {
+      coroutineScope.launch {
+        searchIterator = publication.search(searchQuery)
+          .onFailure {
+            logger.error("Error searching for query: {}", searchQuery, it)
+          }
+          .getOrNull()
+
+        eventSubject.onNext(SR2CommandSearchResults(command, searchIterator))
+      }
+    }
+
+    lastQuery = searchQuery
+
+    return Futures.immediateFuture(Unit)
+  }
+
+  private fun executeCommandCancelSearch(): ListenableFuture<*> {
+    coroutineScope.launch {
+      searchIterator?.close()
+      searchIterator = null
+    }
+
+    return Futures.immediateFuture(Unit)
+  }
+
   /**
    * Load the node for the given locator, and set the reading position appropriately.
    */
@@ -676,6 +728,7 @@ internal class SR2Controller private constructor(
       when (val fragment = locator.chapterHref.substringAfter('#', "")) {
         "" ->
           moveFuture
+
         else ->
           Futures.transformAsync(
             moveFuture,
@@ -706,6 +759,7 @@ internal class SR2Controller private constructor(
       is SR2LocatorPercent -> {
         connection.executeJS { js -> js.setProgression(locator.chapterProgress) }
       }
+
       is SR2LocatorChapterEnd ->
         connection.executeJS { js -> js.openPageLast() }
     }
@@ -754,6 +808,7 @@ internal class SR2Controller private constructor(
         val pageCount = currentChapterPositions.size
         pageNumber to pageCount
       }
+
       SR2PageNumberingMode.WHOLE_BOOK -> {
         val pageNumber = currentChapterPositions[positionIndex].locations.position!!
         val pageCount = positionsByChapter.fold(0) { current, list -> current + list.size }
@@ -827,6 +882,7 @@ internal class SR2Controller private constructor(
       return when (this@SR2Controller.publication.metadata.presentation.layout) {
         FIXED ->
           this@SR2Controller.submitCommand(SR2Command.OpenChapterPrevious(atEnd = true))
+
         REFLOWABLE, null ->
           this@SR2Controller.submitCommand(SR2Command.OpenPagePrevious)
       }
@@ -839,6 +895,7 @@ internal class SR2Controller private constructor(
       return when (this@SR2Controller.publication.metadata.presentation.layout) {
         FIXED ->
           this@SR2Controller.submitCommand(SR2Command.OpenChapterNext)
+
         REFLOWABLE, null ->
           this@SR2Controller.submitCommand(SR2Command.OpenPageNext)
       }
@@ -851,6 +908,7 @@ internal class SR2Controller private constructor(
       return when (this@SR2Controller.publication.metadata.presentation.layout) {
         FIXED ->
           this@SR2Controller.submitCommand(SR2Command.OpenChapterNext)
+
         REFLOWABLE, null ->
           this@SR2Controller.submitCommand(SR2Command.OpenPageNext)
       }
@@ -863,6 +921,7 @@ internal class SR2Controller private constructor(
       return when (this@SR2Controller.publication.metadata.presentation.layout) {
         FIXED ->
           this@SR2Controller.submitCommand(SR2Command.OpenChapterPrevious(atEnd = true))
+
         REFLOWABLE, null ->
           this@SR2Controller.submitCommand(SR2Command.OpenPagePrevious)
       }

@@ -13,6 +13,7 @@ import androidx.annotation.UiThread
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import io.reactivex.disposables.Disposable
 import org.librarysimplified.r2.api.SR2Command
@@ -28,6 +29,7 @@ import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandEventComp
 import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandEventCompleted.SR2CommandExecutionSucceeded
 import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandExecutionRunningLong
 import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandExecutionStarted
+import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandSearchResults
 import org.librarysimplified.r2.api.SR2Event.SR2Error.SR2ChapterNonexistent
 import org.librarysimplified.r2.api.SR2Event.SR2Error.SR2WebViewInaccessible
 import org.librarysimplified.r2.api.SR2Event.SR2ExternalLinkSelected
@@ -46,10 +48,12 @@ import org.librarysimplified.r2.views.SR2ReaderViewEvent
 import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewBookEvent.SR2BookLoadingFailed
 import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewControllerEvent.SR2ControllerBecameAvailable
 import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewNavigationEvent.SR2ReaderViewNavigationClose
+import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewNavigationEvent.SR2ReaderViewNavigationOpenSearch
 import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewNavigationEvent.SR2ReaderViewNavigationOpenTOC
 import org.librarysimplified.r2.views.SR2ReaderViewModel
 import org.librarysimplified.r2.views.SR2ReaderViewModelFactory
 import org.librarysimplified.r2.views.SR2TOCFragment
+import org.librarysimplified.r2.views.search.SR2SearchFragment
 import org.readium.r2.shared.publication.asset.FileAsset
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -78,6 +82,9 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
   private var viewSubscription: Disposable? = null
   private lateinit var scrollMode: CheckBox
   private lateinit var perChapterPageNumbering: CheckBox
+  private lateinit var readerFragment: Fragment
+  private lateinit var searchFragment: Fragment
+  private lateinit var tocFragment: Fragment
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -173,6 +180,15 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
     this.readerFragmentFactory =
       SR2ReaderFragmentFactory(this.readerParameters)
 
+    this.readerFragment =
+      this.readerFragmentFactory.instantiate(this.classLoader, SR2ReaderFragment::class.java.name)
+
+    this.searchFragment =
+      this.readerFragmentFactory.instantiate(this.classLoader, SR2SearchFragment::class.java.name)
+
+    this.tocFragment =
+      this.readerFragmentFactory.instantiate(this.classLoader, SR2TOCFragment::class.java.name)
+
     val readerModel =
       ViewModelProvider(this, SR2ReaderViewModelFactory(this.readerParameters))
         .get(SR2ReaderViewModel::class.java)
@@ -186,10 +202,7 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
     selectFileArea.visibility = View.GONE
 
     this.supportFragmentManager.beginTransaction()
-      .replace(
-        R.id.demoFragmentArea,
-        this.readerFragmentFactory.instantiate(this.classLoader, SR2ReaderFragment::class.java.name),
-      )
+      .add(R.id.demoFragmentArea, readerFragment)
       .commit()
   }
 
@@ -209,6 +222,9 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
         this.onControllerBecameAvailable(event.reference)
       is SR2BookLoadingFailed ->
         this.onBookLoadingFailed(event.exception)
+      SR2ReaderViewNavigationOpenSearch -> {
+        this.openSearch()
+      }
     }
   }
 
@@ -220,13 +236,31 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
       .show()
   }
 
+  private fun openSearch() {
+    val transaction = this.supportFragmentManager.beginTransaction()
+      .hide(readerFragment)
+
+    if (searchFragment.isAdded) {
+      transaction.show(searchFragment)
+    } else {
+      transaction.add(R.id.demoFragmentArea, searchFragment)
+    }
+
+    transaction.addToBackStack(null)
+      .commit()
+  }
+
   private fun openTOC() {
-    this.supportFragmentManager.beginTransaction()
-      .replace(
-        R.id.demoFragmentArea,
-        this.readerFragmentFactory.instantiate(this.classLoader, SR2TOCFragment::class.java.name),
-      )
-      .addToBackStack(null)
+    val transaction = this.supportFragmentManager.beginTransaction()
+      .hide(readerFragment)
+
+    if (tocFragment.isAdded) {
+      transaction.show(tocFragment)
+    } else {
+      transaction.add(R.id.demoFragmentArea, tocFragment)
+    }
+
+    transaction.addToBackStack(null)
       .commit()
   }
 
@@ -265,6 +299,7 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
       is SR2CommandExecutionRunningLong,
       is SR2CommandExecutionSucceeded,
       is SR2CommandExecutionFailed,
+      is SR2CommandSearchResults,
       -> {
         // Nothing
       }

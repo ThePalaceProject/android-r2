@@ -38,6 +38,7 @@ import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandEventComp
 import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandEventCompleted.SR2CommandExecutionSucceeded
 import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandExecutionRunningLong
 import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandExecutionStarted
+import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandSearchResults
 import org.librarysimplified.r2.api.SR2Event.SR2Error.SR2ChapterNonexistent
 import org.librarysimplified.r2.api.SR2Event.SR2Error.SR2WebViewInaccessible
 import org.librarysimplified.r2.api.SR2Event.SR2OnCenterTapped
@@ -51,6 +52,7 @@ import org.librarysimplified.r2.ui_thread.SR2UIThread
 import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewBookEvent.SR2BookLoadingFailed
 import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewControllerEvent.SR2ControllerBecameAvailable
 import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewNavigationEvent.SR2ReaderViewNavigationClose
+import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewNavigationEvent.SR2ReaderViewNavigationOpenSearch
 import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewNavigationEvent.SR2ReaderViewNavigationOpenTOC
 import org.librarysimplified.r2.views.internal.SR2BrightnessService
 import org.librarysimplified.r2.views.internal.SR2SettingsDialog
@@ -132,6 +134,12 @@ class SR2ReaderFragment private constructor(
     val addBookmarkOption = this.toolbar.menu.findItem(R.id.readerMenuAddBookmark)
     addBookmarkOption.setOnMenuItemClickListener { this.onReaderMenuAddBookmarkSelected() }
     addBookmarkOption.isVisible = !this.parameters.isPreview
+
+    val searchOption = this.toolbar.menu.findItem(R.id.readerMenuSearch)
+    searchOption.setOnMenuItemClickListener {
+      this.readerModel.publishViewEvent(SR2ReaderViewNavigationOpenSearch)
+      true
+    }
 
     this.toolbar.setNavigationOnClickListener { this.onToolbarNavigationSelected() }
     this.toolbar.setNavigationContentDescription(R.string.settingsAccessibilityBack)
@@ -407,7 +415,9 @@ class SR2ReaderFragment private constructor(
         this.showOrHideReadingUI(event.uiVisible)
       }
 
-      is SR2CommandExecutionStarted -> {
+      is SR2CommandSearchResults,
+      is SR2CommandExecutionStarted,
+      -> {
         // Nothing
       }
 

@@ -29,8 +29,10 @@
         <c:change date="2023-07-03T00:00:00+00:00" summary="Fixed bug of bookmark not being deleted right after being added."/>
       </c:changes>
     </c:release>
-    <c:release date="2023-08-18T17:35:37+00:00" is-open="true" ticket-system="org.nypl.jira" version="2.0.1">
-      <c:changes/>
+    <c:release date="2023-09-21T11:53:22+00:00" is-open="true" ticket-system="org.nypl.jira" version="2.0.1">
+      <c:changes>
+        <c:change date="2023-09-21T11:53:22+00:00" summary="Implemented searching feature on EPUBs."/>
+      </c:changes>
     </c:release>
   </c:releases>
   <c:ticket-systems>

@@ -8,9 +8,12 @@
   <string name="progress_percent">%1$d%%</string>
   <string name="readerAccessAddBookmark">Create a bookmark for the current page</string>
   <string name="readerAccessDeleteBookmark">Delete the bookmark for the current page</string>
+  <string name="readerAccessSearch">Open the searching input</string>
   <string name="readerAccessSettings">Open the settings dialog</string>
   <string name="readerAccessTOC">Open the table of contents and bookmarks screen</string>
   <string name="readerAddBookmark">Add A Bookmark</string>
+  <string name="readerSearch">Search</string>
+  <string name="readerSearchNoResults">There are no results</string>
   <string name="readerSettings">Settings</string>
   <string name="readerTableOfContents">Table Of Contents &amp; Bookmarks</string>
   <string name="settingsPublisherTitle">Publisher\'s Default</string>

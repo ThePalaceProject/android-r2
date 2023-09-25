@@ -1,10 +1,13 @@
 package org.librarysimplified.r2.views.search
 
+import android.content.Context
 import android.os.Bundle
 import android.text.InputType
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.InputMethodManager
 import android.widget.TextView
 import androidx.appcompat.widget.SearchView
 import androidx.appcompat.widget.Toolbar
@@ -44,6 +47,7 @@ class SR2SearchFragment private constructor(
   private lateinit var readerModel: SR2ReaderViewModel
   private lateinit var searchAdapter: SR2SearchResultAdapter
   private lateinit var searchResultsList: RecyclerView
+  private lateinit var searchView: SearchView
   private lateinit var toolbar: Toolbar
 
   private var controllerEvents: Disposable? = null
@@ -135,6 +139,13 @@ class SR2SearchFragment private constructor(
     super.onStop()
   }
 
+  override fun onHiddenChanged(hidden: Boolean) {
+    super.onHiddenChanged(hidden)
+    if (!hidden) {
+      showKeyboard()
+    }
+  }
+
   private fun close() {
     SR2UIThread.checkIsUIThread()
 
@@ -143,7 +154,7 @@ class SR2SearchFragment private constructor(
 
   private fun configureSearch() {
     val search = toolbar.menu.findItem(R.id.readerMenuSearch)
-    val searchView = search.actionView as SearchView
+    searchView = search.actionView as SearchView
 
     searchView.inputType = InputType.TYPE_CLASS_TEXT
     searchView.isIconified = false
@@ -169,7 +180,7 @@ class SR2SearchFragment private constructor(
       }
     })
 
-    searchView.requestFocus()
+    showKeyboard()
 
     this.controllerEvents =
       this.readerModel.controllerEvents.subscribe(this::onControllerEvent)
@@ -210,6 +221,14 @@ class SR2SearchFragment private constructor(
       is SR2Event.SR2CommandEvent.SR2CommandSearchResults -> {
         this.readerModel.extractResults(event)
       }
+    }
+  }
+
+  private fun showKeyboard() {
+    searchView.post {
+      searchView.requestFocus()
+      (requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager)
+        ?.showSoftInput(requireView().findFocus(), 0)
     }
   }
 }

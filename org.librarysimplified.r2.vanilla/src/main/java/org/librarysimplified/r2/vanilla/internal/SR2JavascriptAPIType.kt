@@ -12,6 +12,15 @@ import org.librarysimplified.r2.api.SR2ScrollingMode
 internal interface SR2JavascriptAPIType {
 
   /**
+   * Highlight or clear the highlight for the given searching terms.
+   */
+  @UiThread
+  fun highlightSearchingTerms(
+    searchingTerms: String,
+    clearHighlight: Boolean,
+  ): ListenableFuture<String>
+
+  /**
    * Open the next page in the current chapter.
    */
 

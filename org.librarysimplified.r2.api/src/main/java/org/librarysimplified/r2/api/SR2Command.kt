@@ -133,4 +133,20 @@ sealed class SR2Command {
   data class ThemeSet(
     val theme: SR2Theme,
   ) : SR2Command()
+
+  /**
+   * Highlight or clear the highlight for the given terms.
+   */
+
+  data class HighlightTerms(
+    val searchingTerms: String,
+    val clearHighlight: Boolean,
+  ) : SR2Command()
+
+  /**
+   * Highlight the current searching terms if a new chapter is loaded and a search has already been
+   * done.
+   */
+
+  object HighlightCurrentTerms : SR2Command()
 }

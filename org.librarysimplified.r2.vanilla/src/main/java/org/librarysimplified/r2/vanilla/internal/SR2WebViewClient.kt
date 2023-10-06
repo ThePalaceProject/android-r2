@@ -94,6 +94,7 @@ internal class SR2WebViewClient(
       try {
         if (this.errors.isEmpty()) {
           this.logger.debug("onPageFinished: {} succeeded", url)
+          this.commandQueue.submitCommand(SR2Command.HighlightCurrentTerms)
           this.future.set(Unit)
           return
         } else {

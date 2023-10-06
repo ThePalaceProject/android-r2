@@ -3,7 +3,6 @@ package org.librarysimplified.r2.views.search
 import android.content.Context
 import android.os.Bundle
 import android.text.InputType
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -51,6 +50,7 @@ class SR2SearchFragment private constructor(
   private lateinit var toolbar: Toolbar
 
   private var controllerEvents: Disposable? = null
+  private var searchingTerms = ""
 
   override fun onCreateView(
     inflater: LayoutInflater,
@@ -81,6 +81,12 @@ class SR2SearchFragment private constructor(
 
     this.searchAdapter = SR2SearchResultAdapter(
       onItemClicked = { locator ->
+        this.controller.submitCommand(
+          SR2Command.HighlightTerms(
+            searchingTerms = searchView.query.toString(),
+            clearHighlight = false,
+          ),
+        )
         this.controller.submitCommand(
           SR2Command.OpenChapter(
             SR2Locator.SR2LocatorPercent(
@@ -164,6 +170,15 @@ class SR2SearchFragment private constructor(
       if (searchView.query.isNotBlank()) {
         searchView.setQuery("", false)
       } else {
+        controller.submitCommand(
+          SR2Command.HighlightTerms(
+            searchingTerms = searchingTerms,
+            clearHighlight = true,
+          ),
+        )
+
+        searchingTerms = ""
+
         close()
       }
       true

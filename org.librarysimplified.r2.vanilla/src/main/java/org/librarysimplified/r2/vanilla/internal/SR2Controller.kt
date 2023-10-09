@@ -215,6 +215,7 @@ internal class SR2Controller private constructor(
 
   private var searchIterator: SearchIterator? = null
 
+  @Volatile
   private var searchingTerms = ""
 
   @Volatile
@@ -348,7 +349,6 @@ internal class SR2Controller private constructor(
     return this.executeCommandSubmission(command)
   }
 
-  private var clear = false
   private fun executeCommandSubmission(
     command: SR2CommandSubmission,
   ): ListenableFuture<*> {

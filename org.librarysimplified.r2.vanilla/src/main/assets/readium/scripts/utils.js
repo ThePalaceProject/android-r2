@@ -36,6 +36,65 @@ var readium = (function() {
         return Math.max(1, pageCountRaw);
     }
 
+    function highlightSearchingTerms(searchingTerms, clearHighlight) {
+      if (!document.body || typeof(document.body.innerHTML) == "undefined") {
+        return false;
+      }
+
+      var bodyText = document.body.innerHTML;
+      document.body.innerHTML = doHighlight(bodyText, searchingTerms, clearHighlight);
+
+      return true;
+    }
+
+    function doHighlight(bodyText, searchingTerms, clearHighlight) {
+      // find all occurrences of the searching terms in the given text and add some "highlight" tags
+      // to them. We are not using a regular expression search because we want to filter out matches
+      // that occur within HTML tags and script blocks, so we have to do a little extra validation
+      var newText = "";
+      var i = -1;
+      var lcSearchingTerm = searchingTerms.toLowerCase();
+      var lcBodyText = bodyText.toLowerCase();
+
+      while (bodyText.length > 0) {
+        i = lcBodyText.indexOf(lcSearchingTerm, i + 1);
+        if (i < 0) {
+          newText += bodyText;
+          bodyText = "";
+        } else {
+          // skip anything inside an HTML tag
+          if (bodyText.lastIndexOf(">", i) >= bodyText.lastIndexOf("<", i)) {
+            // skip anything inside a <script> block
+            if (lcBodyText.lastIndexOf("/script>", i) >= lcBodyText.lastIndexOf("<script", i)) {
+
+              var highlightStartTag = "<font style=\"background-color:yellow;\">";
+              var highlightEndTag = "</font>";
+
+              if (clearHighlight) {
+                indexHighlightStartTag = bodyText.indexOf(highlightStartTag, indexHighlightStartTag + 1);
+                indexHighlightEndTag = bodyText.indexOf(highlightEndTag, indexHighlightEndTag + 1);
+              } else {
+                indexHighlightStartTag = -1
+                indexHighlightEndTag = -1
+              }
+
+              if (indexHighlightStartTag !== -1 && indexHighlightEndTag !== -1) {
+                newText += bodyText.substring(0, indexHighlightStartTag) + bodyText.substr(i, searchingTerms.length);
+                bodyText = bodyText.substr(indexHighlightEndTag + highlightEndTag.length);
+              } else {
+                newText += bodyText.substring(0, i) + highlightStartTag + bodyText.substr(i, searchingTerms.length) + highlightEndTag;
+                bodyText = bodyText.substr(i + searchingTerms.length);
+              }
+              lcBodyText = bodyText.toLowerCase();
+              i = -1;
+            }
+          }
+        }
+      }
+
+      return newText;
+    }
+
     /*
      * Return the index of the current page (starting from 1) in paginated mode, or 1 for
      * scrolling mode.
@@ -286,6 +345,7 @@ var readium = (function() {
 
     // Public API used by the navigator.
     return {
+        'highlightSearchingTerms': highlightSearchingTerms,
         'scrollToId': scrollToId,
         'scrollToPosition': scrollToPosition,
         'scrollLeft': scrollLeft,

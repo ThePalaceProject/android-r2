@@ -7,8 +7,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
-import android.view.View.GONE
-import android.view.View.VISIBLE
 import android.view.ViewGroup
 import android.webkit.WebView
 import android.widget.ProgressBar
@@ -158,7 +156,8 @@ class SR2ReaderFragment private constructor(
     }
 
     this.configureForTheme(this.controller?.themeNow() ?: this.parameters.theme)
-    this.viewsShowLoading()
+    this.viewsHandleLoadingState(showLoading = true)
+
     return view
   }
 
@@ -279,31 +278,31 @@ class SR2ReaderFragment private constructor(
     val context = this.context ?: return
     this.logger.debug("chapterTitle=${event.chapterTitle}")
     if (event.chapterTitle == null) {
-      this.positionTitleView.visibility = GONE
+      this.positionTitleView.visibility = View.GONE
     } else {
       this.positionTitleView.text = event.chapterTitle
-      this.positionTitleView.visibility = VISIBLE
+      this.positionTitleView.visibility = View.VISIBLE
     }
 
     if (event.currentPage == null || event.pageCount == null) {
-      this.positionPageView.visibility = GONE
+      this.positionPageView.visibility = View.GONE
     } else {
       this.positionPageView.text = context.getString(R.string.progress_page, event.currentPage, event.pageCount)
-      this.positionPageView.visibility = VISIBLE
+      this.positionPageView.visibility = View.VISIBLE
     }
 
     val bookProgressPercent = event.bookProgressPercent
     if (bookProgressPercent == null) {
-      this.positionPercentView.visibility = GONE
-      this.progressView.visibility = GONE
+      this.positionPercentView.visibility = View.GONE
+      this.progressView.visibility = View.GONE
     } else {
       this.positionPercentView.text = this.getString(R.string.progress_percent, bookProgressPercent)
       this.progressView.apply {
         this.max = 100
         this.progress = bookProgressPercent
       }
-      this.positionPercentView.visibility = VISIBLE
-      this.progressView.visibility = VISIBLE
+      this.positionPercentView.visibility = View.VISIBLE
+      this.progressView.visibility = View.VISIBLE
     }
     this.reconfigureBookmarkMenuItem(event.locator)
   }
@@ -422,13 +421,13 @@ class SR2ReaderFragment private constructor(
       }
 
       is SR2CommandExecutionRunningLong -> {
-        this.viewsShowLoading()
+        this.viewsHandleLoadingState(showLoading = true)
       }
 
       is SR2CommandExecutionSucceeded,
       is SR2CommandExecutionFailed,
       -> {
-        this.viewsHideLoading()
+        this.viewsHandleLoadingState(showLoading = false)
       }
 
       is SR2Event.SR2ExternalLinkSelected -> {
@@ -444,25 +443,20 @@ class SR2ReaderFragment private constructor(
     this.toolbar.isVisible = uiVisible
   }
 
-  private fun viewsHideLoading() {
+  private fun viewsHandleLoadingState(showLoading: Boolean) {
     SR2UIThread.checkIsUIThread()
 
-    if (this.webView.visibility != View.VISIBLE) {
-      this.webView.visibility = View.VISIBLE
+    val (webViewVisibility, loadingVisibility) = if (showLoading) {
+      View.INVISIBLE to View.VISIBLE
+    } else {
+      View.VISIBLE to View.INVISIBLE
     }
-    if (this.loadingView.visibility != View.INVISIBLE) {
-      this.loadingView.visibility = View.INVISIBLE
-    }
-  }
 
-  private fun viewsShowLoading() {
-    SR2UIThread.checkIsUIThread()
-
-    if (this.webView.visibility != View.INVISIBLE) {
-      this.webView.visibility = View.INVISIBLE
+    if (this.webView.visibility != webViewVisibility) {
+      this.webView.visibility = webViewVisibility
     }
-    if (this.loadingView.visibility != View.VISIBLE) {
-      this.loadingView.visibility = View.VISIBLE
+    if (this.loadingView.visibility != loadingVisibility) {
+      this.loadingView.visibility = loadingVisibility
     }
   }
 

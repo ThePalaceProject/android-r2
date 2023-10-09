@@ -216,6 +216,9 @@ internal class SR2Controller private constructor(
   private var searchIterator: SearchIterator? = null
 
   @Volatile
+  private var searchingTerms = ""
+
+  @Volatile
   private var themeMostRecent: SR2Theme =
     this.configuration.theme
 
@@ -388,6 +391,12 @@ internal class SR2Controller private constructor(
 
       is SR2Command.CancelSearch ->
         this.executeCommandCancelSearch()
+
+      is SR2Command.HighlightTerms ->
+        this.executeCommandHighlightTerms(apiCommand)
+
+      SR2Command.HighlightCurrentTerms ->
+        this.executeCommandHighlightCurrentTerms()
     }
   }
 
@@ -585,6 +594,51 @@ internal class SR2Controller private constructor(
 
   private fun executeCommandOpenPagePrevious(): ListenableFuture<*> {
     return this.waitForWebViewAvailability().executeJS(SR2JavascriptAPIType::openPagePrevious)
+  }
+
+  /**
+   * Execute the [SR2Command.HighlightTerms] command.
+   */
+
+  private fun executeCommandHighlightTerms(
+    apiCommand: SR2Command.HighlightTerms,
+  ): ListenableFuture<*> {
+    if (searchingTerms.isBlank() && apiCommand.searchingTerms.isBlank()) {
+      return Futures.immediateFuture(Unit)
+    }
+
+    val clearHighlight = apiCommand.clearHighlight
+
+    // if the searching terms are blank, it means the user wants to clear the current highlighted
+    // terms, so we need to pass those same highlighted terms
+    val future = if (apiCommand.searchingTerms.isBlank()) {
+      val currentTerms = searchingTerms
+      this.waitForWebViewAvailability()
+        .executeJS { js -> js.highlightSearchingTerms(currentTerms, clearHighlight) }
+    } else {
+      this.waitForWebViewAvailability()
+        .executeJS { js -> js.highlightSearchingTerms(apiCommand.searchingTerms, clearHighlight) }
+    }
+    searchingTerms = apiCommand.searchingTerms
+
+    return future
+  }
+
+  /**
+   * Execute the [SR2Command.HighlightCurrentTerms] command.
+   */
+
+  private fun executeCommandHighlightCurrentTerms(): ListenableFuture<*> {
+    if (searchingTerms.isBlank()) {
+      return Futures.immediateFuture(Unit)
+    }
+    return this.waitForWebViewAvailability()
+      .executeJS { js ->
+        js.highlightSearchingTerms(
+          searchingTerms = searchingTerms,
+          clearHighlight = false,
+        )
+      }
   }
 
   /**

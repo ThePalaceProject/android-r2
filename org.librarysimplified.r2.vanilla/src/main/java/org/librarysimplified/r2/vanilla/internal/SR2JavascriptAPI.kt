@@ -53,6 +53,14 @@ internal class SR2JavascriptAPI(
   }
 
   @UiThread
+  override fun highlightSearchingTerms(
+    searchingTerms: String,
+    clearHighlight: Boolean,
+  ): ListenableFuture<String> {
+    return this.executeJavascript("readium.highlightSearchingTerms(\"$searchingTerms\", $clearHighlight);")
+  }
+
+  @UiThread
   override fun openPageNext(): ListenableFuture<String> {
     val future = this.executeJavascript("readium.scrollRight();")
     future.addListener(
@@ -61,6 +69,7 @@ internal class SR2JavascriptAPI(
           "false" -> {
             this.commandQueue.submitCommand(SR2Command.OpenChapterNext)
           }
+
           else -> {
           }
         }
@@ -79,6 +88,7 @@ internal class SR2JavascriptAPI(
           "false" -> {
             this.commandQueue.submitCommand(SR2Command.OpenChapterPrevious(atEnd = true))
           }
+
           else -> {
           }
         }
@@ -111,8 +121,10 @@ internal class SR2JavascriptAPI(
     when (value) {
       LIGHT, DAY ->
         this.setUserProperty("appearance", "readium-default-on")
+
       DARK, NIGHT ->
         this.setUserProperty("appearance", "readium-night-on")
+
       SEPIA ->
         this.setUserProperty("appearance", "readium-sepia-on")
     }
@@ -153,6 +165,7 @@ internal class SR2JavascriptAPI(
           this.setUserProperty("advancedSettings", ""),
           this.setUserProperty("fontOverride", ""),
         )
+
       SR2_PUBLISHER_DEFAULT_CSS_DISABLED ->
         Futures.allAsList(
           this.setUserProperty("advancedSettings", "readium-advanced-on"),

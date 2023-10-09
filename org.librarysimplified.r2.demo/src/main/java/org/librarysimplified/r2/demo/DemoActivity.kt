@@ -125,6 +125,34 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
     this.viewSubscription?.dispose()
   }
 
+  override fun onBackPressed() {
+    if (this.tocFragment.isVisible) {
+      this.tocClose()
+    } else if (this.searchFragment.isVisible) {
+      this.searchClose()
+    } else {
+      super.onBackPressed()
+    }
+  }
+
+  private fun tocClose() {
+    SR2UIThread.checkIsUIThread()
+
+    this.supportFragmentManager.beginTransaction()
+      .hide(this.tocFragment)
+      .show(this.readerFragment)
+      .commit()
+  }
+
+  private fun searchClose() {
+    SR2UIThread.checkIsUIThread()
+
+    this.supportFragmentManager.beginTransaction()
+      .hide(this.searchFragment)
+      .show(this.readerFragment)
+      .commit()
+  }
+
   private fun onControllerBecameAvailable(reference: SR2ControllerReference) {
     this.controller = reference.controller
 
@@ -215,7 +243,7 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
 
     return when (event) {
       SR2ReaderViewNavigationClose ->
-        this.supportFragmentManager.popBackStack()
+        this.onBackPressed()
       SR2ReaderViewNavigationOpenTOC ->
         this.openTOC()
       is SR2ControllerBecameAvailable ->
@@ -246,8 +274,7 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
       transaction.add(R.id.demoFragmentArea, searchFragment)
     }
 
-    transaction.addToBackStack(null)
-      .commit()
+    transaction.commit()
   }
 
   private fun openTOC() {
@@ -260,8 +287,7 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
       transaction.add(R.id.demoFragmentArea, tocFragment)
     }
 
-    transaction.addToBackStack(null)
-      .commit()
+    transaction.commit()
   }
 
   /**

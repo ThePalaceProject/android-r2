@@ -5,8 +5,8 @@
   <item
     android:id="@+id/readerMenuSearch"
     android:contentDescription="@string/readerAccessSearch"
-    android:icon="@drawable/search"
+    android:icon="@drawable/sr2_search"
     android:title="@string/readerSearch"
-    app:actionViewClass="androidx.appcompat.widget.SearchView"
+    app:actionViewClass="org.thepalaceproject.theme.core.PalaceSearchView"
     app:showAsAction="always" />
 </menu>

@@ -16,9 +16,11 @@
     android:layout_marginStart="16dp"
     android:layout_marginTop="16dp"
     android:src="@drawable/sr2_chapter"
-    tools:src="@drawable/sr2_black"
+    tools:src="@drawable/sr2_chapter"
+    android:tintMode="multiply"
     app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toTopOf="parent" />
+    app:layout_constraintTop_toTopOf="parent"
+    app:tint="@color/PalaceTextColor" />
 
   <TextView
     android:id="@+id/chapterTitle"

@@ -16,8 +16,10 @@
     android:layout_marginStart="16dp"
     android:layout_marginTop="16dp"
     android:src="@drawable/sr2_bookmark"
+    android:tintMode="multiply"
     app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toTopOf="parent" />
+    app:layout_constraintTop_toTopOf="parent"
+    app:tint="@color/PalaceTextColor" />
 
   <TextView
     android:id="@+id/bookmarkDate"
@@ -74,6 +76,8 @@
     android:layout_marginEnd="16dp"
     android:contentDescription="@string/tocAccessBookmarkDelete"
     android:src="@drawable/sr2_bookmark_delete"
+    android:tintMode="multiply"
+    app:tint="@color/PalaceTextColor"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintTop_toTopOf="parent" />
 

@@ -21,7 +21,7 @@
         <c:change date="2022-05-03T00:00:00+00:00" summary="Update R2 libraries version"/>
       </c:changes>
     </c:release>
-    <c:release date="2023-10-11T15:58:46+00:00" is-open="true" ticket-system="org.nypl.jira" version="2.1.0">
+    <c:release date="2023-10-11T16:08:55+00:00" is-open="false" ticket-system="org.nypl.jira" version="2.1.0">
       <c:changes>
         <c:change date="2023-09-21T00:00:00+00:00" summary="Implemented searching feature on EPUBs."/>
         <c:change date="2023-10-06T00:00:00+00:00" summary="Added highlighting feature to searching terms on EPUB pages."/>

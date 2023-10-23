@@ -10,7 +10,7 @@
   <TextView
     android:id="@+id/titleText"
     android:layout_width="match_parent"
-    android:layout_height="?attr/actionBarSize"
+    android:layout_height="@dimen/PalaceToolbarHeight"
     android:gravity="center"
     android:textAppearance="?android:textAppearanceMedium"
     app:layout_constraintTop_toTopOf="parent"
@@ -19,7 +19,7 @@
   <androidx.appcompat.widget.Toolbar
     android:id="@+id/readerToolbar"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="@dimen/PalaceToolbarHeight"
     android:theme="@style/Palace.Legacy.ToolbarTheme"
     app:popupTheme="@style/Palace.Legacy.ToolbarPopupTheme"
     app:layout_constraintEnd_toEndOf="parent"

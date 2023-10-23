@@ -11,7 +11,7 @@
   <androidx.appcompat.widget.Toolbar
     android:id="@+id/searchToolbar"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="@dimen/PalaceToolbarHeight"
     android:theme="@style/Palace.Legacy.ToolbarTheme"
     app:popupTheme="@style/Palace.Legacy.ToolbarPopupTheme"
     app:navigationIcon="@drawable/sr2_arrow_back"

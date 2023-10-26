@@ -95,6 +95,10 @@ internal class SR2TOCBookmarkViewHolder(
   ) {
     MaterialAlertDialogBuilder(this.rootView.context)
       .setMessage(R.string.tocBookmarkDeleteMessage)
+      .setCancelable(true)
+      .setNegativeButton(R.string.tocBookmarkCancel) { dialog, which ->
+        dialog.dismiss()
+      }
       .setPositiveButton(R.string.tocBookmarkDelete) { dialog, which ->
         onBookmarkDeleteRequested.invoke(bookmark)
         dialog.dismiss()

@@ -26,6 +26,7 @@
   <string name="settingsAa">A a</string>
   <string name="tocAccessBookmarkDelete">Delete A Bookmark</string>
   <string name="tocBookmarkDelete">Delete</string>
+  <string name="tocBookmarkCancel">Cancel</string>
   <string name="tocBookmarkDeleteMessage">Are you sure you want to delete this bookmark?</string>
   <string name="tocBookmarkDeleteErrorMessage">There was an error deleting the bookmark</string>
   <string name="tocBookmarks">Bookmarks</string>

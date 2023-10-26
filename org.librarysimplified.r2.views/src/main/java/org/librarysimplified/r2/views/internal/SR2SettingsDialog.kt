@@ -5,8 +5,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.widget.SeekBar
 import android.widget.TextView
-import androidx.appcompat.app.AlertDialog
 import androidx.core.content.res.ResourcesCompat
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.tabs.TabLayout
 import io.reactivex.disposables.CompositeDisposable
 import org.librarysimplified.r2.api.SR2ColorScheme
@@ -72,7 +72,7 @@ internal class SR2SettingsDialog private constructor() {
       val eventSubscriptions = CompositeDisposable()
 
       val dialog =
-        AlertDialog.Builder(context)
+        MaterialAlertDialogBuilder(context)
           .setView(R.layout.sr2_settings)
           .setOnDismissListener {
             eventSubscriptions.dispose()

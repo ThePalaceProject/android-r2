@@ -5,9 +5,9 @@ import android.view.View
 import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
-import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import org.joda.time.format.DateTimeFormatterBuilder
 import org.librarysimplified.r2.api.SR2Bookmark
 import org.librarysimplified.r2.api.SR2Bookmark.Type.EXPLICIT
@@ -93,8 +93,12 @@ internal class SR2TOCBookmarkViewHolder(
     bookmark: SR2Bookmark,
     onBookmarkDeleteRequested: (SR2Bookmark) -> Unit,
   ) {
-    AlertDialog.Builder(this.rootView.context)
+    MaterialAlertDialogBuilder(this.rootView.context)
       .setMessage(R.string.tocBookmarkDeleteMessage)
+      .setCancelable(true)
+      .setNegativeButton(R.string.tocBookmarkCancel) { dialog, which ->
+        dialog.dismiss()
+      }
       .setPositiveButton(R.string.tocBookmarkDelete) { dialog, which ->
         onBookmarkDeleteRequested.invoke(bookmark)
         dialog.dismiss()

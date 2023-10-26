@@ -208,14 +208,16 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
     this.readerFragmentFactory =
       SR2ReaderFragmentFactory(this.readerParameters)
 
-    this.readerFragment =
-      this.readerFragmentFactory.instantiate(this.classLoader, SR2ReaderFragment::class.java.name)
+    if (!::readerFragment.isInitialized) {
+      this.readerFragment =
+        this.readerFragmentFactory.instantiate(this.classLoader, SR2ReaderFragment::class.java.name)
 
-    this.searchFragment =
-      this.readerFragmentFactory.instantiate(this.classLoader, SR2SearchFragment::class.java.name)
+      this.searchFragment =
+        this.readerFragmentFactory.instantiate(this.classLoader, SR2SearchFragment::class.java.name)
 
-    this.tocFragment =
-      this.readerFragmentFactory.instantiate(this.classLoader, SR2TOCFragment::class.java.name)
+      this.tocFragment =
+        this.readerFragmentFactory.instantiate(this.classLoader, SR2TOCFragment::class.java.name)
+    }
 
     val readerModel =
       ViewModelProvider(this, SR2ReaderViewModelFactory(this.readerParameters))
@@ -229,9 +231,11 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
 
     selectFileArea.visibility = View.GONE
 
-    this.supportFragmentManager.beginTransaction()
-      .add(R.id.demoFragmentArea, readerFragment)
-      .commit()
+    if (!readerFragment.isAdded) {
+      this.supportFragmentManager.beginTransaction()
+        .add(R.id.demoFragmentArea, readerFragment)
+        .commit()
+    }
   }
 
   /**

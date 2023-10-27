@@ -2,7 +2,7 @@ name: Android CI (Authenticated)
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, release/* ]
     tags: [ 'org.thepalaceproject.r2-*' ]
 
 jobs:

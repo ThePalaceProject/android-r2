@@ -35,7 +35,10 @@
         <c:change date="2022-10-27T00:00:00+00:00" summary="Changed target version to Android 13."/>
       </c:changes>
     </c:release>
-    <c:release date="2023-10-27T15:36:59+00:00" is-open="false" ticket-system="org.nypl.jira" version="2.2.0">
+    <c:release date="2023-10-27T00:00:00+00:00" is-open="false" ticket-system="org.nypl.jira" version="2.2.0">
+      <c:changes/>
+    </c:release>
+    <c:release date="2023-10-27T17:29:12+00:00" is-open="true" ticket-system="org.nypl.jira" version="2.2.1">
       <c:changes/>
     </c:release>
   </c:releases>

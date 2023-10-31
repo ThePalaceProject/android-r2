@@ -125,7 +125,7 @@ internal class SR2Controller private constructor(
       this.logger.debug("creating controller for {}", bookFile)
 
       val onCreatePublication: Publication.Builder.() -> Unit = {
-        fetcher = TransformingFetcher(fetcher, SR2HtmlInjector(manifest)::transform)
+        this.fetcher = TransformingFetcher(this.fetcher, SR2HtmlInjector(this.manifest)::transform)
       }
 
       val streamer =
@@ -238,7 +238,7 @@ internal class SR2Controller private constructor(
     )
 
   private val navigationGraph: SR2NavigationGraph =
-    SR2NavigationGraphs.create(publication)
+    SR2NavigationGraphs.create(this.publication)
 
   @Volatile
   private var currentTarget: SR2NavigationTarget =
@@ -270,7 +270,7 @@ internal class SR2Controller private constructor(
     )
 
     // Pre-compute positions
-    runBlocking { publication.positionsByReadingOrder() }
+    runBlocking { this@SR2Controller.publication.positionsByReadingOrder() }
   }
 
   private fun serverLocationOfTarget(
@@ -318,7 +318,7 @@ internal class SR2Controller private constructor(
           uri = null,
         )
 
-        this.eventSubject.onNext(
+        this.publishEvent(
           SR2BookmarkCreate(
             newBookmark,
             onBookmarkCreationCompleted = { createdBookmark ->
@@ -327,7 +327,7 @@ internal class SR2Controller private constructor(
                 newBookmarks.removeAll { bookmark -> bookmark.type == LAST_READ }
                 newBookmarks.add(createdBookmark)
                 this.bookmarks = newBookmarks.toList()
-                this.eventSubject.onNext(SR2BookmarkCreated(createdBookmark))
+                this.publishEvent(SR2BookmarkCreated(createdBookmark))
               }
             },
           ),
@@ -439,7 +439,7 @@ internal class SR2Controller private constructor(
     val setFuture = SettableFuture.create<Unit>()
     allFutures.addListener(
       {
-        this.eventSubject.onNext(SR2Event.SR2ThemeChanged(theme))
+        this.publishEvent(SR2Event.SR2ThemeChanged(theme))
         setFuture.set(Unit)
       },
       MoreExecutors.directExecutor(),
@@ -459,7 +459,7 @@ internal class SR2Controller private constructor(
         isBeingDeleted = bookmark == apiCommand.bookmark,
       )
     }
-    this.eventSubject.onNext(
+    this.publishEvent(
       SR2BookmarkTryToDelete(
         bookmark = apiCommand.bookmark,
         onDeleteOperationFinished = { wasDeleted ->
@@ -467,7 +467,7 @@ internal class SR2Controller private constructor(
             val newBookmarks = this.bookmarks.toMutableList()
             newBookmarks.remove(apiCommand.bookmark)
             this.bookmarks = newBookmarks.toList()
-            this.eventSubject.onNext(SR2BookmarkDeleted(apiCommand.bookmark))
+            this.publishEvent(SR2BookmarkDeleted(apiCommand.bookmark))
           } else {
             this.bookmarks = this.bookmarks.map { bookmark ->
               bookmark.copy(
@@ -478,7 +478,7 @@ internal class SR2Controller private constructor(
                 },
               )
             }
-            this.eventSubject.onNext(SR2BookmarkFailedToBeDeleted)
+            this.publishEvent(SR2BookmarkFailedToBeDeleted)
           }
         },
       ),
@@ -504,7 +504,7 @@ internal class SR2Controller private constructor(
         uri = null,
       )
 
-    this.eventSubject.onNext(
+    this.publishEvent(
       SR2BookmarkCreate(
         bookmark = bookmark,
         onBookmarkCreationCompleted = { createdBookmark ->
@@ -512,7 +512,7 @@ internal class SR2Controller private constructor(
             val newBookmarks = this.bookmarks.toMutableList()
             newBookmarks.add(createdBookmark)
             this.bookmarks = newBookmarks.toList()
-            this.eventSubject.onNext(SR2BookmarkCreated(createdBookmark))
+            this.publishEvent(SR2BookmarkCreated(createdBookmark))
           }
         },
       ),
@@ -547,7 +547,7 @@ internal class SR2Controller private constructor(
     val newBookmarks = this.bookmarks.toMutableList()
     newBookmarks.addAll(apiCommand.bookmarks)
     this.bookmarks = newBookmarks.toList()
-    this.eventSubject.onNext(SR2BookmarksLoaded)
+    this.publishEvent(SR2BookmarksLoaded)
     return Futures.immediateFuture(Unit)
   }
 
@@ -603,7 +603,7 @@ internal class SR2Controller private constructor(
   private fun executeCommandHighlightTerms(
     apiCommand: SR2Command.HighlightTerms,
   ): ListenableFuture<*> {
-    if (searchingTerms.isBlank() && apiCommand.searchingTerms.isBlank()) {
+    if (this.searchingTerms.isBlank() && apiCommand.searchingTerms.isBlank()) {
       return Futures.immediateFuture(Unit)
     }
 
@@ -612,14 +612,14 @@ internal class SR2Controller private constructor(
     // if the searching terms are blank, it means the user wants to clear the current highlighted
     // terms, so we need to pass those same highlighted terms
     val future = if (apiCommand.searchingTerms.isBlank()) {
-      val currentTerms = searchingTerms
+      val currentTerms = this.searchingTerms
       this.waitForWebViewAvailability()
         .executeJS { js -> js.highlightSearchingTerms(currentTerms, clearHighlight) }
     } else {
       this.waitForWebViewAvailability()
         .executeJS { js -> js.highlightSearchingTerms(apiCommand.searchingTerms, clearHighlight) }
     }
-    searchingTerms = apiCommand.searchingTerms
+    this.searchingTerms = apiCommand.searchingTerms
 
     return future
   }
@@ -629,13 +629,13 @@ internal class SR2Controller private constructor(
    */
 
   private fun executeCommandHighlightCurrentTerms(): ListenableFuture<*> {
-    if (searchingTerms.isBlank()) {
+    if (this.searchingTerms.isBlank()) {
       return Futures.immediateFuture(Unit)
     }
     return this.waitForWebViewAvailability()
       .executeJS { js ->
         js.highlightSearchingTerms(
-          searchingTerms = searchingTerms,
+          searchingTerms = this.searchingTerms,
           clearHighlight = false,
         )
       }
@@ -681,11 +681,11 @@ internal class SR2Controller private constructor(
         return Futures.immediateFuture(Unit)
       }
 
-      this.eventSubject.onNext(SR2ExternalLinkSelected(apiCommand.link))
+      this.publishEvent(SR2ExternalLinkSelected(apiCommand.link))
       return Futures.immediateFuture(Unit)
     } catch (e: Exception) {
       this.logger.error("unable to open link ${apiCommand.link}: ", e)
-      this.eventSubject.onNext(
+      this.publishEvent(
         SR2Event.SR2Error.SR2ChapterNonexistent(
           chapterHref = apiCommand.link,
           message = e.message ?: "Unable to open chapter ${apiCommand.link}",
@@ -702,27 +702,29 @@ internal class SR2Controller private constructor(
   ): ListenableFuture<*> {
     val searchQuery = command.searchQuery
 
-    if (searchQuery != lastQuery) {
-      coroutineScope.launch {
-        searchIterator = publication.search(searchQuery)
+    if (searchQuery != this.lastQuery) {
+      this.coroutineScope.launch {
+        this@SR2Controller.searchIterator = this@SR2Controller.publication.search(searchQuery)
           .onFailure {
-            logger.error("Error searching for query: {}", searchQuery, it)
+            this@SR2Controller.logger.error("Error searching for query: {}", searchQuery, it)
           }
           .getOrNull()
 
-        eventSubject.onNext(SR2CommandSearchResults(command, searchIterator))
+        this@SR2Controller.publishEvent(
+          SR2CommandSearchResults(command, this@SR2Controller.searchIterator),
+        )
       }
     }
 
-    lastQuery = searchQuery
+    this.lastQuery = searchQuery
 
     return Futures.immediateFuture(Unit)
   }
 
   private fun executeCommandCancelSearch(): ListenableFuture<*> {
-    coroutineScope.launch {
-      searchIterator?.close()
-      searchIterator = null
+    this.coroutineScope.launch {
+      this@SR2Controller.searchIterator?.close()
+      this@SR2Controller.searchIterator = null
     }
 
     return Futures.immediateFuture(Unit)
@@ -793,7 +795,7 @@ internal class SR2Controller private constructor(
     } catch (e: Exception) {
       this.logger.error("unable to open chapter ${locator.chapterHref}: ", e)
       this.setCurrentNode(previousNode)
-      this.eventSubject.onNext(
+      this.publishEvent(
         SR2Event.SR2Error.SR2ChapterNonexistent(
           chapterHref = locator.chapterHref,
           message = e.message ?: "Unable to open chapter ${locator.chapterHref}",
@@ -823,7 +825,7 @@ internal class SR2Controller private constructor(
       "progress must be in [0, 1]; was $chapterProgress"
     }
 
-    val currentNode = currentTarget.node
+    val currentNode = this.currentTarget.node
     if (currentNode !is SR2NavigationNode.SR2NavigationReadingOrderNode) {
       return null
     }
@@ -904,7 +906,7 @@ internal class SR2Controller private constructor(
         val (currentPage, pageCount) =
           this@SR2Controller.getCurrentPage(chapterProgress)
 
-        this@SR2Controller.eventSubject.onNext(
+        this@SR2Controller.publishEvent(
           SR2ReadingPositionChanged(
             chapterHref = targetHref,
             chapterTitle = targetTitle,
@@ -921,7 +923,7 @@ internal class SR2Controller private constructor(
     override fun onCenterTapped() {
       this.logger.debug("onCenterTapped")
       this@SR2Controller.uiVisible = !this@SR2Controller.uiVisible
-      this@SR2Controller.eventSubject.onNext(SR2OnCenterTapped(this@SR2Controller.uiVisible))
+      this@SR2Controller.publishEvent(SR2OnCenterTapped(this@SR2Controller.uiVisible))
     }
 
     @android.webkit.JavascriptInterface
@@ -1001,24 +1003,29 @@ internal class SR2Controller private constructor(
   ) {
     this.logger.debug("submitCommand: {}", command)
 
-    this.queueExecutor.execute {
-      this.publishCommmandStart(command)
-      val future = this.executeInternalCommand(command)
-      try {
+    try {
+      this.queueExecutor.execute {
+        this.publishCommmandStart(command)
+        val future = this.executeInternalCommand(command)
         try {
-          future.get()
-          this.publishCommmandSucceeded(command)
-        } catch (e: ExecutionException) {
-          throw e.cause!!
+          try {
+            future.get()
+            this.publishCommmandSucceeded(command)
+          } catch (e: ExecutionException) {
+            throw e.cause!!
+          }
+        } catch (e: SR2WebViewDisconnectedException) {
+          this.logger.debug("webview disconnected: could not execute {}", command)
+          this.publishEvent(SR2Event.SR2Error.SR2WebViewInaccessible("No web view is connected"))
+          this.publishCommmandFailed(command, e)
+        } catch (e: Exception) {
+          this.logger.error("{}: ", command, e)
+          this.publishCommmandFailed(command, e)
         }
-      } catch (e: SR2WebViewDisconnectedException) {
-        this.logger.debug("webview disconnected: could not execute {}", command)
-        this.eventSubject.onNext(SR2Event.SR2Error.SR2WebViewInaccessible("No web view is connected"))
-        this.publishCommmandFailed(command, e)
-      } catch (e: Exception) {
-        this.logger.error("{}: ", command, e)
-        this.publishCommmandFailed(command, e)
       }
+    } catch (e: Exception) {
+      this.logger.error("{}: ", command, e)
+      this.publishCommmandFailed(command, e)
     }
   }
 
@@ -1027,22 +1034,30 @@ internal class SR2Controller private constructor(
    */
 
   private fun publishCommmandRunningLong(command: SR2CommandSubmission) {
-    this.eventSubject.onNext(SR2CommandExecutionRunningLong(command.command))
+    this.publishEvent(SR2CommandExecutionRunningLong(command.command))
+  }
+
+  private fun publishEvent(event: SR2Event) {
+    try {
+      this.eventSubject.onNext(event)
+    } catch (e: Exception) {
+      this.logger.warn("Could not submit event: ", e)
+    }
   }
 
   private fun publishCommmandSucceeded(command: SR2CommandSubmission) {
-    this.eventSubject.onNext(SR2CommandExecutionSucceeded(command.command))
+    this.publishEvent(SR2CommandExecutionSucceeded(command.command))
   }
 
   private fun publishCommmandFailed(
     command: SR2CommandSubmission,
     exception: Exception,
   ) {
-    this.eventSubject.onNext(SR2CommandExecutionFailed(command.command, exception))
+    this.publishEvent(SR2CommandExecutionFailed(command.command, exception))
   }
 
   private fun publishCommmandStart(command: SR2CommandSubmission) {
-    this.eventSubject.onNext(SR2CommandExecutionStarted(command.command))
+    this.publishEvent(SR2CommandExecutionStarted(command.command))
   }
 
   override val events: Observable<SR2Event> =

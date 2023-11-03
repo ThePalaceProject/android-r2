@@ -35,11 +35,21 @@
         <c:change date="2022-10-27T00:00:00+00:00" summary="Changed target version to Android 13."/>
       </c:changes>
     </c:release>
-    <c:release date="2023-10-11T16:16:54+00:00" is-open="true" ticket-system="org.nypl.jira" version="2.1.1">
+    <c:release date="2023-11-03T00:00:00+00:00" is-open="false" ticket-system="org.nypl.jira" version="2.1.1">
       <c:changes/>
+    </c:release>
+    <c:release date="2023-11-03T13:59:31+00:00" is-open="true" ticket-system="org.nypl.jira" version="2.3.0">
+      <c:changes>
+        <c:change date="2023-11-03T13:59:31+00:00" summary="Fix some lifecycle issues.">
+          <c:tickets>
+            <c:ticket id="PP-676"/>
+          </c:tickets>
+        </c:change>
+      </c:changes>
     </c:release>
   </c:releases>
   <c:ticket-systems>
-    <c:ticket-system default="true" id="org.nypl.jira" url="https://jira.nypl.org/browse/"/>
+    <c:ticket-system default="true" id="org.lyrasis.jira" url="https://ebce-lyrasis.atlassian.net/browse/"/>
+    <c:ticket-system default="false" id="org.nypl.jira" url="https://jira.nypl.org/browse/"/>
   </c:ticket-systems>
 </c:changelog>

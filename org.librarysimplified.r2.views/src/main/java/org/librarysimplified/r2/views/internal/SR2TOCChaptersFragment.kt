@@ -11,6 +11,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.SimpleItemAnimator
 import org.librarysimplified.r2.api.SR2Command
+import org.librarysimplified.r2.api.SR2ControllerConfiguration
 import org.librarysimplified.r2.api.SR2ControllerType
 import org.librarysimplified.r2.api.SR2Locator.SR2LocatorPercent
 import org.librarysimplified.r2.api.SR2TOCEntry
@@ -71,7 +72,21 @@ internal class SR2TOCChaptersFragment private constructor(
       ViewModelProvider(activity, SR2ReaderViewModelFactory(this.parameters))
         .get(SR2ReaderViewModel::class.java)
 
-    this.controller = this.readerModel.get()!!
+    this.controller =
+      this.readerModel.createOrGet(
+        configuration = SR2ControllerConfiguration(
+          bookFile = this.parameters.bookFile,
+          bookId = this.parameters.bookId,
+          context = activity,
+          ioExecutor = this.readerModel.ioExecutor,
+          contentProtections = this.parameters.contentProtections,
+          theme = this.parameters.theme,
+          uiExecutor = SR2UIThread::runOnUIThread,
+          scrollingMode = this.parameters.scrollingMode,
+          pageNumberingMode = this.parameters.pageNumberingMode,
+        ),
+      ).get().controller
+
     val toc = this.controller.bookMetadata.tableOfContents
     view?.apply {
       findViewById<View>(R.id.tocChaptersError)?.isVisible = toc.isEmpty()

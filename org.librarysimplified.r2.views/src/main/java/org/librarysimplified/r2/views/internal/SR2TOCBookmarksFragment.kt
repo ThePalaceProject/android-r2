@@ -15,6 +15,7 @@ import io.reactivex.disposables.CompositeDisposable
 import org.librarysimplified.r2.api.SR2Bookmark
 import org.librarysimplified.r2.api.SR2Bookmark.Type.LAST_READ
 import org.librarysimplified.r2.api.SR2Command
+import org.librarysimplified.r2.api.SR2ControllerConfiguration
 import org.librarysimplified.r2.api.SR2ControllerType
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent
 import org.librarysimplified.r2.ui_thread.SR2UIThread
@@ -93,7 +94,19 @@ internal class SR2TOCBookmarksFragment private constructor(
         .get(SR2ReaderViewModel::class.java)
 
     this.controller =
-      this.readerModel.get()!!
+      this.readerModel.createOrGet(
+        configuration = SR2ControllerConfiguration(
+          bookFile = this.parameters.bookFile,
+          bookId = this.parameters.bookId,
+          context = activity,
+          ioExecutor = this.readerModel.ioExecutor,
+          contentProtections = this.parameters.contentProtections,
+          theme = this.parameters.theme,
+          uiExecutor = SR2UIThread::runOnUIThread,
+          scrollingMode = this.parameters.scrollingMode,
+          pageNumberingMode = this.parameters.pageNumberingMode,
+        ),
+      ).get().controller
 
     this.bookmarkSubscriptions.add(
       this.controller.events.ofType(SR2BookmarkEvent::class.java)

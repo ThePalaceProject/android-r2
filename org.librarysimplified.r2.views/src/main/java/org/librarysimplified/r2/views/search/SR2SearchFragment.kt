@@ -21,6 +21,7 @@ import io.reactivex.disposables.Disposable
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.librarysimplified.r2.api.SR2Command
+import org.librarysimplified.r2.api.SR2ControllerConfiguration
 import org.librarysimplified.r2.api.SR2ControllerType
 import org.librarysimplified.r2.api.SR2Event
 import org.librarysimplified.r2.api.SR2Locator
@@ -67,8 +68,23 @@ class SR2SearchFragment private constructor(
       ViewModelProvider(requireActivity(), SR2ReaderViewModelFactory(this.parameters))
         .get(SR2ReaderViewModel::class.java)
 
+    val activity =
+      this.requireActivity()
+
     this.controller =
-      this.readerModel.get()!!
+      this.readerModel.createOrGet(
+        configuration = SR2ControllerConfiguration(
+          bookFile = this.parameters.bookFile,
+          bookId = this.parameters.bookId,
+          context = activity,
+          ioExecutor = this.readerModel.ioExecutor,
+          contentProtections = this.parameters.contentProtections,
+          theme = this.parameters.theme,
+          uiExecutor = SR2UIThread::runOnUIThread,
+          scrollingMode = this.parameters.scrollingMode,
+          pageNumberingMode = this.parameters.pageNumberingMode,
+        ),
+      ).get().controller
 
     this.toolbar =
       view.findViewById(R.id.searchToolbar)

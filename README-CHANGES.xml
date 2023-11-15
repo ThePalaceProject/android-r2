@@ -47,10 +47,13 @@
         </c:change>
       </c:changes>
     </c:release>
-    <c:release date="2023-11-15T11:32:37+00:00" is-open="false" ticket-system="org.lyrasis.jira" version="2.4.0">
+    <c:release date="2023-11-15T00:00:00+00:00" is-open="false" ticket-system="org.lyrasis.jira" version="2.4.0">
       <c:changes>
         <c:change date="2023-11-15T00:00:00+00:00" summary="Fix some more lifecycle issues."/>
       </c:changes>
+    </c:release>
+    <c:release date="2023-11-15T11:45:26+00:00" is-open="true" ticket-system="org.lyrasis.jira" version="2.4.1">
+      <c:changes/>
     </c:release>
   </c:releases>
   <c:ticket-systems>

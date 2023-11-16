@@ -326,7 +326,7 @@ internal class SR2Controller private constructor(
                 val newBookmarks = this.bookmarks.toMutableList()
                 newBookmarks.removeAll { bookmark -> bookmark.type == LAST_READ }
                 newBookmarks.add(createdBookmark)
-                this.bookmarks = newBookmarks.toList()
+                this.bookmarks = newBookmarks.distinct().toList()
                 this.publishEvent(SR2BookmarkCreated(createdBookmark))
               }
             },
@@ -458,7 +458,7 @@ internal class SR2Controller private constructor(
       bookmark.copy(
         isBeingDeleted = bookmark == apiCommand.bookmark,
       )
-    }
+    }.distinct().toList()
     this.publishEvent(
       SR2BookmarkTryToDelete(
         bookmark = apiCommand.bookmark,
@@ -466,7 +466,7 @@ internal class SR2Controller private constructor(
           if (wasDeleted) {
             val newBookmarks = this.bookmarks.toMutableList()
             newBookmarks.remove(apiCommand.bookmark)
-            this.bookmarks = newBookmarks.toList()
+            this.bookmarks = newBookmarks.distinct().toList()
             this.publishEvent(SR2BookmarkDeleted(apiCommand.bookmark))
           } else {
             this.bookmarks = this.bookmarks.map { bookmark ->
@@ -477,7 +477,7 @@ internal class SR2Controller private constructor(
                   bookmark.isBeingDeleted
                 },
               )
-            }
+            }.distinct().toList()
             this.publishEvent(SR2BookmarkFailedToBeDeleted)
           }
         },
@@ -511,7 +511,7 @@ internal class SR2Controller private constructor(
           if (createdBookmark != null) {
             val newBookmarks = this.bookmarks.toMutableList()
             newBookmarks.add(createdBookmark)
-            this.bookmarks = newBookmarks.toList()
+            this.bookmarks = newBookmarks.distinct().toList()
             this.publishEvent(SR2BookmarkCreated(createdBookmark))
           }
         },
@@ -546,7 +546,7 @@ internal class SR2Controller private constructor(
   ): ListenableFuture<*> {
     val newBookmarks = this.bookmarks.toMutableList()
     newBookmarks.addAll(apiCommand.bookmarks)
-    this.bookmarks = newBookmarks.toList()
+    this.bookmarks = newBookmarks.distinct().toList()
     this.publishEvent(SR2BookmarksLoaded)
     return Futures.immediateFuture(Unit)
   }

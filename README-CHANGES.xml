@@ -10,9 +10,9 @@
         <c:change date="2023-07-03T00:00:00+00:00" summary="Fixed bug of bookmark not being deleted right after being added."/>
       </c:changes>
     </c:release>
-    <c:release date="2023-11-16T09:53:56+00:00" is-open="true" ticket-system="org.lyrasis.jira" version="2.5.0">
+    <c:release date="2023-11-16T10:08:51+00:00" is-open="false" ticket-system="org.lyrasis.jira" version="2.5.0">
       <c:changes>
-        <c:change date="2023-11-16T09:53:56+00:00" summary="API misuse could result in duplicate bookmarks appearing in lists.">
+        <c:change date="2023-11-16T00:00:00+00:00" summary="API misuse could result in duplicate bookmarks appearing in lists.">
           <c:tickets>
             <c:ticket id="PP-727"/>
           </c:tickets>

@@ -67,8 +67,6 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.coroutines.core.jvm)
     implementation(libs.logback.android)
-    implementation(libs.nano.httpd)
-    implementation(libs.nano.httpd.nanolets)
     implementation(libs.palace.theme)
     implementation(libs.r2.shared)
     implementation(libs.r2.streamer)

@@ -61,8 +61,10 @@
     <c:release date="2023-11-03T00:00:00+00:00" is-open="false" ticket-system="org.nypl.jira" version="2.1.1">
       <c:changes/>
     </c:release>
-    <c:release date="2023-11-16T10:13:14+00:00" is-open="true" ticket-system="org.lyrasis.jira" version="2.5.1">
-      <c:changes/>
+    <c:release date="2023-11-17T18:20:41+00:00" is-open="true" ticket-system="org.lyrasis.jira" version="2.5.1">
+      <c:changes>
+        <c:change date="2023-11-17T18:20:41+00:00" summary="Updated Readium version."/>
+      </c:changes>
     </c:release>
   </c:releases>
   <c:ticket-systems>

@@ -10,8 +10,6 @@ dependencies {
     implementation(libs.kotlin.stdlib)
     implementation(libs.kotlinx.coroutines)
     implementation(libs.kotlinx.coroutines.android)
-    implementation(libs.nano.httpd)
-    implementation(libs.nano.httpd.nanolets)
     implementation(libs.r2.shared)
     implementation(libs.r2.streamer)
     implementation(libs.rxjava2)

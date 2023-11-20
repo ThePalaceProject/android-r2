@@ -408,7 +408,7 @@ internal class SR2Controller private constructor(
     command: SR2CommandSubmission,
     apiCommand: SR2Command.ThemeSet,
   ): ListenableFuture<*> {
-    this.publishCommmandRunningLong(command)
+    this.publishCommandRunningLong(command)
     return this.executeThemeSet(this.waitForWebViewAvailability(), apiCommand.theme)
   }
 
@@ -741,7 +741,7 @@ internal class SR2Controller private constructor(
     val previousNode = this.currentTarget
 
     return try {
-      this.publishCommmandRunningLong(command)
+      this.publishCommandRunningLong(command)
 
       val target =
         this.navigationGraph.findNavigationNode(locator)
@@ -1005,27 +1005,27 @@ internal class SR2Controller private constructor(
 
     try {
       this.queueExecutor.execute {
-        this.publishCommmandStart(command)
+        this.publishCommandStart(command)
         val future = this.executeInternalCommand(command)
         try {
           try {
             future.get()
-            this.publishCommmandSucceeded(command)
+            this.publishCommandSucceeded(command)
           } catch (e: ExecutionException) {
             throw e.cause!!
           }
         } catch (e: SR2WebViewDisconnectedException) {
           this.logger.debug("webview disconnected: could not execute {}", command)
           this.publishEvent(SR2Event.SR2Error.SR2WebViewInaccessible("No web view is connected"))
-          this.publishCommmandFailed(command, e)
+          this.publishCommandFailed(command, e)
         } catch (e: Exception) {
           this.logger.error("{}: ", command, e)
-          this.publishCommmandFailed(command, e)
+          this.publishCommandFailed(command, e)
         }
       }
     } catch (e: Exception) {
       this.logger.error("{}: ", command, e)
-      this.publishCommmandFailed(command, e)
+      this.publishCommandFailed(command, e)
     }
   }
 
@@ -1033,7 +1033,7 @@ internal class SR2Controller private constructor(
    * Publish an event to indicate that the current command is taking a long time to execute.
    */
 
-  private fun publishCommmandRunningLong(command: SR2CommandSubmission) {
+  private fun publishCommandRunningLong(command: SR2CommandSubmission) {
     this.publishEvent(SR2CommandExecutionRunningLong(command.command))
   }
 
@@ -1045,18 +1045,18 @@ internal class SR2Controller private constructor(
     }
   }
 
-  private fun publishCommmandSucceeded(command: SR2CommandSubmission) {
+  private fun publishCommandSucceeded(command: SR2CommandSubmission) {
     this.publishEvent(SR2CommandExecutionSucceeded(command.command))
   }
 
-  private fun publishCommmandFailed(
+  private fun publishCommandFailed(
     command: SR2CommandSubmission,
     exception: Exception,
   ) {
     this.publishEvent(SR2CommandExecutionFailed(command.command, exception))
   }
 
-  private fun publishCommmandStart(command: SR2CommandSubmission) {
+  private fun publishCommandStart(command: SR2CommandSubmission) {
     this.publishEvent(SR2CommandExecutionStarted(command.command))
   }
 

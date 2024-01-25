@@ -18,4 +18,9 @@ dependencies {
 
 android {
     buildFeatures.buildConfig = true
+
+    defaultConfig {
+        val versionName = project.extra["VERSION_NAME"] as String
+        buildConfigField("String", "R2_VERSION_NAME", "\"${versionName}\"")
+    }
 }

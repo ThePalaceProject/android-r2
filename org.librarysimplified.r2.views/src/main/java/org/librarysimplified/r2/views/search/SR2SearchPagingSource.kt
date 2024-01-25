@@ -16,7 +16,7 @@ class SR2SearchPagingSource(
 
   override suspend fun load(params: LoadParams<Unit>): LoadResult<Unit, Locator> {
     return try {
-      val page = pagingSourceListener.getIteratorNext().getOrThrow()
+      val page = pagingSourceListener.getIteratorNext().getOrNull()
       LoadResult.Page(
         data = page?.locators.orEmpty(),
         prevKey = null,

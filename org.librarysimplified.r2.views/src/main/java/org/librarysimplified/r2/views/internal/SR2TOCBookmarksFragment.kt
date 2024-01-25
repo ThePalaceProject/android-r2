@@ -7,7 +7,6 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.annotation.UiThread
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.SimpleItemAnimator
@@ -15,35 +14,22 @@ import io.reactivex.disposables.CompositeDisposable
 import org.librarysimplified.r2.api.SR2Bookmark
 import org.librarysimplified.r2.api.SR2Bookmark.Type.LAST_READ
 import org.librarysimplified.r2.api.SR2Command
-import org.librarysimplified.r2.api.SR2ControllerConfiguration
-import org.librarysimplified.r2.api.SR2ControllerType
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent
 import org.librarysimplified.r2.ui_thread.SR2UIThread
 import org.librarysimplified.r2.views.R
-import org.librarysimplified.r2.views.SR2ReaderParameters
-import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewNavigationEvent.SR2ReaderViewNavigationClose
-import org.librarysimplified.r2.views.SR2ReaderViewModel
-import org.librarysimplified.r2.views.SR2ReaderViewModelFactory
+import org.librarysimplified.r2.views.SR2ReaderModel
+import org.librarysimplified.r2.views.SR2ReaderViewCommand.SR2ReaderViewNavigationTOCClose
 import org.slf4j.LoggerFactory
 
-internal class SR2TOCBookmarksFragment private constructor(
-  private val parameters: SR2ReaderParameters,
-) : Fragment() {
+internal class SR2TOCBookmarksFragment : Fragment() {
 
-  private val logger = LoggerFactory.getLogger(SR2TOCBookmarksFragment::class.java)
-
-  companion object {
-    fun create(parameters: SR2ReaderParameters): SR2TOCBookmarksFragment {
-      return SR2TOCBookmarksFragment(parameters)
-    }
-  }
+  private val logger =
+    LoggerFactory.getLogger(SR2TOCBookmarksFragment::class.java)
 
   private lateinit var lastReadItem: SR2TOCBookmarkViewHolder
   private lateinit var emptyMessage: TextView
   private lateinit var bookmarkAdapter: SR2TOCBookmarkAdapter
-  private lateinit var controller: SR2ControllerType
-  private lateinit var readerModel: SR2ReaderViewModel
-  private val bookmarkSubscriptions = CompositeDisposable()
+  private lateinit var bookmarkSubscriptions: CompositeDisposable
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -71,7 +57,7 @@ internal class SR2TOCBookmarksFragment private constructor(
     val recyclerView =
       layout.findViewById<RecyclerView>(R.id.tocBookmarksList)
 
-    emptyMessage = layout.findViewById(R.id.empty_bookmarks_text)
+    this.emptyMessage = layout.findViewById(R.id.empty_bookmarks_text)
 
     recyclerView.adapter = this.bookmarkAdapter
     recyclerView.setHasFixedSize(true)
@@ -87,33 +73,20 @@ internal class SR2TOCBookmarksFragment private constructor(
   override fun onStart() {
     super.onStart()
 
-    val activity = this.requireActivity()
-
-    this.readerModel =
-      ViewModelProvider(activity, SR2ReaderViewModelFactory(this.parameters))
-        .get(SR2ReaderViewModel::class.java)
-
-    this.controller =
-      this.readerModel.createOrGet(
-        configuration = SR2ControllerConfiguration(
-          bookFile = this.parameters.bookFile,
-          bookId = this.parameters.bookId,
-          context = activity,
-          ioExecutor = this.readerModel.ioExecutor,
-          contentProtections = this.parameters.contentProtections,
-          theme = this.parameters.theme,
-          uiExecutor = SR2UIThread::runOnUIThread,
-          scrollingMode = this.parameters.scrollingMode,
-          pageNumberingMode = this.parameters.pageNumberingMode,
-        ),
-      ).get().controller
-
+    this.bookmarkSubscriptions = CompositeDisposable()
     this.bookmarkSubscriptions.add(
-      this.controller.events.ofType(SR2BookmarkEvent::class.java)
+      SR2ReaderModel.controller()
+        .events
+        .ofType(SR2BookmarkEvent::class.java)
         .subscribe { this.reloadBookmarks() },
     )
 
     this.reloadBookmarks()
+  }
+
+  override fun onStop() {
+    super.onStop()
+    this.bookmarkSubscriptions.dispose()
   }
 
   private fun reloadBookmarks() {
@@ -126,7 +99,7 @@ internal class SR2TOCBookmarksFragment private constructor(
   private fun reloadBookmarksUI() {
     SR2UIThread.checkIsUIThread()
 
-    val bookmarksNow = this.controller.bookmarksNow()
+    val bookmarksNow = SR2ReaderModel.controller().bookmarksNow()
     this.logger.debug("received {} bookmarks", bookmarksNow.size)
     val bookmarks = bookmarksNow.filter { it.type != LAST_READ }
     this.bookmarkAdapter.setBookmarks(bookmarks)
@@ -144,7 +117,7 @@ internal class SR2TOCBookmarksFragment private constructor(
       this.lastReadItem.rootView.visibility = View.GONE
     }
 
-    emptyMessage.visibility = if (bookmarks.isEmpty() && lastRead == null) {
+    this.emptyMessage.visibility = if (bookmarks.isEmpty() && lastRead == null) {
       View.VISIBLE
     } else {
       View.GONE
@@ -152,20 +125,15 @@ internal class SR2TOCBookmarksFragment private constructor(
   }
 
   private fun onBookmarkSelected(bookmark: SR2Bookmark) {
-    this.controller.submitCommand(SR2Command.OpenChapter(bookmark.locator))
+    SR2ReaderModel.controller().submitCommand(SR2Command.OpenChapter(bookmark.locator))
 
     SR2UIThread.runOnUIThreadDelayed(
-      Runnable { this.readerModel.publishViewEvent(SR2ReaderViewNavigationClose) },
+      { SR2ReaderModel.submitViewCommand(SR2ReaderViewNavigationTOCClose) },
       SR2TOC.tocSelectionDelay(),
     )
   }
 
   private fun onBookmarkDeleteRequested(bookmark: SR2Bookmark) {
-    this.controller.submitCommand(SR2Command.BookmarkDelete(bookmark))
-  }
-
-  override fun onStop() {
-    super.onStop()
-    this.bookmarkSubscriptions.dispose()
+    SR2ReaderModel.controller().submitCommand(SR2Command.BookmarkDelete(bookmark))
   }
 }

@@ -11,6 +11,7 @@ import org.librarysimplified.r2.api.SR2Font
 import org.librarysimplified.r2.api.SR2Locator.SR2LocatorChapterEnd
 import org.librarysimplified.r2.api.SR2Locator.SR2LocatorPercent
 import org.librarysimplified.r2.api.SR2Theme
+import org.readium.r2.shared.publication.Href
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.ObjectInputStream
@@ -25,7 +26,7 @@ import java.util.concurrent.Executors
  * This object provides an excessively simple persistent database.
  */
 
-class DemoDatabase(private val context: Context) {
+class DemoDatabase(private val baseDirectory: File) {
 
   private val logger =
     LoggerFactory.getLogger(DemoDatabase::class.java)
@@ -72,7 +73,7 @@ class DemoDatabase(private val context: Context) {
           date = bookmark.time,
           type = bookmark.type,
           title = bookmark.title,
-          locator = SR2LocatorPercent(bookmark.chapterHref, bookmark.chapterProgress),
+          locator = SR2LocatorPercent(Href(bookmark.chapterHref)!!, bookmark.chapterProgress),
           bookProgress = bookmark.bookProgress,
           uri = bookmark.uri,
         )
@@ -90,7 +91,7 @@ class DemoDatabase(private val context: Context) {
     }
 
     val existing = this.bookmarks[bookId]?.toMutableList() ?: mutableListOf()
-    existing.removeAll { it == toSerializable(bookmark) }
+    existing.removeAll { it == this.toSerializable(bookmark) }
     this.bookmarks[bookId] = existing.toList()
     this.ioExecutor.execute { this.saveMap() }
   }
@@ -111,7 +112,7 @@ class DemoDatabase(private val context: Context) {
       }
     }
 
-    val serializable = toSerializable(bookmark)
+    val serializable = this.toSerializable(bookmark)
     existing.removeAll { it == serializable }
     existing.add(serializable)
     this.bookmarks[bookId] = existing.toList()
@@ -127,7 +128,7 @@ class DemoDatabase(private val context: Context) {
           time = bookmark.date,
           type = bookmark.type,
           title = bookmark.title,
-          chapterHref = bookmark.locator.chapterHref,
+          chapterHref = bookmark.locator.chapterHref.toString(),
           chapterProgress = locator.chapterProgress,
           uri = bookmark.uri,
         )
@@ -137,7 +138,7 @@ class DemoDatabase(private val context: Context) {
           time = bookmark.date,
           type = bookmark.type,
           title = bookmark.title,
-          chapterHref = bookmark.locator.chapterHref,
+          chapterHref = bookmark.locator.chapterHref.toString(),
           chapterProgress = 1.0,
           uri = bookmark.uri,
         )
@@ -149,12 +150,12 @@ class DemoDatabase(private val context: Context) {
     return try {
       this.logger.debug("loading bookmarks")
 
-      val file = File(this.context.filesDir, "bookmarks.dat")
+      val file = File(this.baseDirectory, "bookmarks.dat")
       file.inputStream().use { stream ->
         ObjectInputStream(stream).use { objectStream ->
           val map = objectStream.readObject() as ConcurrentHashMap<String, List<SerializableBookmark>>
           this.logger.debug("loaded {} bookmarks", this.countBookmarks(map))
-          logBookmarks(map)
+          this.logBookmarks(map)
           map
         }
       }
@@ -177,9 +178,9 @@ class DemoDatabase(private val context: Context) {
       this.logger.debug("saving {} bookmarks", this.countBookmarks(this.bookmarks))
 
       val fileTmp =
-        File(this.context.filesDir, "bookmarks.dat.tmp")
+        File(this.baseDirectory, "bookmarks.dat.tmp")
       val file =
-        File(this.context.filesDir, "bookmarks.dat")
+        File(this.baseDirectory, "bookmarks.dat")
 
       fileTmp.outputStream().use { stream ->
         ObjectOutputStream(stream).use { objectStream ->
@@ -196,7 +197,7 @@ class DemoDatabase(private val context: Context) {
     return try {
       this.logger.debug("loading theme")
 
-      val file = File(this.context.filesDir, "theme.dat")
+      val file = File(this.baseDirectory, "theme.dat")
       val properties = Properties()
       file.inputStream().use(properties::load)
 
@@ -216,9 +217,9 @@ class DemoDatabase(private val context: Context) {
       this.logger.debug("saving theme")
 
       val fileTmp =
-        File(this.context.filesDir, "theme.dat.tmp")
+        File(this.baseDirectory, "theme.dat.tmp")
       val file =
-        File(this.context.filesDir, "theme.dat")
+        File(this.baseDirectory, "theme.dat")
 
       val properties = Properties()
       properties["colorScheme"] = theme.colorScheme.name

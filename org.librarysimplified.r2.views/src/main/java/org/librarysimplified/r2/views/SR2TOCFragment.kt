@@ -14,15 +14,7 @@ import org.librarysimplified.r2.views.internal.SR2TOCBookmarksFragment
 import org.librarysimplified.r2.views.internal.SR2TOCChaptersFragment
 import org.librarysimplified.r2.views.internal.SR2TOCPage
 
-class SR2TOCFragment private constructor(
-  private val parameters: SR2ReaderParameters,
-) : Fragment() {
-
-  companion object {
-    fun create(parameters: SR2ReaderParameters): SR2TOCFragment {
-      return SR2TOCFragment(parameters)
-    }
-  }
+class SR2TOCFragment : Fragment() {
 
   private lateinit var viewPagerAdapter: SR2TOCAdapter
   private lateinit var viewPager: ViewPager2
@@ -49,11 +41,11 @@ class SR2TOCFragment private constructor(
         pages = listOf(
           SR2TOCPage(
             title = this.resources.getString(R.string.tocTitle),
-            fragmentConstructor = { SR2TOCChaptersFragment.create(this.parameters) },
+            fragmentConstructor = { SR2TOCChaptersFragment() },
           ),
           SR2TOCPage(
             title = this.resources.getString(R.string.tocBookmarks),
-            fragmentConstructor = { SR2TOCBookmarksFragment.create(this.parameters) },
+            fragmentConstructor = { SR2TOCBookmarksFragment() },
           ),
         ),
       )

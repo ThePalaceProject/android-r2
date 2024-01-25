@@ -1,15 +1,17 @@
 package org.librarysimplified.r2.api
 
+import org.readium.r2.shared.publication.Href
+
 /**
  * A location within a book.
  */
 
 sealed class SR2Locator : Comparable<SR2Locator> {
 
-  abstract val chapterHref: String
+  abstract val chapterHref: Href
 
   data class SR2LocatorPercent(
-    override val chapterHref: String,
+    override val chapterHref: Href,
     val chapterProgress: Double,
   ) : SR2Locator() {
 
@@ -20,13 +22,13 @@ sealed class SR2Locator : Comparable<SR2Locator> {
     }
 
     companion object {
-      fun start(href: String): SR2LocatorPercent {
+      fun start(href: Href): SR2LocatorPercent {
         return SR2LocatorPercent(chapterProgress = 0.0, chapterHref = href)
       }
     }
 
     override fun compareTo(other: SR2Locator): Int {
-      val indexCmp = this.chapterHref.compareTo(other.chapterHref)
+      val indexCmp = this.chapterHref.toString().compareTo(other.chapterHref.toString())
       return if (indexCmp == 0) {
         when (other) {
           is SR2LocatorPercent ->
@@ -41,10 +43,10 @@ sealed class SR2Locator : Comparable<SR2Locator> {
   }
 
   data class SR2LocatorChapterEnd(
-    override val chapterHref: String,
+    override val chapterHref: Href,
   ) : SR2Locator() {
     override fun compareTo(other: SR2Locator): Int {
-      val indexCmp = this.chapterHref.compareTo(other.chapterHref)
+      val indexCmp = this.chapterHref.toString().compareTo(other.chapterHref.toString())
       return if (indexCmp == 0) {
         when (other) {
           is SR2LocatorPercent ->

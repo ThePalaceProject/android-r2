@@ -1,5 +1,7 @@
 package org.librarysimplified.r2.vanilla.internal
 
+import android.app.Application
+import android.content.Context
 import android.webkit.WebView
 import com.google.common.util.concurrent.AsyncFunction
 import com.google.common.util.concurrent.Futures
@@ -43,8 +45,9 @@ import org.librarysimplified.r2.api.SR2Locator.SR2LocatorChapterEnd
 import org.librarysimplified.r2.api.SR2Locator.SR2LocatorPercent
 import org.librarysimplified.r2.api.SR2PageNumberingMode
 import org.librarysimplified.r2.api.SR2Theme
+import org.librarysimplified.r2.vanilla.BuildConfig
 import org.readium.r2.shared.Search
-import org.readium.r2.shared.fetcher.TransformingFetcher
+import org.readium.r2.shared.publication.Href
 import org.readium.r2.shared.publication.Publication
 import org.readium.r2.shared.publication.epub.EpubLayout.FIXED
 import org.readium.r2.shared.publication.epub.EpubLayout.REFLOWABLE
@@ -54,19 +57,20 @@ import org.readium.r2.shared.publication.services.positionsByReadingOrder
 import org.readium.r2.shared.publication.services.protectionError
 import org.readium.r2.shared.publication.services.search.SearchIterator
 import org.readium.r2.shared.publication.services.search.search
+import org.readium.r2.shared.util.ErrorException
+import org.readium.r2.shared.util.Url
+import org.readium.r2.shared.util.asset.AssetRetriever
 import org.readium.r2.shared.util.getOrElse
-import org.readium.r2.streamer.Streamer
-import org.readium.r2.streamer.parser.epub.EpubParser
-import org.readium.r2.streamer.server.Server
+import org.readium.r2.shared.util.http.DefaultHttpClient
+import org.readium.r2.streamer.PublicationOpener
+import org.readium.r2.streamer.parser.DefaultPublicationParser
 import org.slf4j.LoggerFactory
 import java.io.IOException
-import java.net.ServerSocket
 import java.net.URI
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.collections.List
 import kotlin.math.round
 
 /**
@@ -76,11 +80,8 @@ import kotlin.math.round
 @OptIn(Search::class)
 internal class SR2Controller private constructor(
   private val configuration: SR2ControllerConfiguration,
-  private val port: Int,
-  private val server: Server,
   private val publication: Publication,
-  private val epubFileName: String,
-  private val baseUrl: URI,
+  private val baseUrl: Url,
 ) : SR2ControllerType {
 
   companion object {
@@ -89,106 +90,72 @@ internal class SR2Controller private constructor(
       LoggerFactory.getLogger(SR2Controller::class.java)
 
     /**
-     * Find a high-numbered port upon which to run the internal server. Tries up to ten
-     * times to find a port and then gives up with an exception if it can't.
-     */
-
-    private fun fetchUnusedHTTPPort(): Int {
-      for (i in 0 until 10) {
-        try {
-          val socket = ServerSocket(0)
-          val port = socket.localPort
-          socket.close()
-          return port
-        } catch (e: IOException) {
-          this.logger.error("failed to open port: ", e)
-        }
-
-        try {
-          Thread.sleep(1_000L)
-        } catch (e: InterruptedException) {
-          Thread.currentThread().interrupt()
-        }
-      }
-
-      throw IOException("Unable to find an unused port for the server")
-    }
-
-    /**
      * Create a new controller based on the given configuration.
      */
 
     fun create(
+      context: Application,
       configuration: SR2ControllerConfiguration,
     ): SR2ControllerType {
       val bookFile = configuration.bookFile
       this.logger.debug("creating controller for {}", bookFile)
 
-      val onCreatePublication: Publication.Builder.() -> Unit = {
-        this.fetcher = TransformingFetcher(this.fetcher, SR2HtmlInjector(this.manifest)::transform)
-      }
+      val httpClient =
+        DefaultHttpClient(userAgent = "${BuildConfig.LIBRARY_PACKAGE_NAME}/${BuildConfig.R2_VERSION_NAME}")
+      val assetRetriever =
+        AssetRetriever(context.contentResolver, httpClient)
 
-      val streamer =
-        Streamer(
-          context = configuration.context,
-          onCreatePublication = onCreatePublication,
-          parsers = listOf(EpubParser()),
-          contentProtections = configuration.contentProtections,
-          ignoreDefaultParsers = true,
+      val publicationParser =
+        DefaultPublicationParser(
+          context = context,
+          httpClient = httpClient,
+          assetRetriever = assetRetriever,
+          pdfFactory = SR2NoPDFFactory
         )
+      val publicationOpener =
+        PublicationOpener(
+          publicationParser = publicationParser,
+          contentProtections =
+          configuration.contentProtections,
+          onCreatePublication = {
+          })
 
-      val publication = runBlocking {
-        streamer.open(bookFile, allowUserInteraction = false)
-      }.getOrElse {
-        throw IOException("Failed to open EPUB", it)
-      }
+      val publication =
+        runBlocking {
+          publicationOpener.open(
+            asset = configuration.bookFile,
+            credentials = null,
+            allowUserInteraction = false,
+          )
+        }.getOrElse {
+          throw IOException("Failed to open EPUB", ErrorException(it))
+        }
 
       if (publication.isRestricted) {
-        throw IOException("Failed to unlock EPUB", publication.protectionError)
+        val protectionError = publication.protectionError
+        if (protectionError != null) {
+          throw IOException("Failed to unlock EPUB", ErrorException(protectionError))
+        } else {
+          throw IOException("Failed to unlock EPUB")
+        }
       }
 
       if (publication.readingOrder.isEmpty()) {
         throw IOException("Publication has no chapters!")
       }
 
-      this.logger.debug("publication title: {}", publication.metadata.title)
-      val port = this.fetchUnusedHTTPPort()
-      this.logger.debug("server port: {}", port)
-
-      val server = Server(port, configuration.context, enableReadiumNavigatorSupport = false)
-      this.logger.debug("starting server")
-      server.start(5_000)
-
-      try {
-        this.logger.debug("loading epub into server")
-        val epubName = "/${bookFile.name}"
-        val baseUrl = server.addPublication(
-          publication = publication,
-          userPropertiesFile = null,
-        )
-
-        this.logger.debug("publication uri: {}", baseUrl)
-        if (baseUrl == null) {
-          throw IOException("Publication cannot be served")
-        }
-
-        this.logger.debug("server ready")
-        return SR2Controller(
-          configuration = configuration,
-          epubFileName = epubName,
-          baseUrl = baseUrl.toURI(),
-          port = port,
-          publication = publication,
-          server = server,
-        )
-      } catch (e: Exception) {
-        try {
-          server.stop()
-        } catch (e: Exception) {
-          this.logger.error("error stopping server: ", e)
-        }
-        throw e
+      this.logger.debug("Publication title: {}", publication.metadata.title)
+      val baseUrl = publication.baseUrl
+      this.logger.debug("Publication URI: {}", baseUrl)
+      if (baseUrl == null) {
+        throw IOException("Publication cannot be served")
       }
+
+      return SR2Controller(
+        configuration = configuration,
+        publication = publication,
+        baseUrl = baseUrl
+      )
     }
   }
 
@@ -275,12 +242,8 @@ internal class SR2Controller private constructor(
 
   private fun serverLocationOfTarget(
     target: SR2NavigationTarget,
-  ): String {
-    val href = target.node.navigationPoint.locator.chapterHref.replace("^/+".toRegex(), "")
-    return when (target.extraFragment) {
-      null -> String.format("%s/%s", this.baseUrl, href)
-      else -> String.format("%s/%s#%s", this.baseUrl, href, target.extraFragment)
-    }
+  ): Href {
+    return target.node.navigationPoint.locator.chapterHref
   }
 
   private fun setCurrentNode(target: SR2NavigationTarget) {
@@ -676,7 +639,7 @@ internal class SR2Controller private constructor(
       val link = apiCommand.link
       val baseText = this.baseUrl.toString()
       if (apiCommand.link.startsWith(baseText)) {
-        val target = link.removePrefix(baseText)
+        val target = Href(link.removePrefix(baseText))!!
         this.submitCommand(SR2Command.OpenChapter(SR2LocatorPercent(target, 0.0)))
         return Futures.immediateFuture(Unit)
       }
@@ -704,12 +667,8 @@ internal class SR2Controller private constructor(
 
     if (searchQuery != this.lastQuery) {
       this.coroutineScope.launch {
-        this@SR2Controller.searchIterator = this@SR2Controller.publication.search(searchQuery)
-          .onFailure {
-            this@SR2Controller.logger.error("Error searching for query: {}", searchQuery, it)
-          }
-          .getOrNull()
-
+        this@SR2Controller.searchIterator =
+          this@SR2Controller.publication.search(searchQuery)
         this@SR2Controller.publishEvent(
           SR2CommandSearchResults(command, this@SR2Controller.searchIterator),
         )
@@ -754,7 +713,7 @@ internal class SR2Controller private constructor(
       val connection =
         this.waitForWebViewAvailability()
       val openFuture =
-        connection.openURL(targetLocation)
+        connection.openURL(targetLocation.toString())
 
       val themeFuture =
         Futures.transformAsync(
@@ -781,7 +740,7 @@ internal class SR2Controller private constructor(
        * If there's a fragment, attempt to scroll to it.
        */
 
-      when (val fragment = locator.chapterHref.substringAfter('#', "")) {
+      when (val fragment = locator.chapterHref.toString().substringAfter('#', "")) {
         "" ->
           moveFuture
 
@@ -797,7 +756,7 @@ internal class SR2Controller private constructor(
       this.setCurrentNode(previousNode)
       this.publishEvent(
         SR2Event.SR2Error.SR2ChapterNonexistent(
-          chapterHref = locator.chapterHref,
+          chapterHref = locator.chapterHref.toString(),
           message = e.message ?: "Unable to open chapter ${locator.chapterHref}",
         ),
       )
@@ -1139,42 +1098,27 @@ internal class SR2Controller private constructor(
       try {
         this.viewDisconnect()
       } catch (e: Exception) {
-        this.logger.error("could not disconnect view: ", e)
+        this.logger.error("Could not disconnect view: ", e)
       }
 
       try {
-        this.server.closeAllConnections()
+        runBlocking {
+          this@SR2Controller.publication.close()
+        }
       } catch (e: Exception) {
-        this.logger.error("could not close connections: ", e)
-      }
-
-      try {
-        this.server.stop()
-      } catch (e: Exception) {
-        this.logger.error("could not stop server: ", e)
-      }
-
-      try {
-        this.publication.close()
-      } catch (e: Exception) {
-        this.logger.error("could not close publication: ", e)
+        this.logger.error("Could not close publication: ", e)
       }
 
       try {
         this.queueExecutor.shutdown()
       } catch (e: Exception) {
-        this.logger.error("could not stop command queue: ", e)
+        this.logger.error("Could not stop command queue: ", e)
       }
 
       try {
         this.eventSubject.onComplete()
       } catch (e: Exception) {
-        this.logger.error("could not complete event stream: ", e)
-      }
-
-      try {
-      } catch (e: Exception) {
-        this.logger.error("could not unsubscribe: ", e)
+        this.logger.error("Could not complete event stream: ", e)
       }
     }
   }

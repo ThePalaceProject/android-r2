@@ -1,7 +1,10 @@
 package org.librarysimplified.r2.api
 
+import android.app.Application
+import android.content.Context
 import com.google.common.util.concurrent.ListenableFuture
 import java.util.concurrent.Callable
+import java.util.concurrent.CompletableFuture
 
 /**
  * A provider of R2 controllers.
@@ -14,13 +17,18 @@ interface SR2ControllerProviderType {
    */
 
   fun create(
+    context: Application,
     configuration: SR2ControllerConfiguration,
-  ): ListenableFuture<SR2ControllerType> {
-    return configuration.ioExecutor.submit(
-      Callable {
-        this.createHere(configuration)
-      },
-    )
+  ): CompletableFuture<SR2ControllerType> {
+    val future = CompletableFuture<SR2ControllerType>()
+    configuration.ioExecutor.execute {
+      try {
+        future.complete(this.createHere(context, configuration))
+      } catch (e: Throwable) {
+        future.completeExceptionally(e)
+      }
+    }
+    return future
   }
 
   /**
@@ -31,6 +39,7 @@ interface SR2ControllerProviderType {
    */
 
   fun createHere(
+    context: Application,
     configuration: SR2ControllerConfiguration,
   ): SR2ControllerType
 }

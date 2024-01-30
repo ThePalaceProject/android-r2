@@ -1153,20 +1153,24 @@ internal class SR2Controller private constructor(
   }
 
   private fun guessMimeType(path: String): String {
-    if (path.endsWith(".css")) {
+    val upper = path.uppercase()
+    if (upper.endsWith(".CSS")) {
       return MediaType.CSS.toString()
     }
-    if (path.endsWith(".js")) {
+    if (upper.endsWith(".JS")) {
       return MediaType.JAVASCRIPT.toString()
     }
-    if (path.endsWith(".ttf")) {
+    if (upper.endsWith(".TTF")) {
       return MediaType.TTF.toString()
     }
-    if (path.endsWith(".otf")) {
+    if (upper.endsWith(".OTF")) {
       return MediaType.OTF.toString()
     }
-    if (path.endsWith(".html")) {
+    if (upper.endsWith(".HTML")) {
       return MediaType.HTML.toString()
+    }
+    if (upper.endsWith(".XHTML")) {
+      return MediaType.XHTML.toString()
     }
     return "application/octet-stream"
   }

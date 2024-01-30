@@ -1,9 +1,8 @@
 package org.librarysimplified.r2.vanilla.internal
 
 import android.app.Application
-import android.content.Context
+import android.webkit.WebResourceResponse
 import android.webkit.WebView
-import com.google.common.util.concurrent.AsyncFunction
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
@@ -46,7 +45,7 @@ import org.librarysimplified.r2.api.SR2Locator.SR2LocatorPercent
 import org.librarysimplified.r2.api.SR2PageNumberingMode
 import org.librarysimplified.r2.api.SR2Theme
 import org.librarysimplified.r2.vanilla.BuildConfig
-import org.readium.r2.shared.Search
+import org.readium.r2.shared.ExperimentalReadiumApi
 import org.readium.r2.shared.publication.Href
 import org.readium.r2.shared.publication.Publication
 import org.readium.r2.shared.publication.epub.EpubLayout.FIXED
@@ -58,15 +57,18 @@ import org.readium.r2.shared.publication.services.protectionError
 import org.readium.r2.shared.publication.services.search.SearchIterator
 import org.readium.r2.shared.publication.services.search.search
 import org.readium.r2.shared.util.ErrorException
+import org.readium.r2.shared.util.Try
 import org.readium.r2.shared.util.Url
 import org.readium.r2.shared.util.asset.AssetRetriever
+import org.readium.r2.shared.util.data.asInputStream
 import org.readium.r2.shared.util.getOrElse
 import org.readium.r2.shared.util.http.DefaultHttpClient
+import org.readium.r2.shared.util.mediatype.MediaType
 import org.readium.r2.streamer.PublicationOpener
 import org.readium.r2.streamer.parser.DefaultPublicationParser
 import org.slf4j.LoggerFactory
+import java.io.ByteArrayInputStream
 import java.io.IOException
-import java.net.URI
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -77,14 +79,18 @@ import kotlin.math.round
  * The default R2 controller implementation.
  */
 
-@OptIn(Search::class)
 internal class SR2Controller private constructor(
   private val configuration: SR2ControllerConfiguration,
   private val publication: Publication,
-  private val baseUrl: Url,
+  private val assetRetriever: AssetRetriever,
 ) : SR2ControllerType {
 
   companion object {
+
+    const val PREFIX_PUBLICATION =
+      "https://org.librarysimplified.r2/publication/"
+    const val PREFIX_ASSETS =
+      "https://org.librarysimplified.r2/assets/"
 
     private val logger =
       LoggerFactory.getLogger(SR2Controller::class.java)
@@ -98,7 +104,7 @@ internal class SR2Controller private constructor(
       configuration: SR2ControllerConfiguration,
     ): SR2ControllerType {
       val bookFile = configuration.bookFile
-      this.logger.debug("creating controller for {}", bookFile)
+      this.logger.debug("Creating controller for {}", bookFile)
 
       val httpClient =
         DefaultHttpClient(userAgent = "${BuildConfig.LIBRARY_PACKAGE_NAME}/${BuildConfig.R2_VERSION_NAME}")
@@ -110,7 +116,7 @@ internal class SR2Controller private constructor(
           context = context,
           httpClient = httpClient,
           assetRetriever = assetRetriever,
-          pdfFactory = SR2NoPDFFactory
+          pdfFactory = SR2NoPDFFactory,
         )
       val publicationOpener =
         PublicationOpener(
@@ -118,7 +124,8 @@ internal class SR2Controller private constructor(
           contentProtections =
           configuration.contentProtections,
           onCreatePublication = {
-          })
+          },
+        )
 
       val publication =
         runBlocking {
@@ -145,16 +152,10 @@ internal class SR2Controller private constructor(
       }
 
       this.logger.debug("Publication title: {}", publication.metadata.title)
-      val baseUrl = publication.baseUrl
-      this.logger.debug("Publication URI: {}", baseUrl)
-      if (baseUrl == null) {
-        throw IOException("Publication cannot be served")
-      }
-
       return SR2Controller(
         configuration = configuration,
         publication = publication,
-        baseUrl = baseUrl
+        assetRetriever = assetRetriever,
       )
     }
   }
@@ -180,6 +181,7 @@ internal class SR2Controller private constructor(
 
   private val closed = AtomicBoolean(false)
 
+  @OptIn(ExperimentalReadiumApi::class)
   private var searchIterator: SearchIterator? = null
 
   @Volatile
@@ -242,8 +244,8 @@ internal class SR2Controller private constructor(
 
   private fun serverLocationOfTarget(
     target: SR2NavigationTarget,
-  ): Href {
-    return target.node.navigationPoint.locator.chapterHref
+  ): Url {
+    return target.node.navigationPoint.locator.chapterHref.resolve(Url(PREFIX_PUBLICATION))
   }
 
   private fun setCurrentNode(target: SR2NavigationTarget) {
@@ -305,7 +307,7 @@ internal class SR2Controller private constructor(
     this.logger.debug("executing {}", command)
 
     if (this.closed.get()) {
-      this.logger.debug("executor has been shut down")
+      this.logger.debug("Executor has been shut down")
       return Futures.immediateFuture(Unit)
     }
 
@@ -637,9 +639,8 @@ internal class SR2Controller private constructor(
        */
 
       val link = apiCommand.link
-      val baseText = this.baseUrl.toString()
-      if (apiCommand.link.startsWith(baseText)) {
-        val target = Href(link.removePrefix(baseText))!!
+      if (apiCommand.link.startsWith(PREFIX_PUBLICATION)) {
+        val target = Href(link.removePrefix(PREFIX_PUBLICATION))!!
         this.submitCommand(SR2Command.OpenChapter(SR2LocatorPercent(target, 0.0)))
         return Futures.immediateFuture(Unit)
       }
@@ -647,7 +648,7 @@ internal class SR2Controller private constructor(
       this.publishEvent(SR2ExternalLinkSelected(apiCommand.link))
       return Futures.immediateFuture(Unit)
     } catch (e: Exception) {
-      this.logger.error("unable to open link ${apiCommand.link}: ", e)
+      this.logger.error("Unable to open link ${apiCommand.link}: ", e)
       this.publishEvent(
         SR2Event.SR2Error.SR2ChapterNonexistent(
           chapterHref = apiCommand.link,
@@ -660,11 +661,11 @@ internal class SR2Controller private constructor(
     }
   }
 
+  @OptIn(ExperimentalReadiumApi::class)
   private fun executeCommandSearch(
     command: SR2Command.Search,
   ): ListenableFuture<*> {
     val searchQuery = command.searchQuery
-
     if (searchQuery != this.lastQuery) {
       this.coroutineScope.launch {
         this@SR2Controller.searchIterator =
@@ -676,10 +677,10 @@ internal class SR2Controller private constructor(
     }
 
     this.lastQuery = searchQuery
-
     return Futures.immediateFuture(Unit)
   }
 
+  @OptIn(ExperimentalReadiumApi::class)
   private fun executeCommandCancelSearch(): ListenableFuture<*> {
     this.coroutineScope.launch {
       this@SR2Controller.searchIterator?.close()
@@ -718,21 +719,21 @@ internal class SR2Controller private constructor(
       val themeFuture =
         Futures.transformAsync(
           openFuture,
-          AsyncFunction { this.executeThemeSet(connection, this.themeMostRecent) },
+          { this.executeThemeSet(connection, this.themeMostRecent) },
           MoreExecutors.directExecutor(),
         )
 
       val scrollModeFuture =
         Futures.transformAsync(
           themeFuture,
-          AsyncFunction { connection.executeJS { js -> js.setScrollMode(this.configuration.scrollingMode) } },
+          { connection.executeJS { js -> js.setScrollMode(this.configuration.scrollingMode) } },
           MoreExecutors.directExecutor(),
         )
 
       val moveFuture =
         Futures.transformAsync(
           scrollModeFuture,
-          AsyncFunction { this.executeLocatorSet(connection, locator) },
+          { this.executeLocatorSet(connection, locator) },
           MoreExecutors.directExecutor(),
         )
 
@@ -747,12 +748,12 @@ internal class SR2Controller private constructor(
         else ->
           Futures.transformAsync(
             moveFuture,
-            AsyncFunction { connection.executeJS { js -> js.scrollToId(fragment) } },
+            { connection.executeJS { js -> js.scrollToId(fragment) } },
             MoreExecutors.directExecutor(),
           )
       }
     } catch (e: Exception) {
-      this.logger.error("unable to open chapter ${locator.chapterHref}: ", e)
+      this.logger.error("Unable to open chapter ${locator.chapterHref}: ", e)
       this.setCurrentNode(previousNode)
       this.publishEvent(
         SR2Event.SR2Error.SR2ChapterNonexistent(
@@ -781,7 +782,7 @@ internal class SR2Controller private constructor(
 
   private fun getBookProgress(chapterProgress: Double): Double? {
     require(chapterProgress < 1 || chapterProgress > 0) {
-      "progress must be in [0, 1]; was $chapterProgress"
+      "Progress must be in [0, 1]; was $chapterProgress"
     }
 
     val currentNode = this.currentTarget.node
@@ -974,7 +975,7 @@ internal class SR2Controller private constructor(
             throw e.cause!!
           }
         } catch (e: SR2WebViewDisconnectedException) {
-          this.logger.debug("webview disconnected: could not execute {}", command)
+          this.logger.debug("Webview disconnected: could not execute {}", command)
           this.publishEvent(SR2Event.SR2Error.SR2WebViewInaccessible("No web view is connected"))
           this.publishCommandFailed(command, e)
         } catch (e: Exception) {
@@ -1119,6 +1120,108 @@ internal class SR2Controller private constructor(
         this.eventSubject.onComplete()
       } catch (e: Exception) {
         this.logger.error("Could not complete event stream: ", e)
+      }
+    }
+  }
+
+  internal fun openAsset(path: String): WebResourceResponse {
+    this.logger.debug("openAsset: {}", path)
+
+    val resourcePath =
+      "/org/librarysimplified/r2/vanilla/readium/$path"
+    val resourceURL =
+      SR2Controller::class.java.getResource(resourcePath)
+        ?: return WebResourceResponse(
+          "text/plain",
+          null,
+          404,
+          "not found",
+          mapOf(),
+          ByteArrayInputStream(ByteArray(0)),
+        )
+
+    return resourceURL.openStream().use { stream ->
+      WebResourceResponse(
+        guessMimeType(path),
+        null,
+        200,
+        "OK",
+        mapOf(),
+        ByteArrayInputStream(stream.readBytes()),
+      )
+    }
+  }
+
+  private fun guessMimeType(path: String): String {
+    if (path.endsWith(".css")) {
+      return MediaType.CSS.toString()
+    }
+    if (path.endsWith(".js")) {
+      return MediaType.JAVASCRIPT.toString()
+    }
+    if (path.endsWith(".ttf")) {
+      return MediaType.TTF.toString()
+    }
+    if (path.endsWith(".otf")) {
+      return MediaType.OTF.toString()
+    }
+    if (path.endsWith(".html")) {
+      return MediaType.HTML.toString()
+    }
+    return "application/octet-stream"
+  }
+
+  internal fun openPublicationResource(path: String): WebResourceResponse? {
+    this.logger.debug("openPublicationResource: {}", path)
+
+    val urlPath = Url(path)
+    if (urlPath == null) {
+      this.logger.error("Could not decode publication resource path: {}", path)
+      return null
+    }
+
+    val resourceValue = this.publication.get(urlPath)
+    if (resourceValue == null) {
+      this.logger.error("Could not retrieve publication resource for URL: {}", urlPath)
+      return null
+    }
+
+    return runBlocking {
+      val c = this@SR2Controller
+      when (val result = c.assetRetriever.retrieve(resourceValue)) {
+        is Try.Failure -> {
+          c.logger.error(
+            "Failed to retrieve publication resource for {}: {}",
+            urlPath,
+            result.value.message,
+          )
+          WebResourceResponse(
+            result.value.message,
+            "text/plain",
+            500,
+            result.value.message,
+            null,
+            result.value.message.byteInputStream(),
+          )
+        }
+
+        is Try.Success -> {
+          val resourceInjected =
+            SR2HtmlInjectingResource(
+              publication = c.publication,
+              mediaType = result.value.format.mediaType,
+              resourceValue,
+            )
+
+          WebResourceResponse(
+            result.value.format.mediaType.toString(),
+            result.value.format.mediaType.charset?.name(),
+            200,
+            "OK",
+            null,
+            resourceInjected.asInputStream(),
+          )
+        }
       }
     }
   }

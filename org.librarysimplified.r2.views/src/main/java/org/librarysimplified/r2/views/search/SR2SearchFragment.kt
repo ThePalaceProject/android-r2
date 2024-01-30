@@ -88,7 +88,7 @@ class SR2SearchFragment : Fragment() {
       this.layoutManager = LinearLayoutManager(
         this@SR2SearchFragment.requireContext(),
         LinearLayoutManager.VERTICAL,
-        false
+        false,
       )
       this.addItemDecoration(
         SR2SearchResultSectionItemDecoration(
@@ -190,9 +190,7 @@ class SR2SearchFragment : Fragment() {
     this.subscriptions =
       CompositeDisposable()
     this.subscriptions.add(
-      SR2ReaderModel.controller()
-        .events
-        .subscribe(this::onControllerEvent)
+      SR2ReaderModel.controllerEvents.subscribe(this::onControllerEvent),
     )
   }
 

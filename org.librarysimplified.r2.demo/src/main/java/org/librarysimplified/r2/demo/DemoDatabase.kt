@@ -1,6 +1,5 @@
 package org.librarysimplified.r2.demo
 
-import android.content.Context
 import org.joda.time.DateTime
 import org.librarysimplified.r2.api.SR2Bookmark
 import org.librarysimplified.r2.api.SR2Bookmark.Type

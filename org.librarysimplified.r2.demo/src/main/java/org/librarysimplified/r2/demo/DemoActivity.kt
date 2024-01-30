@@ -3,10 +3,7 @@ package org.librarysimplified.r2.demo
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
-import android.widget.Button
-import android.widget.CheckBox
 import android.widget.Toast
 import androidx.annotation.UiThread
 import androidx.appcompat.app.AlertDialog
@@ -34,18 +31,20 @@ import org.librarysimplified.r2.api.SR2Event.SR2ExternalLinkSelected
 import org.librarysimplified.r2.api.SR2Event.SR2OnCenterTapped
 import org.librarysimplified.r2.api.SR2Event.SR2ReadingPositionChanged
 import org.librarysimplified.r2.api.SR2Event.SR2ThemeChanged
-import org.librarysimplified.r2.api.SR2PageNumberingMode
-import org.librarysimplified.r2.api.SR2ScrollingMode
 import org.librarysimplified.r2.ui_thread.SR2UIThread
 import org.librarysimplified.r2.vanilla.SR2Controllers
 import org.librarysimplified.r2.views.SR2ControllerReference
 import org.librarysimplified.r2.views.SR2ReaderFragment
 import org.librarysimplified.r2.views.SR2ReaderModel
+import org.librarysimplified.r2.views.SR2ReaderViewCommand
+import org.librarysimplified.r2.views.SR2ReaderViewCommand.SR2ReaderViewNavigationReaderClose
+import org.librarysimplified.r2.views.SR2ReaderViewCommand.SR2ReaderViewNavigationSearchClose
+import org.librarysimplified.r2.views.SR2ReaderViewCommand.SR2ReaderViewNavigationSearchOpen
+import org.librarysimplified.r2.views.SR2ReaderViewCommand.SR2ReaderViewNavigationTOCClose
+import org.librarysimplified.r2.views.SR2ReaderViewCommand.SR2ReaderViewNavigationTOCOpen
 import org.librarysimplified.r2.views.SR2ReaderViewEvent
 import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewBookEvent.SR2BookLoadingFailed
 import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewControllerEvent.SR2ControllerBecameAvailable
-import org.librarysimplified.r2.views.SR2ReaderViewCommand
-import org.librarysimplified.r2.views.SR2ReaderViewCommand.*
 import org.librarysimplified.r2.views.SR2TOCFragment
 import org.librarysimplified.r2.views.search.SR2SearchFragment
 import org.readium.r2.shared.util.Try
@@ -69,9 +68,6 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
     const val PICK_DOCUMENT = 1001
   }
 
-  private lateinit var demoLoaderBrowseButton: Button
-  private lateinit var demoLoaderPerChapterPageNumbering: CheckBox
-  private lateinit var demoLoaderScrollMode: CheckBox
   private lateinit var subscriptions: CompositeDisposable
   private var fragmentNow: Fragment? = null
 
@@ -84,28 +80,7 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
     this.subscriptions = CompositeDisposable()
     this.fragmentNow = null
 
-    this.setContentView(R.layout.demo_loader)
-
-    this.demoLoaderBrowseButton =
-      this.findViewById(R.id.browse_button)
-    this.demoLoaderScrollMode =
-      this.findViewById(R.id.scrollMode)
-    this.demoLoaderPerChapterPageNumbering =
-      this.findViewById(R.id.perChapterPageNumbering)
-
-    this.demoLoaderBrowseButton.setOnClickListener { this.startDocumentPickerForResult() }
-    this.demoLoaderScrollMode.setOnCheckedChangeListener { _, isChecked ->
-      DemoModel.scrollMode = when (isChecked) {
-        true -> SR2ScrollingMode.SCROLLING_MODE_CONTINUOUS
-        false -> SR2ScrollingMode.SCROLLING_MODE_PAGINATED
-      }
-    }
-    this.demoLoaderPerChapterPageNumbering.setOnCheckedChangeListener { _, isChecked ->
-      DemoModel.perChapterNumbering = when (isChecked) {
-        true -> SR2PageNumberingMode.PER_CHAPTER
-        false -> SR2PageNumberingMode.WHOLE_BOOK
-      }
-    }
+    this.switchFragment(DemoFileSelectionFragment())
   }
 
   @Deprecated("Deprecated in Java")
@@ -124,8 +99,15 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
   override fun onStart() {
     super.onStart()
 
-    this.subscriptions.add(SR2ReaderModel.viewCommands.subscribe(this::onViewCommandReceived))
-    this.subscriptions.add(SR2ReaderModel.viewEvents.subscribe(this::onViewEventReceived))
+    this.subscriptions.add(
+      SR2ReaderModel.controllerEvents.subscribe(this::onControllerEvent),
+    )
+    this.subscriptions.add(
+      SR2ReaderModel.viewCommands.subscribe(this::onViewCommandReceived),
+    )
+    this.subscriptions.add(
+      SR2ReaderModel.viewEvents.subscribe(this::onViewEventReceived),
+    )
   }
 
   override fun onStop() {
@@ -135,7 +117,7 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
     if (fragment != null) {
       this.supportFragmentManager.beginTransaction()
         .remove(fragment)
-        .commit()
+        .commitAllowingStateLoss()
     }
 
     this.subscriptions.dispose()
@@ -145,14 +127,11 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
   private fun onControllerBecameAvailable(reference: SR2ControllerReference) {
     this.switchFragment(SR2ReaderFragment())
 
-    // Listen for messages from the controller.
-    this.subscriptions.add(reference.controller.events.subscribe(this::onControllerEvent))
-
     if (reference.isFirstStartup) {
       // Navigate to the first chapter or saved reading position.
       val bookId = reference.controller.bookMetadata.id
       reference.controller.submitCommand(
-        SR2Command.BookmarksLoad(DemoModel.database.bookmarksFor(bookId))
+        SR2Command.BookmarksLoad(DemoModel.database.bookmarksFor(bookId)),
       )
       val lastRead = DemoModel.database.bookmarkFindLastReadLocation(bookId)
       val startLocator = lastRead?.locator ?: reference.controller.bookMetadata.start
@@ -175,7 +154,7 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
     val assetRetriever =
       AssetRetriever(
         contentResolver = this.contentResolver,
-        httpClient = DefaultHttpClient()
+        httpClient = DefaultHttpClient(),
       )
 
     val file = DemoModel.epubFile!!
@@ -193,7 +172,7 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
       bookId = id,
       theme = DemoModel.database.theme(),
       context = DemoApplication.application,
-      controllers = SR2Controllers()
+      controllers = SR2Controllers(),
     )
   }
 
@@ -226,7 +205,7 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
         this.switchFragment(SR2TOCFragment())
       }
       SR2ReaderViewNavigationReaderClose -> {
-        this.finish()
+        this.switchFragment(DemoFileSelectionFragment())
       }
       SR2ReaderViewNavigationSearchClose -> {
         this.switchFragment(SR2ReaderFragment())
@@ -240,7 +219,7 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
   private fun switchFragment(fragment: Fragment) {
     this.fragmentNow = fragment
     this.supportFragmentManager.beginTransaction()
-      .replace(R.id.demoFragmentArea, fragment)
+      .replace(R.id.mainFragmentHolder, fragment)
       .commit()
   }
 
@@ -260,14 +239,16 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
     when (event) {
       is SR2BookmarkCreate -> {
         DemoModel.database.bookmarkSave(
-          SR2ReaderModel.controller().bookMetadata.id, event.bookmark
+          SR2ReaderModel.controller().bookMetadata.id,
+          event.bookmark,
         )
         event.onBookmarkCreationCompleted(event.bookmark)
       }
 
       is SR2BookmarkDeleted -> {
         DemoModel.database.bookmarkDelete(
-          SR2ReaderModel.controller().bookMetadata.id, event.bookmark
+          SR2ReaderModel.controller().bookMetadata.id,
+          event.bookmark,
         )
       }
 
@@ -300,6 +281,9 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
    */
 
   private fun onPickDocumentResult(resultCode: Int, intent: Intent?) {
+    SR2UIThread.checkIsUIThread()
+    this.switchFragment(DemoLoadingFragment())
+
     // Assume the user picked a valid EPUB file. In reality, we'd want to verify
     // this is a supported file type.
     if (resultCode == Activity.RESULT_OK) {
@@ -309,9 +293,7 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
         DemoModel.setEpubAndId(data)
 
         this.logger.debug("Starting reader...")
-        SR2UIThread.runOnUIThread {
-          this.startReader()
-        }
+        this.startReader()
       }
     }
   }
@@ -368,27 +350,5 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
   private class NullOutputStream : OutputStream() {
     override fun write(b: Int) {
     }
-  }
-
-  /**
-   * Present the native document picker and prompt the user to select an EPUB.
-   */
-
-  private fun startDocumentPickerForResult() {
-    val pickIntent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-      this.type = "*/*"
-      this.addCategory(Intent.CATEGORY_OPENABLE)
-
-      // Filter by MIME type; Android versions prior to Marshmallow don't seem
-      // to understand the 'application/epub+zip' MIME type.
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-        this.putExtra(
-          Intent.EXTRA_MIME_TYPES,
-          arrayOf("application/epub+zip"),
-        )
-      }
-    }
-
-    this.startActivityForResult(pickIntent, PICK_DOCUMENT)
   }
 }

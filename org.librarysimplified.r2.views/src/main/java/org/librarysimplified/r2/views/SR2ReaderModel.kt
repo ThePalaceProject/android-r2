@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.StateFlow
 import org.librarysimplified.r2.api.SR2ControllerConfiguration
 import org.librarysimplified.r2.api.SR2ControllerProviderType
 import org.librarysimplified.r2.api.SR2ControllerType
+import org.librarysimplified.r2.api.SR2Event
 import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandSearchResults
 import org.librarysimplified.r2.api.SR2PageNumberingMode
 import org.librarysimplified.r2.api.SR2ScrollingMode
@@ -51,7 +52,7 @@ object SR2ReaderModel {
           logger.error("Uncaught exception: ", e)
         }
         thread
-      }
+      },
     )
 
   var isPreview: Boolean =
@@ -74,11 +75,18 @@ object SR2ReaderModel {
     PublishSubject.create<SR2ReaderViewEvent>()
       .toSerialized()
 
+  private val controllerEventSource =
+    PublishSubject.create<SR2Event>()
+      .toSerialized()
+
   val viewCommands: Observable<SR2ReaderViewCommand> =
     this.viewCommandSource.observeOn(AndroidSchedulers.mainThread())
 
   val viewEvents: Observable<SR2ReaderViewEvent> =
     this.viewEventSource.observeOn(AndroidSchedulers.mainThread())
+
+  val controllerEvents: Observable<SR2Event> =
+    this.controllerEventSource.observeOn(AndroidSchedulers.mainThread())
 
   @OptIn(ExperimentalReadiumApi::class)
   private var searchIterator: SearchIterator? = null
@@ -126,11 +134,12 @@ object SR2ReaderModel {
     bookFile: Asset,
     bookId: String,
     theme: SR2Theme,
-    controllers: SR2ControllerProviderType
+    controllers: SR2ControllerProviderType,
   ): CompletableFuture<SR2ControllerType> {
     val future =
       controllers.create(
-        context, SR2ControllerConfiguration(
+        context,
+        SR2ControllerConfiguration(
           bookFile = bookFile,
           bookId = bookId,
           theme = theme,
@@ -139,8 +148,8 @@ object SR2ReaderModel {
           uiExecutor = SR2UIThread::runOnUIThread,
           ioExecutor = this.ioExecutor,
           scrollingMode = this.scrollMode,
-          pageNumberingMode = this.perChapterNumbering
-        )
+          pageNumberingMode = this.perChapterNumbering,
+        ),
       )
 
     future.whenComplete { newController, exception ->
@@ -165,6 +174,7 @@ object SR2ReaderModel {
       this.controllerField = newController
       val reference = SR2ControllerReference(controller = newController, isFirstStartup = true)
       this.viewEventSource.onNext(SR2ControllerBecameAvailable(reference))
+      newController.events.subscribe(this.controllerEventSource::onNext)
     }
     return future
   }

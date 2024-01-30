@@ -66,7 +66,7 @@ internal class SR2SettingsDialog private constructor() {
 
     fun create(
       brightness: SR2BrightnessServiceType,
-      context: Context
+      context: Context,
     ): SR2SettingsDialog {
       val eventSubscriptions = CompositeDisposable()
 

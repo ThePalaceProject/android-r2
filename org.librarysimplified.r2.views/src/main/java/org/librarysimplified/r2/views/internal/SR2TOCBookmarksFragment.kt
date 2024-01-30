@@ -75,8 +75,7 @@ internal class SR2TOCBookmarksFragment : Fragment() {
 
     this.bookmarkSubscriptions = CompositeDisposable()
     this.bookmarkSubscriptions.add(
-      SR2ReaderModel.controller()
-        .events
+      SR2ReaderModel.controllerEvents
         .ofType(SR2BookmarkEvent::class.java)
         .subscribe { this.reloadBookmarks() },
     )

@@ -5,7 +5,6 @@ import android.webkit.WebView
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import com.google.common.util.concurrent.SettableFuture
-import org.librarysimplified.r2.api.SR2ControllerCommandQueueType
 import org.librarysimplified.r2.api.SR2ScrollingMode
 import org.librarysimplified.r2.api.SR2ScrollingMode.SCROLLING_MODE_CONTINUOUS
 import org.librarysimplified.r2.api.SR2ScrollingMode.SCROLLING_MODE_PAGINATED
@@ -27,7 +26,7 @@ internal class SR2WebViewConnection(
   private val webView: WebView,
   private val requestQueue: ExecutorService,
   private val uiExecutor: (f: () -> Unit) -> Unit,
-  private val commandQueue: SR2ControllerCommandQueueType,
+  private val commandQueue: SR2Controller,
 ) : SR2WebViewConnectionType {
 
   private val logger =
@@ -39,7 +38,7 @@ internal class SR2WebViewConnection(
       webView: WebView,
       jsReceiver: SR2JavascriptAPIReceiverType,
       uiExecutor: (f: () -> Unit) -> Unit,
-      commandQueue: SR2ControllerCommandQueueType,
+      commandQueue: SR2Controller,
       scrollingMode: SR2ScrollingMode,
       layout: EpubLayout,
     ): SR2WebViewConnectionType {

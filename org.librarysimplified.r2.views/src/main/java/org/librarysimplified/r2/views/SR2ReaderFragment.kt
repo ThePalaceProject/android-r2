@@ -198,7 +198,7 @@ class SR2ReaderFragment : Fragment() {
     val activity = requireActivity()
     SR2SettingsDialog.create(
       brightness = SR2BrightnessService(activity),
-      context = activity
+      context = activity,
     )
   }
 
@@ -206,18 +206,14 @@ class SR2ReaderFragment : Fragment() {
     this.logger.debug("onStart")
     super.onStart()
 
-    this.eventSubscriptions =
-      CompositeDisposable()
+    this.eventSubscriptions = CompositeDisposable()
+    this.eventSubscriptions.add(SR2ReaderModel.controllerEvents.subscribe(this::onControllerEvent))
 
-    val controller =
-      SR2ReaderModel.controller()
-
-    this.eventSubscriptions.add(controller.events.subscribe(this::onControllerEvent))
-
+    val controller = SR2ReaderModel.controller()
     this.toolbar.title = controller.bookMetadata.title
     this.titleText.text = controller.bookMetadata.title
-
     this.showOrHideReadingUI(true)
+    controller.viewConnect(this.webView)
   }
 
   override fun onStop() {

@@ -8,7 +8,8 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import com.google.common.util.concurrent.SettableFuture
 import org.librarysimplified.r2.api.SR2Command
-import org.librarysimplified.r2.api.SR2ControllerCommandQueueType
+import org.librarysimplified.r2.vanilla.internal.SR2Controller.Companion.PREFIX_ASSETS
+import org.librarysimplified.r2.vanilla.internal.SR2Controller.Companion.PREFIX_PUBLICATION
 import org.slf4j.LoggerFactory
 import java.net.URLDecoder
 import java.util.concurrent.ConcurrentHashMap
@@ -22,7 +23,7 @@ import java.util.concurrent.ConcurrentHashMap
 internal class SR2WebViewClient(
   private val requestLocation: String,
   private val future: SettableFuture<Unit>,
-  private val commandQueue: SR2ControllerCommandQueueType,
+  private val commandQueue: SR2Controller,
 ) : WebViewClient() {
 
   companion object {
@@ -61,6 +62,14 @@ internal class SR2WebViewClient(
   ): WebResourceResponse? {
     if (request != null) {
       val url = request.url?.toString() ?: ""
+
+      if (url.startsWith(PREFIX_ASSETS)) {
+        return this.commandQueue.openAsset(url.removePrefix(PREFIX_ASSETS))
+      }
+
+      if (url.startsWith(PREFIX_PUBLICATION)) {
+        return this.commandQueue.openPublicationResource(url.removePrefix(PREFIX_PUBLICATION))
+      }
 
       if (url.endsWith("favicon.ico")) {
         return WebResourceResponse(

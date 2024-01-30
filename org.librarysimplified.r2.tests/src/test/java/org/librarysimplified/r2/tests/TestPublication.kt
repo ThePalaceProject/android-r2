@@ -2,11 +2,16 @@ package org.librarysimplified.r2.tests
 
 import android.content.Context
 import kotlinx.coroutines.runBlocking
+import org.librarysimplified.r2.vanilla.BuildConfig
+import org.librarysimplified.r2.vanilla.internal.SR2NoPDFFactory
 import org.mockito.Mockito
 import org.readium.r2.shared.publication.Publication
-import org.readium.r2.shared.publication.asset.FileAsset
-import org.readium.r2.shared.util.getOrElse
-import org.readium.r2.streamer.Streamer
+import org.readium.r2.shared.util.ErrorException
+import org.readium.r2.shared.util.Try
+import org.readium.r2.shared.util.asset.AssetRetriever
+import org.readium.r2.shared.util.http.DefaultHttpClient
+import org.readium.r2.streamer.PublicationOpener
+import org.readium.r2.streamer.parser.DefaultPublicationParser
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
@@ -30,11 +35,39 @@ object TestPublication {
     Mockito.`when`(context.applicationContext)
       .thenReturn(context)
 
-    val streamer = Streamer(context)
+    val httpClient =
+      DefaultHttpClient(userAgent = "${BuildConfig.LIBRARY_PACKAGE_NAME}/${BuildConfig.R2_VERSION_NAME}")
+    val assetRetriever =
+      AssetRetriever(context.contentResolver, httpClient)
+
+    val publicationParser =
+      DefaultPublicationParser(
+        context = context,
+        httpClient = httpClient,
+        assetRetriever = assetRetriever,
+        pdfFactory = SR2NoPDFFactory,
+      )
+    val publicationOpener =
+      PublicationOpener(
+        publicationParser = publicationParser,
+        contentProtections = listOf(),
+        onCreatePublication = {
+        },
+      )
+
     return runBlocking {
-      streamer.open(FileAsset(output), allowUserInteraction = false)
-    }.getOrElse {
-      throw IOException("Failed to open EPUB", it)
+      when (val result = assetRetriever.retrieve(output)) {
+        is Try.Failure -> throw IOException("Failed to open EPUB", ErrorException(result.value))
+        is Try.Success ->
+          when (val pub = publicationOpener.open(
+            asset = result.value,
+            credentials = null,
+            allowUserInteraction = false,
+          )) {
+            is Try.Failure -> throw IOException("Failed to open EPUB", ErrorException(pub.value))
+            is Try.Success -> pub.value
+          }
+      }
     }
   }
 }

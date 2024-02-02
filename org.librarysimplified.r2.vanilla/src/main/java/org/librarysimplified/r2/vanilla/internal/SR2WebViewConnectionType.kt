@@ -1,19 +1,18 @@
 package org.librarysimplified.r2.vanilla.internal
 
-import com.google.common.util.concurrent.ListenableFuture
-import java.io.Closeable
+import java.util.concurrent.CompletableFuture
 
 /**
  * A connection to a web view.
  */
 
-internal interface SR2WebViewConnectionType : Closeable {
+internal interface SR2WebViewConnectionType {
 
   fun openURL(
     location: String,
-  ): ListenableFuture<*>
+  ): CompletableFuture<*>
 
   fun executeJS(
-    f: (SR2JavascriptAPIType) -> ListenableFuture<*>,
-  ): ListenableFuture<Any>
+    f: (SR2JavascriptAPIType) -> CompletableFuture<*>,
+  ): CompletableFuture<*>
 }

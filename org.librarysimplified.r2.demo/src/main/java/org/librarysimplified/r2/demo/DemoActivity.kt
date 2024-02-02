@@ -34,6 +34,7 @@ import org.librarysimplified.r2.api.SR2Event.SR2ThemeChanged
 import org.librarysimplified.r2.ui_thread.SR2UIThread
 import org.librarysimplified.r2.vanilla.SR2Controllers
 import org.librarysimplified.r2.views.SR2ControllerReference
+import org.librarysimplified.r2.views.SR2Fragment
 import org.librarysimplified.r2.views.SR2ReaderFragment
 import org.librarysimplified.r2.views.SR2ReaderModel
 import org.librarysimplified.r2.views.SR2ReaderViewCommand
@@ -45,8 +46,8 @@ import org.librarysimplified.r2.views.SR2ReaderViewCommand.SR2ReaderViewNavigati
 import org.librarysimplified.r2.views.SR2ReaderViewEvent
 import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewBookEvent.SR2BookLoadingFailed
 import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewControllerEvent.SR2ControllerBecameAvailable
+import org.librarysimplified.r2.views.SR2SearchFragment
 import org.librarysimplified.r2.views.SR2TOCFragment
-import org.librarysimplified.r2.views.search.SR2SearchFragment
 import org.readium.r2.shared.util.Try
 import org.readium.r2.shared.util.asset.AssetRetriever
 import org.readium.r2.shared.util.http.DefaultHttpClient
@@ -79,8 +80,6 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
 
     this.subscriptions = CompositeDisposable()
     this.fragmentNow = null
-
-    this.switchFragment(DemoFileSelectionFragment())
   }
 
   @Deprecated("Deprecated in Java")
@@ -108,6 +107,12 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
     this.subscriptions.add(
       SR2ReaderModel.viewEvents.subscribe(this::onViewEventReceived),
     )
+
+    if (DemoModel.epubFile == null) {
+      this.switchFragment(DemoFileSelectionFragment())
+    } else {
+      this.switchFragment(SR2ReaderFragment())
+    }
   }
 
   override fun onStop() {
@@ -190,6 +195,39 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
 
       is SR2BookLoadingFailed ->
         this.onBookLoadingFailed(event.exception)
+    }
+  }
+
+  @Deprecated("Deprecated in Java")
+  override fun onBackPressed() {
+    return when (val f = this.fragmentNow) {
+      is DemoFileSelectionFragment -> {
+        super.onBackPressed()
+      }
+      is DemoLoadingFragment -> {
+        super.onBackPressed()
+      }
+      is SR2Fragment -> {
+        when (f) {
+          is SR2ReaderFragment -> {
+            this.switchFragment(DemoFileSelectionFragment())
+          }
+
+          is SR2SearchFragment -> {
+            this.switchFragment(SR2ReaderFragment())
+          }
+
+          is SR2TOCFragment -> {
+            this.switchFragment(SR2ReaderFragment())
+          }
+        }
+      }
+      null -> {
+        super.onBackPressed()
+      }
+      else -> {
+        throw IllegalStateException("Unrecognized fragment: $f")
+      }
     }
   }
 

@@ -6,12 +6,12 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import com.google.common.util.concurrent.SettableFuture
 import org.librarysimplified.r2.api.SR2Command
 import org.librarysimplified.r2.vanilla.internal.SR2Controller.Companion.PREFIX_ASSETS
 import org.librarysimplified.r2.vanilla.internal.SR2Controller.Companion.PREFIX_PUBLICATION
 import org.slf4j.LoggerFactory
 import java.net.URLDecoder
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 internal class SR2WebViewClient(
   private val requestLocation: String,
-  private val future: SettableFuture<Unit>,
+  private val future: CompletableFuture<Any>,
   private val commandQueue: SR2Controller,
 ) : WebViewClient() {
 
@@ -104,11 +104,11 @@ internal class SR2WebViewClient(
         if (this.errors.isEmpty()) {
           this.logger.debug("onPageFinished: {} succeeded", url)
           this.commandQueue.submitCommand(SR2Command.HighlightCurrentTerms)
-          this.future.set(Unit)
+          this.future.complete(Unit)
           return
         } else {
           this.logger.error("onPageFinished: {} failed with {} errors", url, this.errors.size)
-          this.future.setException(
+          this.future.completeExceptionally(
             SR2WebViewLoadException("Failed to load $requestLocation", this.errors.toMap()),
           )
           return

@@ -6,7 +6,6 @@ import androidx.paging.InvalidatingPagingSourceFactory
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
-import com.google.common.util.concurrent.MoreExecutors
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.subjects.PublishSubject
@@ -18,6 +17,7 @@ import org.librarysimplified.r2.api.SR2ControllerProviderType
 import org.librarysimplified.r2.api.SR2ControllerType
 import org.librarysimplified.r2.api.SR2Event
 import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandSearchResults
+import org.librarysimplified.r2.api.SR2Executors
 import org.librarysimplified.r2.api.SR2PageNumberingMode
 import org.librarysimplified.r2.api.SR2ScrollingMode
 import org.librarysimplified.r2.api.SR2Theme
@@ -36,24 +36,11 @@ import org.readium.r2.shared.util.Try
 import org.readium.r2.shared.util.asset.Asset
 import org.slf4j.LoggerFactory
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Executors
 
 object SR2ReaderModel {
 
   private val logger =
     LoggerFactory.getLogger(SR2ReaderModel::class.java)
-
-  private val ioExecutor =
-    MoreExecutors.listeningDecorator(
-      Executors.newSingleThreadExecutor { r ->
-        val thread = Thread(r)
-        thread.name = "org.librarysimplified.r2.views.io"
-        thread.setUncaughtExceptionHandler { t, e ->
-          logger.error("Uncaught exception: ", e)
-        }
-        thread
-      },
-    )
 
   var isPreview: Boolean =
     false
@@ -136,21 +123,28 @@ object SR2ReaderModel {
     theme: SR2Theme,
     controllers: SR2ControllerProviderType,
   ): CompletableFuture<SR2ControllerType> {
-    val future =
-      controllers.create(
-        context,
-        SR2ControllerConfiguration(
-          bookFile = bookFile,
-          bookId = bookId,
-          theme = theme,
-          context = context,
-          contentProtections = contentProtections,
-          uiExecutor = SR2UIThread::runOnUIThread,
-          ioExecutor = this.ioExecutor,
-          scrollingMode = this.scrollMode,
-          pageNumberingMode = this.perChapterNumbering,
-        ),
-      )
+    val future = CompletableFuture<SR2ControllerType>()
+    SR2Executors.ioExecutor.execute {
+      try {
+        future.complete(
+          controllers.create(
+            context,
+            SR2ControllerConfiguration(
+              bookFile = bookFile,
+              bookId = bookId,
+              theme = theme,
+              context = context,
+              contentProtections = contentProtections,
+              uiExecutor = SR2UIThread::runOnUIThread,
+              scrollingMode = this.scrollMode,
+              pageNumberingMode = this.perChapterNumbering,
+            ),
+          ),
+        )
+      } catch (e: Throwable) {
+        future.completeExceptionally(e)
+      }
+    }
 
     future.whenComplete { newController, exception ->
       this.logger.debug("Completed controller opening...")

@@ -16,7 +16,6 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.view.MenuItemCompat
 import androidx.core.view.forEach
 import androidx.core.view.isVisible
-import androidx.fragment.app.Fragment
 import io.reactivex.disposables.CompositeDisposable
 import org.librarysimplified.r2.api.SR2Bookmark
 import org.librarysimplified.r2.api.SR2Bookmark.Type.EXPLICIT
@@ -51,7 +50,7 @@ import org.librarysimplified.r2.views.internal.SR2BrightnessService
 import org.librarysimplified.r2.views.internal.SR2SettingsDialog
 import org.slf4j.LoggerFactory
 
-class SR2ReaderFragment : Fragment() {
+class SR2ReaderFragment : SR2Fragment() {
 
   private val logger =
     LoggerFactory.getLogger(SR2ReaderFragment::class.java)

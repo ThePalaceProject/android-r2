@@ -1,4 +1,4 @@
-package org.librarysimplified.r2.views.search
+package org.librarysimplified.r2.views
 
 import android.content.Context
 import android.os.Bundle
@@ -12,7 +12,6 @@ import androidx.annotation.UiThread
 import androidx.appcompat.widget.SearchView
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.isVisible
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -24,12 +23,13 @@ import org.librarysimplified.r2.api.SR2Command
 import org.librarysimplified.r2.api.SR2Event
 import org.librarysimplified.r2.api.SR2Locator
 import org.librarysimplified.r2.ui_thread.SR2UIThread
-import org.librarysimplified.r2.views.R
-import org.librarysimplified.r2.views.SR2ReaderModel
 import org.librarysimplified.r2.views.SR2ReaderViewCommand.SR2ReaderViewNavigationSearchClose
+import org.librarysimplified.r2.views.search.SR2SearchResultAdapter
+import org.librarysimplified.r2.views.search.SR2SearchResultSectionItemDecoration
+import org.librarysimplified.r2.views.search.SR2SearchResultSectionListener
 import org.readium.r2.shared.publication.Href
 
-class SR2SearchFragment : Fragment() {
+class SR2SearchFragment : SR2Fragment() {
 
   private lateinit var subscriptions: CompositeDisposable
   private lateinit var noResultLabel: TextView

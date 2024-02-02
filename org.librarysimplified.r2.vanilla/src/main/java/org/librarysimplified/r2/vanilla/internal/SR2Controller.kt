@@ -3,10 +3,6 @@ package org.librarysimplified.r2.vanilla.internal
 import android.app.Application
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
-import com.google.common.util.concurrent.Futures
-import com.google.common.util.concurrent.ListenableFuture
-import com.google.common.util.concurrent.MoreExecutors
-import com.google.common.util.concurrent.SettableFuture
 import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.subjects.PublishSubject
@@ -69,6 +65,7 @@ import org.readium.r2.streamer.parser.DefaultPublicationParser
 import org.slf4j.LoggerFactory
 import java.io.ByteArrayInputStream
 import java.io.IOException
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -303,12 +300,12 @@ internal class SR2Controller private constructor(
 
   private fun executeInternalCommand(
     command: SR2CommandSubmission,
-  ): ListenableFuture<*> {
+  ): CompletableFuture<*> {
     this.logger.debug("executing {}", command)
 
     if (this.closed.get()) {
       this.logger.debug("Executor has been shut down")
-      return Futures.immediateFuture(Unit)
+      return CompletableFuture.completedFuture(Unit)
     }
 
     return this.executeCommandSubmission(command)
@@ -316,7 +313,7 @@ internal class SR2Controller private constructor(
 
   private fun executeCommandSubmission(
     command: SR2CommandSubmission,
-  ): ListenableFuture<*> {
+  ): CompletableFuture<*> {
     return when (val apiCommand = command.command) {
       is SR2Command.OpenChapter ->
         this.executeCommandOpenChapter(command, apiCommand)
@@ -372,7 +369,7 @@ internal class SR2Controller private constructor(
   private fun executeCommandThemeSet(
     command: SR2CommandSubmission,
     apiCommand: SR2Command.ThemeSet,
-  ): ListenableFuture<*> {
+  ): CompletableFuture<*> {
     this.publishCommandRunningLong(command)
     return this.executeThemeSet(this.waitForWebViewAvailability(), apiCommand.theme)
   }
@@ -380,36 +377,21 @@ internal class SR2Controller private constructor(
   private fun executeThemeSet(
     viewConnection: SR2WebViewConnectionType,
     theme: SR2Theme,
-  ): ListenableFuture<*> {
+  ): CompletableFuture<*> {
     this.themeMostRecent = theme
 
-    val tasks = mutableListOf<ListenableFuture<Any>>()
-    tasks.add(
+    val allFutures = CompletableFuture.allOf(
       viewConnection.executeJS { js -> js.setFontFamily(SR2Fonts.fontFamilyStringOf(theme.font)) },
-    )
-    tasks.add(
       viewConnection.executeJS { js -> js.setTheme(SR2ReadiumInternalTheme.from(theme.colorScheme)) },
-    )
-    tasks.add(
       viewConnection.executeJS { js -> js.setFontSize(theme.textSize) },
-    )
-    tasks.add(
       viewConnection.executeJS { js -> js.setPublisherCSS(theme.publisherCSS) },
-    )
-    tasks.add(
       viewConnection.executeJS { js -> js.broadcastReadingPosition() },
     )
 
-    val allFutures = Futures.allAsList(tasks)
-    val setFuture = SettableFuture.create<Unit>()
-    allFutures.addListener(
-      {
-        this.publishEvent(SR2Event.SR2ThemeChanged(theme))
-        setFuture.set(Unit)
-      },
-      MoreExecutors.directExecutor(),
-    )
-    return setFuture
+    allFutures.whenComplete { _, _ ->
+      this.publishEvent(SR2Event.SR2ThemeChanged(theme))
+    }
+    return allFutures
   }
 
   /**
@@ -418,7 +400,7 @@ internal class SR2Controller private constructor(
 
   private fun executeCommandBookmarkDelete(
     apiCommand: SR2Command.BookmarkDelete,
-  ): ListenableFuture<*> {
+  ): CompletableFuture<*> {
     this.bookmarks = this.bookmarks.map { bookmark ->
       bookmark.copy(
         isBeingDeleted = bookmark == apiCommand.bookmark,
@@ -448,14 +430,15 @@ internal class SR2Controller private constructor(
         },
       ),
     )
-    return Futures.immediateFuture(Unit)
+
+    return CompletableFuture.completedFuture(Unit)
   }
 
   /**
    * Execute the [SR2Command.BookmarkCreate] command.
    */
 
-  private fun executeCommandBookmarkCreate(): ListenableFuture<*> {
+  private fun executeCommandBookmarkCreate(): CompletableFuture<*> {
     val bookmark =
       SR2Bookmark(
         date = DateTime.now(),
@@ -483,7 +466,7 @@ internal class SR2Controller private constructor(
       ),
     )
 
-    return Futures.immediateFuture(Unit)
+    return CompletableFuture.completedFuture(Unit)
   }
 
   /**
@@ -492,7 +475,7 @@ internal class SR2Controller private constructor(
 
   private fun executeCommandRefresh(
     command: SR2CommandSubmission,
-  ): ListenableFuture<*> {
+  ): CompletableFuture<*> {
     return this.openNodeForLocator(
       command,
       SR2LocatorPercent(
@@ -508,12 +491,12 @@ internal class SR2Controller private constructor(
 
   private fun executeCommandBookmarksLoad(
     apiCommand: SR2Command.BookmarksLoad,
-  ): ListenableFuture<*> {
+  ): CompletableFuture<*> {
     val newBookmarks = this.bookmarks.toMutableList()
     newBookmarks.addAll(apiCommand.bookmarks)
     this.bookmarks = newBookmarks.distinct().toList()
     this.publishEvent(SR2BookmarksLoaded)
-    return Futures.immediateFuture(Unit)
+    return CompletableFuture.completedFuture(Unit)
   }
 
   /**
@@ -522,10 +505,10 @@ internal class SR2Controller private constructor(
 
   private fun executeCommandOpenChapterPrevious(
     command: SR2CommandSubmission,
-  ): ListenableFuture<*> {
+  ): CompletableFuture<*> {
     val previousNode =
       this.navigationGraph.findPreviousNode(this.currentTarget.node)
-        ?: return Futures.immediateFuture(Unit)
+        ?: return CompletableFuture.completedFuture(Unit)
 
     return this.openNodeForLocator(
       command,
@@ -539,10 +522,10 @@ internal class SR2Controller private constructor(
 
   private fun executeCommandOpenChapterNext(
     command: SR2CommandSubmission,
-  ): ListenableFuture<*> {
+  ): CompletableFuture<*> {
     val nextNode =
       this.navigationGraph.findNextNode(this.currentTarget.node)
-        ?: return Futures.immediateFuture(Unit)
+        ?: return CompletableFuture.completedFuture(Unit)
 
     return this.openNodeForLocator(
       command,
@@ -557,7 +540,7 @@ internal class SR2Controller private constructor(
    * Execute the [SR2Command.OpenPagePrevious] command.
    */
 
-  private fun executeCommandOpenPagePrevious(): ListenableFuture<*> {
+  private fun executeCommandOpenPagePrevious(): CompletableFuture<*> {
     return this.waitForWebViewAvailability().executeJS(SR2JavascriptAPIType::openPagePrevious)
   }
 
@@ -567,9 +550,9 @@ internal class SR2Controller private constructor(
 
   private fun executeCommandHighlightTerms(
     apiCommand: SR2Command.HighlightTerms,
-  ): ListenableFuture<*> {
+  ): CompletableFuture<*> {
     if (this.searchingTerms.isBlank() && apiCommand.searchingTerms.isBlank()) {
-      return Futures.immediateFuture(Unit)
+      return CompletableFuture.completedFuture(Unit)
     }
 
     val clearHighlight = apiCommand.clearHighlight
@@ -593,9 +576,9 @@ internal class SR2Controller private constructor(
    * Execute the [SR2Command.HighlightCurrentTerms] command.
    */
 
-  private fun executeCommandHighlightCurrentTerms(): ListenableFuture<*> {
+  private fun executeCommandHighlightCurrentTerms(): CompletableFuture<*> {
     if (this.searchingTerms.isBlank()) {
-      return Futures.immediateFuture(Unit)
+      return CompletableFuture.completedFuture(Unit)
     }
     return this.waitForWebViewAvailability()
       .executeJS { js ->
@@ -610,7 +593,7 @@ internal class SR2Controller private constructor(
    * Execute the [SR2Command.OpenPageNext] command.
    */
 
-  private fun executeCommandOpenPageNext(): ListenableFuture<*> {
+  private fun executeCommandOpenPageNext(): CompletableFuture<*> {
     return this.waitForWebViewAvailability().executeJS(SR2JavascriptAPIType::openPageNext)
   }
 
@@ -621,7 +604,7 @@ internal class SR2Controller private constructor(
   private fun executeCommandOpenChapter(
     command: SR2CommandSubmission,
     apiCommand: SR2Command.OpenChapter,
-  ): ListenableFuture<*> {
+  ): CompletableFuture<*> {
     return this.openNodeForLocator(command, apiCommand.locator)
   }
 
@@ -631,7 +614,7 @@ internal class SR2Controller private constructor(
 
   private fun executeCommandOpenLink(
     apiCommand: SR2Command.OpenLink,
-  ): ListenableFuture<*> {
+  ): CompletableFuture<*> {
     try {
       /*
        * Determine if the link is an internal EPUB link. If it is, translate it to an "open chapter"
@@ -642,11 +625,11 @@ internal class SR2Controller private constructor(
       if (apiCommand.link.startsWith(PREFIX_PUBLICATION)) {
         val target = Href(link.removePrefix(PREFIX_PUBLICATION))!!
         this.submitCommand(SR2Command.OpenChapter(SR2LocatorPercent(target, 0.0)))
-        return Futures.immediateFuture(Unit)
+        return CompletableFuture.completedFuture(Unit)
       }
 
       this.publishEvent(SR2ExternalLinkSelected(apiCommand.link))
-      return Futures.immediateFuture(Unit)
+      return CompletableFuture.completedFuture(Unit)
     } catch (e: Exception) {
       this.logger.error("Unable to open link ${apiCommand.link}: ", e)
       this.publishEvent(
@@ -655,8 +638,8 @@ internal class SR2Controller private constructor(
           message = e.message ?: "Unable to open chapter ${apiCommand.link}",
         ),
       )
-      val future = SettableFuture.create<Unit>()
-      future.setException(e)
+      val future = CompletableFuture<Unit>()
+      future.completeExceptionally(e)
       return future
     }
   }
@@ -664,7 +647,7 @@ internal class SR2Controller private constructor(
   @OptIn(ExperimentalReadiumApi::class)
   private fun executeCommandSearch(
     command: SR2Command.Search,
-  ): ListenableFuture<*> {
+  ): CompletableFuture<*> {
     val searchQuery = command.searchQuery
     if (searchQuery != this.lastQuery) {
       this.coroutineScope.launch {
@@ -677,17 +660,17 @@ internal class SR2Controller private constructor(
     }
 
     this.lastQuery = searchQuery
-    return Futures.immediateFuture(Unit)
+    return CompletableFuture.completedFuture(Unit)
   }
 
   @OptIn(ExperimentalReadiumApi::class)
-  private fun executeCommandCancelSearch(): ListenableFuture<*> {
+  private fun executeCommandCancelSearch(): CompletableFuture<*> {
     this.coroutineScope.launch {
       this@SR2Controller.searchIterator?.close()
       this@SR2Controller.searchIterator = null
     }
 
-    return Futures.immediateFuture(Unit)
+    return CompletableFuture.completedFuture(Unit)
   }
 
   /**
@@ -697,7 +680,7 @@ internal class SR2Controller private constructor(
   private fun openNodeForLocator(
     command: SR2CommandSubmission,
     locator: SR2Locator,
-  ): ListenableFuture<*> {
+  ): CompletableFuture<*> {
     val previousNode = this.currentTarget
 
     return try {
@@ -713,44 +696,30 @@ internal class SR2Controller private constructor(
 
       val connection =
         this.waitForWebViewAvailability()
-      val openFuture =
+
+      val future =
         connection.openURL(targetLocation.toString())
-
-      val themeFuture =
-        Futures.transformAsync(
-          openFuture,
-          { this.executeThemeSet(connection, this.themeMostRecent) },
-          MoreExecutors.directExecutor(),
-        )
-
-      val scrollModeFuture =
-        Futures.transformAsync(
-          themeFuture,
-          { connection.executeJS { js -> js.setScrollMode(this.configuration.scrollingMode) } },
-          MoreExecutors.directExecutor(),
-        )
-
-      val moveFuture =
-        Futures.transformAsync(
-          scrollModeFuture,
-          { this.executeLocatorSet(connection, locator) },
-          MoreExecutors.directExecutor(),
-        )
+          .thenCompose {
+            this.executeThemeSet(connection, this.themeMostRecent)
+          }
+          .thenCompose {
+            connection.executeJS { js -> js.setScrollMode(this.configuration.scrollingMode) }
+          }
+          .thenCompose {
+            this.executeLocatorSet(connection, locator)
+          }
 
       /*
        * If there's a fragment, attempt to scroll to it.
        */
 
       when (val fragment = locator.chapterHref.toString().substringAfter('#', "")) {
-        "" ->
-          moveFuture
+        "" -> future
 
         else ->
-          Futures.transformAsync(
-            moveFuture,
-            { connection.executeJS { js -> js.scrollToId(fragment) } },
-            MoreExecutors.directExecutor(),
-          )
+          future.thenCompose {
+            connection.executeJS { js -> js.scrollToId(fragment) }
+          }
       }
     } catch (e: Exception) {
       this.logger.error("Unable to open chapter ${locator.chapterHref}: ", e)
@@ -761,8 +730,8 @@ internal class SR2Controller private constructor(
           message = e.message ?: "Unable to open chapter ${locator.chapterHref}",
         ),
       )
-      val future = SettableFuture.create<Unit>()
-      future.setException(e)
+      val future = CompletableFuture<Any>()
+      future.completeExceptionally(e)
       return future
     }
   }
@@ -770,7 +739,7 @@ internal class SR2Controller private constructor(
   private fun executeLocatorSet(
     connection: SR2WebViewConnectionType,
     locator: SR2Locator,
-  ): ListenableFuture<*> =
+  ): CompletableFuture<*> =
     when (locator) {
       is SR2LocatorPercent -> {
         connection.executeJS { js -> js.setProgression(locator.chapterProgress) }
@@ -1060,13 +1029,14 @@ internal class SR2Controller private constructor(
     synchronized(this.webViewConnectionLock) {
       this.webViewConnection = newConnection
     }
+
+    this.submitCommand(SR2Command.Refresh)
   }
 
   override fun viewDisconnect() {
     this.logger.debug("viewDisconnect")
 
     synchronized(this.webViewConnectionLock) {
-      this.webViewConnection?.close()
       this.webViewConnection = null
     }
   }

@@ -1,7 +1,6 @@
 package org.librarysimplified.r2.api
 
 import android.content.Context
-import com.google.common.util.concurrent.ListeningExecutorService
 import org.readium.r2.shared.publication.protection.ContentProtection
 import org.readium.r2.shared.util.asset.Asset
 
@@ -41,12 +40,6 @@ data class SR2ControllerConfiguration(
    */
 
   val contentProtections: List<ContentProtection>,
-
-  /**
-   * An executor service used to execute I/O code on one or more background threads.
-   */
-
-  val ioExecutor: ListeningExecutorService,
 
   /**
    * A function that executes `f` on the Android UI thread.

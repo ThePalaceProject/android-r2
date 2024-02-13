@@ -77,9 +77,8 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
 
     val toolbar = this.findViewById(R.id.mainToolbar) as Toolbar
     this.setSupportActionBar(toolbar)
-
-    this.subscriptions = CompositeDisposable()
     this.fragmentNow = null
+    this.subscriptions = CompositeDisposable()
   }
 
   @Deprecated("Deprecated in Java")
@@ -98,6 +97,7 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
   override fun onStart() {
     super.onStart()
 
+    this.subscriptions = CompositeDisposable()
     this.subscriptions.add(
       SR2ReaderModel.controllerEvents.subscribe(this::onControllerEvent),
     )

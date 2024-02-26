@@ -1,6 +1,7 @@
 package org.librarysimplified.r2.api
 
 import org.readium.r2.shared.Search
+import org.readium.r2.shared.publication.Href
 import org.readium.r2.shared.publication.services.search.SearchIterator
 
 /**
@@ -51,7 +52,7 @@ sealed class SR2Event {
    */
 
   data class SR2ReadingPositionChanged(
-    val chapterHref: String,
+    val chapterHref: Href,
     val chapterProgress: Double,
     val chapterTitle: String?,
     val currentPage: Int?,

@@ -3,6 +3,7 @@ package org.librarysimplified.r2.vanilla.internal
 import org.librarysimplified.r2.api.SR2Locator
 import org.librarysimplified.r2.vanilla.internal.SR2NavigationNode.SR2NavigationReadingOrderNode
 import org.librarysimplified.r2.vanilla.internal.SR2NavigationNode.SR2NavigationResourceNode
+import org.readium.r2.shared.publication.Href
 
 /**
  * A navigation graph.
@@ -91,14 +92,15 @@ data class SR2NavigationGraph(
      * again but without the fragment (if there is one). Record the fragment as an extra.
      */
 
-    val fragment = locator.chapterHref.substringAfter('#', "")
+    val locationText = locator.chapterHref.toString()
+    val fragment = locationText.substringAfter('#', "")
     return if (fragment.isNotBlank()) {
       val withoutFragment =
         when (locator) {
           is SR2Locator.SR2LocatorChapterEnd ->
-            locator.copy(chapterHref = locator.chapterHref.substringBefore('#'))
+            locator.copy(chapterHref = Href(locationText.substringBefore('#'))!!)
           is SR2Locator.SR2LocatorPercent ->
-            locator.copy(chapterHref = locator.chapterHref.substringBefore('#'))
+            locator.copy(chapterHref = Href(locationText.substringBefore('#'))!!)
         }
 
       (

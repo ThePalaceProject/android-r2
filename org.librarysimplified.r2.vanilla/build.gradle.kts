@@ -3,8 +3,6 @@ dependencies {
     implementation(project(":org.librarysimplified.r2.ui_thread"))
 
     implementation(libs.androidx.annotation)
-    implementation(libs.google.failureaccess)
-    implementation(libs.google.guava)
     implementation(libs.jcip.annotations)
     implementation(libs.joda.time)
     implementation(libs.kotlin.stdlib)
@@ -18,4 +16,9 @@ dependencies {
 
 android {
     buildFeatures.buildConfig = true
+
+    defaultConfig {
+        val versionName = project.extra["VERSION_NAME"] as String
+        buildConfigField("String", "R2_VERSION_NAME", "\"${versionName}\"")
+    }
 }

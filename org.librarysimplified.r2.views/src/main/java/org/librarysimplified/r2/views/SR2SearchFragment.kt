@@ -1,4 +1,4 @@
-package org.librarysimplified.r2.views.search
+package org.librarysimplified.r2.views
 
 import android.content.Context
 import android.os.Bundle
@@ -8,50 +8,35 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.TextView
+import androidx.annotation.UiThread
 import androidx.appcompat.widget.SearchView
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.isVisible
-import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import io.reactivex.disposables.Disposable
+import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.librarysimplified.r2.api.SR2Command
-import org.librarysimplified.r2.api.SR2ControllerConfiguration
-import org.librarysimplified.r2.api.SR2ControllerType
 import org.librarysimplified.r2.api.SR2Event
 import org.librarysimplified.r2.api.SR2Locator
 import org.librarysimplified.r2.ui_thread.SR2UIThread
-import org.librarysimplified.r2.views.R
-import org.librarysimplified.r2.views.SR2ReaderParameters
-import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewNavigationEvent.SR2ReaderViewNavigationClose
-import org.librarysimplified.r2.views.SR2ReaderViewModel
-import org.librarysimplified.r2.views.SR2ReaderViewModelFactory
+import org.librarysimplified.r2.views.SR2ReaderViewCommand.SR2ReaderViewNavigationSearchClose
+import org.librarysimplified.r2.views.search.SR2SearchResultAdapter
+import org.librarysimplified.r2.views.search.SR2SearchResultSectionItemDecoration
+import org.librarysimplified.r2.views.search.SR2SearchResultSectionListener
+import org.readium.r2.shared.publication.Href
 
-class SR2SearchFragment private constructor(
-  private val parameters: SR2ReaderParameters,
-) : Fragment() {
+class SR2SearchFragment : SR2Fragment() {
 
-  companion object {
-    fun create(parameters: SR2ReaderParameters): SR2SearchFragment {
-      return SR2SearchFragment(parameters)
-    }
-  }
-
-  private lateinit var controller: SR2ControllerType
+  private lateinit var subscriptions: CompositeDisposable
   private lateinit var noResultLabel: TextView
-  private lateinit var readerModel: SR2ReaderViewModel
   private lateinit var searchAdapter: SR2SearchResultAdapter
   private lateinit var searchResultsList: RecyclerView
   private lateinit var searchView: SearchView
   private lateinit var toolbar: Toolbar
-
-  private var controllerEvents: Disposable? = null
-  private var searchingTerms = ""
 
   override fun onCreateView(
     inflater: LayoutInflater,
@@ -64,67 +49,53 @@ class SR2SearchFragment private constructor(
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     super.onViewCreated(view, savedInstanceState)
 
-    this.readerModel =
-      ViewModelProvider(requireActivity(), SR2ReaderViewModelFactory(this.parameters))
-        .get(SR2ReaderViewModel::class.java)
-
-    val activity =
-      this.requireActivity()
-
-    this.controller =
-      this.readerModel.createOrGet(
-        configuration = SR2ControllerConfiguration(
-          bookFile = this.parameters.bookFile,
-          bookId = this.parameters.bookId,
-          context = activity,
-          ioExecutor = this.readerModel.ioExecutor,
-          contentProtections = this.parameters.contentProtections,
-          theme = this.parameters.theme,
-          uiExecutor = SR2UIThread::runOnUIThread,
-          scrollingMode = this.parameters.scrollingMode,
-          pageNumberingMode = this.parameters.pageNumberingMode,
-        ),
-      ).get().controller
-
     this.toolbar =
       view.findViewById(R.id.searchToolbar)
+    this.searchResultsList =
+      view.findViewById(R.id.searchResultsList)
+    this.noResultLabel =
+      view.findViewById(R.id.noResultLabel)
 
     this.toolbar.inflateMenu(R.menu.sr2_search_menu)
-    this.toolbar.setNavigationOnClickListener {
-      close()
-    }
+    this.toolbar.setNavigationOnClickListener { this.close() }
     this.toolbar.setNavigationContentDescription(R.string.settingsAccessibilityBack)
 
     this.searchAdapter = SR2SearchResultAdapter(
       onItemClicked = { locator ->
-        this.controller.submitCommand(
+        val controller = SR2ReaderModel.controller()
+
+        controller.submitCommand(
           SR2Command.HighlightTerms(
-            searchingTerms = searchView.query.toString(),
+            searchingTerms = this.searchView.query.toString(),
             clearHighlight = false,
           ),
         )
-        this.controller.submitCommand(
+
+        controller.submitCommand(
           SR2Command.OpenChapter(
             SR2Locator.SR2LocatorPercent(
-              chapterHref = locator.href,
+              chapterHref = Href(locator.href),
               chapterProgress = locator.locations.progression ?: 0.0,
             ),
           ),
         )
-        close()
+        this.close()
       },
     )
 
-    this.searchResultsList = view.findViewById(R.id.searchResultsList)
     this.searchResultsList.apply {
-      adapter = searchAdapter
-      layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.VERTICAL, false)
-      addItemDecoration(
+      this.adapter = this@SR2SearchFragment.searchAdapter
+      this.layoutManager = LinearLayoutManager(
+        this@SR2SearchFragment.requireContext(),
+        LinearLayoutManager.VERTICAL,
+        false,
+      )
+      this.addItemDecoration(
         SR2SearchResultSectionItemDecoration(
-          context,
+          this.context,
           object : SR2SearchResultSectionListener {
             override fun isStartOfSection(index: Int): Boolean =
-              readerModel.searchLocators.value.run {
+              SR2ReaderModel.searchLocators.value.run {
                 when {
                   index == 0 -> {
                     true
@@ -140,69 +111,60 @@ class SR2SearchFragment private constructor(
                 }
               }
 
-            override fun sectionTitle(index: Int): String =
-              readerModel.searchLocators.value.getOrNull(index)?.title.orEmpty()
+            override fun sectionTitle(index: Int): String {
+              return SR2ReaderModel.searchLocators.value.getOrNull(index)?.title.orEmpty()
+            }
           },
         ),
       )
-      addItemDecoration(DividerItemDecoration(context, DividerItemDecoration.VERTICAL))
+      this.addItemDecoration(DividerItemDecoration(this.context, DividerItemDecoration.VERTICAL))
     }
 
-    this.noResultLabel = view.findViewById(R.id.noResultLabel)
-
-    configureSearch()
-  }
-
-  override fun onStop() {
-    this.controllerEvents?.dispose()
-    if (::controller.isInitialized) {
-      this.controller.viewDisconnect()
-    }
-    super.onStop()
+    this.configureSearch()
   }
 
   override fun onHiddenChanged(hidden: Boolean) {
     super.onHiddenChanged(hidden)
     if (!hidden) {
-      showKeyboard()
+      this.showKeyboard()
     }
   }
 
+  @UiThread
   private fun close() {
     SR2UIThread.checkIsUIThread()
-
-    this.readerModel.publishViewEvent(SR2ReaderViewNavigationClose)
+    SR2ReaderModel.submitViewCommand(SR2ReaderViewNavigationSearchClose)
   }
 
   private fun configureSearch() {
-    val search = toolbar.menu.findItem(R.id.readerMenuSearch)
-    searchView = search.actionView as SearchView
+    val search = this.toolbar.menu.findItem(R.id.readerMenuSearch)
+    this.searchView = search.actionView as SearchView
 
-    searchView.inputType = InputType.TYPE_CLASS_TEXT
-    searchView.isIconified = false
+    this.searchView.inputType = InputType.TYPE_CLASS_TEXT
+    this.searchView.isIconified = false
+    this.searchView.setOnCloseListener {
+      SR2ReaderModel.controller().submitCommand(SR2Command.CancelSearch)
 
-    searchView.setOnCloseListener {
-      controller.submitCommand(SR2Command.CancelSearch)
-      if (searchView.query.isNotBlank()) {
-        searchView.setQuery("", false)
+      if (this.searchView.query.isNotBlank()) {
+        this.searchView.setQuery("", false)
       } else {
-        controller.submitCommand(
+        SR2ReaderModel.controller().submitCommand(
           SR2Command.HighlightTerms(
-            searchingTerms = searchingTerms,
+            searchingTerms = SR2ReaderModel.searchTerm,
             clearHighlight = true,
           ),
         )
 
-        searchingTerms = ""
-
-        close()
+        SR2ReaderModel.searchTerm = ""
+        this.close()
       }
       true
     }
-    searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+
+    this.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
       override fun onQueryTextSubmit(query: String): Boolean {
-        controller.submitCommand(SR2Command.Search(query))
-        searchView.clearFocus()
+        SR2ReaderModel.controller().submitCommand(SR2Command.Search(query))
+        this@SR2SearchFragment.searchView.clearFocus()
         return true
       }
 
@@ -211,20 +173,33 @@ class SR2SearchFragment private constructor(
       }
     })
 
-    showKeyboard()
+    this.showKeyboard()
 
-    this.controllerEvents =
-      this.readerModel.controllerEvents.subscribe(this::onControllerEvent)
+    SR2ReaderModel.searchResult
+      .onEach { this.searchAdapter.submitData(it) }
+      .launchIn(this.viewLifecycleOwner.lifecycleScope)
 
-    readerModel.searchResult
-      .onEach { searchAdapter.submitData(it) }
-      .launchIn(viewLifecycleOwner.lifecycleScope)
-
-    readerModel.searchLocators
-      .onEach { noResultLabel.isVisible = it.isEmpty() }
-      .launchIn(viewLifecycleOwner.lifecycleScope)
+    SR2ReaderModel.searchLocators
+      .onEach { this.noResultLabel.isVisible = it.isEmpty() }
+      .launchIn(this.viewLifecycleOwner.lifecycleScope)
   }
 
+  override fun onStart() {
+    super.onStart()
+
+    this.subscriptions =
+      CompositeDisposable()
+    this.subscriptions.add(
+      SR2ReaderModel.controllerEvents.subscribe(this::onControllerEvent),
+    )
+  }
+
+  override fun onStop() {
+    super.onStop()
+    this.subscriptions.dispose()
+  }
+
+  @UiThread
   private fun onControllerEvent(event: SR2Event) {
     SR2UIThread.checkIsUIThread()
 
@@ -250,16 +225,16 @@ class SR2SearchFragment private constructor(
       }
 
       is SR2Event.SR2CommandEvent.SR2CommandSearchResults -> {
-        this.readerModel.extractResults(event)
+        SR2ReaderModel.consumeSearchResults(event)
       }
     }
   }
 
   private fun showKeyboard() {
-    searchView.post {
-      searchView.requestFocus()
-      (requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager)
-        ?.showSoftInput(requireView().findFocus(), 0)
+    this.searchView.post {
+      this.searchView.requestFocus()
+      (this.requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager)
+        ?.showSoftInput(this.requireView().findFocus(), 0)
     }
   }
 }

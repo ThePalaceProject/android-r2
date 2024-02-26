@@ -11,13 +11,13 @@ import com.google.android.material.tabs.TabLayout
 import io.reactivex.disposables.CompositeDisposable
 import org.librarysimplified.r2.api.SR2ColorScheme
 import org.librarysimplified.r2.api.SR2Command
-import org.librarysimplified.r2.api.SR2ControllerType
 import org.librarysimplified.r2.api.SR2Event
 import org.librarysimplified.r2.api.SR2Font
 import org.librarysimplified.r2.api.SR2PublisherCSS.SR2_PUBLISHER_DEFAULT_CSS_DISABLED
 import org.librarysimplified.r2.api.SR2PublisherCSS.SR2_PUBLISHER_DEFAULT_CSS_ENABLED
 import org.librarysimplified.r2.api.SR2Theme
 import org.librarysimplified.r2.views.R
+import org.librarysimplified.r2.views.SR2ReaderModel
 
 internal class SR2SettingsDialog private constructor() {
 
@@ -58,25 +58,22 @@ internal class SR2SettingsDialog private constructor() {
 
   companion object {
     private fun updateTheme(
-      controller: SR2ControllerType,
       updater: (SR2Theme) -> SR2Theme,
     ) {
+      val controller = SR2ReaderModel.controller()
       controller.submitCommand(SR2Command.ThemeSet(updater.invoke(controller.themeNow())))
     }
 
     fun create(
       brightness: SR2BrightnessServiceType,
       context: Context,
-      controller: SR2ControllerType,
     ): SR2SettingsDialog {
       val eventSubscriptions = CompositeDisposable()
 
       val dialog =
         MaterialAlertDialogBuilder(context)
           .setView(R.layout.sr2_settings)
-          .setOnDismissListener {
-            eventSubscriptions.dispose()
-          }
+          .setOnDismissListener { eventSubscriptions.dispose() }
           .create()
 
       dialog.show()
@@ -104,7 +101,7 @@ internal class SR2SettingsDialog private constructor() {
         override fun onTabSelected(tab: TabLayout.Tab) {
           val selectedTab = FontSelectionTab.values()[tab.position]
           val updater = selectedTab.toThemeUpdater()
-          this@Companion.updateTheme(controller, updater)
+          this@Companion.updateTheme(updater)
           val showDetail = selectedTab == FontSelectionTab.PUB
           setFontDetail.visibility = if (showDetail) View.VISIBLE else View.GONE
         }
@@ -118,7 +115,8 @@ internal class SR2SettingsDialog private constructor() {
         }
       })
 
-      val currentTabIndex = FontSelectionTab.fromTheme(controller.themeNow()).ordinal
+      val currentTabIndex =
+        FontSelectionTab.fromTheme(SR2ReaderModel.controller().themeNow()).ordinal
       setFontTabs.selectTab(setFontTabs.getTabAt(currentTabIndex))
 
       val setThemeLight =
@@ -129,13 +127,13 @@ internal class SR2SettingsDialog private constructor() {
         dialog.findViewById<View>(R.id.setThemeSepia)!!
 
       setThemeLight.setOnClickListener {
-        this.updateTheme(controller) { it.copy(colorScheme = SR2ColorScheme.DARK_TEXT_LIGHT_BACKGROUND) }
+        this.updateTheme { it.copy(colorScheme = SR2ColorScheme.DARK_TEXT_LIGHT_BACKGROUND) }
       }
       setThemeDark.setOnClickListener {
-        this.updateTheme(controller) { it.copy(colorScheme = SR2ColorScheme.LIGHT_TEXT_DARK_BACKGROUND) }
+        this.updateTheme { it.copy(colorScheme = SR2ColorScheme.LIGHT_TEXT_DARK_BACKGROUND) }
       }
       setThemeSepia.setOnClickListener {
-        this.updateTheme(controller) { it.copy(colorScheme = SR2ColorScheme.DARK_TEXT_ON_SEPIA) }
+        this.updateTheme { it.copy(colorScheme = SR2ColorScheme.DARK_TEXT_ON_SEPIA) }
       }
 
       val setTextSmaller =
@@ -148,26 +146,26 @@ internal class SR2SettingsDialog private constructor() {
         dialog.findViewById<SeekBar>(R.id.setBrightness)!!
 
       setTextLarger.setOnClickListener {
-        this.updateTheme(controller) { it.copy(textSize = SR2Theme.sizeConstrain(it.textSize + 0.1)) }
+        this.updateTheme { it.copy(textSize = SR2Theme.sizeConstrain(it.textSize + 0.1)) }
       }
       setTextReset.setOnClickListener {
-        this.updateTheme(controller) { it.copy(textSize = 1.0) }
+        this.updateTheme { it.copy(textSize = 1.0) }
       }
       setTextSmaller.setOnClickListener {
-        this.updateTheme(controller) { it.copy(textSize = SR2Theme.sizeConstrain(it.textSize - 0.1)) }
+        this.updateTheme { it.copy(textSize = SR2Theme.sizeConstrain(it.textSize - 0.1)) }
       }
 
       fun updateSetText() {
-        val themeNow = controller.themeNow()
-
+        val themeNow = SR2ReaderModel.controller().themeNow()
         setTextSmaller.isEnabled = !themeNow.isTextSizeMinimized
         setTextLarger.isEnabled = !themeNow.isTextSizeMaximized
       }
 
       eventSubscriptions.add(
-        controller.events.ofType(SR2Event.SR2ThemeChanged::class.java).subscribe {
-          updateSetText()
-        },
+        SR2ReaderModel.controller()
+          .events
+          .ofType(SR2Event.SR2ThemeChanged::class.java)
+          .subscribe { updateSetText() },
       )
 
       updateSetText()

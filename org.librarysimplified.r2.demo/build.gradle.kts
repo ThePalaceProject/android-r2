@@ -57,8 +57,6 @@ dependencies {
     implementation(libs.androidx.vectordrawable.animated)
     implementation(libs.androidx.viewpager)
     implementation(libs.androidx.viewpager2)
-    implementation(libs.google.failureaccess)
-    implementation(libs.google.guava)
     implementation(libs.google.material)
     implementation(libs.joda.time)
     implementation(libs.jsoup)

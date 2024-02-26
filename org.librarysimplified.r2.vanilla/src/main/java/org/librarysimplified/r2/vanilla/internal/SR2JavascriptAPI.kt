@@ -2,10 +2,6 @@ package org.librarysimplified.r2.vanilla.internal
 
 import android.webkit.WebView
 import androidx.annotation.UiThread
-import com.google.common.util.concurrent.Futures
-import com.google.common.util.concurrent.ListenableFuture
-import com.google.common.util.concurrent.MoreExecutors
-import com.google.common.util.concurrent.SettableFuture
 import org.librarysimplified.r2.api.SR2Command
 import org.librarysimplified.r2.api.SR2ControllerCommandQueueType
 import org.librarysimplified.r2.api.SR2PublisherCSS
@@ -21,6 +17,7 @@ import org.librarysimplified.r2.vanilla.internal.SR2ReadiumInternalTheme.LIGHT
 import org.librarysimplified.r2.vanilla.internal.SR2ReadiumInternalTheme.NIGHT
 import org.librarysimplified.r2.vanilla.internal.SR2ReadiumInternalTheme.SEPIA
 import org.slf4j.LoggerFactory
+import java.util.concurrent.CompletableFuture
 
 /**
  * The default implementation of the Javascript API.
@@ -37,16 +34,16 @@ internal class SR2JavascriptAPI(
   @UiThread
   private fun executeJavascript(
     script: String,
-  ): ListenableFuture<String> {
+  ): CompletableFuture<String> {
     SR2UIThread.checkIsUIThread()
 
-    val future = SettableFuture.create<String>()
+    val future = CompletableFuture<String>()
     this.logger.debug("evaluating {}", script)
     this.webView.evaluateJavascript(script) {
       try {
         this.logger.debug("evaluated {} ⇒ {}", script, it)
       } finally {
-        future.set(it)
+        future.complete(it)
       }
     }
     return future
@@ -56,68 +53,62 @@ internal class SR2JavascriptAPI(
   override fun highlightSearchingTerms(
     searchingTerms: String,
     clearHighlight: Boolean,
-  ): ListenableFuture<String> {
+  ): CompletableFuture<String> {
     return this.executeJavascript("readium.highlightSearchingTerms(\"$searchingTerms\", $clearHighlight);")
   }
 
   @UiThread
-  override fun openPageNext(): ListenableFuture<String> {
-    val future = this.executeJavascript("readium.scrollRight();")
-    future.addListener(
-      {
-        when (future.get()) {
+  override fun openPageNext(): CompletableFuture<String> {
+    return this.executeJavascript("readium.scrollRight();")
+      .thenApply { r: String ->
+        return@thenApply when (r) {
           "false" -> {
             this.commandQueue.submitCommand(SR2Command.OpenChapterNext)
+            r
           }
-
           else -> {
+            r
           }
         }
-      },
-      MoreExecutors.directExecutor(),
-    )
-    return future
+      }
   }
 
   @UiThread
-  override fun openPagePrevious(): ListenableFuture<String> {
-    val future = this.executeJavascript("readium.scrollLeft();")
-    future.addListener(
-      {
-        when (future.get()) {
+  override fun openPagePrevious(): CompletableFuture<String> {
+    return this.executeJavascript("readium.scrollLeft();")
+      .thenApply { r: String ->
+        return@thenApply when (r) {
           "false" -> {
             this.commandQueue.submitCommand(SR2Command.OpenChapterPrevious(atEnd = true))
+            r
           }
-
           else -> {
+            r
           }
         }
-      },
-      MoreExecutors.directExecutor(),
-    )
-    return future
+      }
   }
 
   @UiThread
-  override fun openPageLast(): ListenableFuture<String> {
+  override fun openPageLast(): CompletableFuture<String> {
     return this.executeJavascript("readium.scrollToEnd();")
   }
 
   @UiThread
-  override fun setFontFamily(value: String): ListenableFuture<*> {
-    return Futures.allAsList(
+  override fun setFontFamily(value: String): CompletableFuture<*> {
+    return CompletableFuture.allOf(
       this.setUserProperty("fontFamily", value),
       this.setUserProperty("fontOverride", "readium-font-on"),
     )
   }
 
   @UiThread
-  override fun setFontSize(value: Double): ListenableFuture<String> {
+  override fun setFontSize(value: Double): CompletableFuture<String> {
     val percent = (value * 100.0).toString() + "%"
     return this.setUserProperty("fontSize", percent)
   }
 
-  override fun setTheme(value: SR2ReadiumInternalTheme): ListenableFuture<String> =
+  override fun setTheme(value: SR2ReadiumInternalTheme): CompletableFuture<String> =
     when (value) {
       LIGHT, DAY ->
         this.setUserProperty("appearance", "readium-default-on")
@@ -130,17 +121,17 @@ internal class SR2JavascriptAPI(
     }
 
   @UiThread
-  override fun setProgression(progress: Double): ListenableFuture<String> {
+  override fun setProgression(progress: Double): CompletableFuture<String> {
     return this.executeJavascript("readium.scrollToPosition($progress);")
   }
 
   @UiThread
-  override fun broadcastReadingPosition(): ListenableFuture<*> {
+  override fun broadcastReadingPosition(): CompletableFuture<*> {
     return this.executeJavascript("readium.broadcastReadingPosition();")
   }
 
   @UiThread
-  override fun setScrollMode(mode: SR2ScrollingMode): ListenableFuture<*> {
+  override fun setScrollMode(mode: SR2ScrollingMode): CompletableFuture<*> {
     return this.setUserProperty(
       name = "scroll",
       value = when (mode) {
@@ -151,23 +142,23 @@ internal class SR2JavascriptAPI(
   }
 
   @UiThread
-  override fun scrollToId(id: String): ListenableFuture<*> {
+  override fun scrollToId(id: String): CompletableFuture<*> {
     return this.executeJavascript("readium.scrollToId(\"$id\");")
   }
 
   @UiThread
   override fun setPublisherCSS(
     css: SR2PublisherCSS,
-  ): ListenableFuture<*> {
+  ): CompletableFuture<*> {
     return when (css) {
       SR2_PUBLISHER_DEFAULT_CSS_ENABLED ->
-        Futures.allAsList(
+        CompletableFuture.allOf(
           this.setUserProperty("advancedSettings", ""),
           this.setUserProperty("fontOverride", ""),
         )
 
       SR2_PUBLISHER_DEFAULT_CSS_DISABLED ->
-        Futures.allAsList(
+        CompletableFuture.allOf(
           this.setUserProperty("advancedSettings", "readium-advanced-on"),
           this.setUserProperty("fontOverride", "readium-font-on"),
         )
@@ -178,7 +169,7 @@ internal class SR2JavascriptAPI(
   fun setUserProperty(
     name: String,
     value: String,
-  ): ListenableFuture<String> {
+  ): CompletableFuture<String> {
     return this.executeJavascript("readium.setProperty(\"--USER__${name}\", \"${value}\");")
   }
 }

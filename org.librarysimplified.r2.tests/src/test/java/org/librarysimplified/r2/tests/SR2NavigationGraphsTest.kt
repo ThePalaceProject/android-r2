@@ -6,12 +6,14 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
-import org.librarysimplified.r2.api.SR2Locator
+import org.librarysimplified.r2.api.SR2Locator.*
+import org.librarysimplified.r2.api.SR2Locator.SR2LocatorPercent.*
 import org.librarysimplified.r2.vanilla.internal.SR2NavigationGraphs
 import org.librarysimplified.r2.vanilla.internal.SR2NavigationNode
 import org.librarysimplified.r2.vanilla.internal.SR2NavigationNode.SR2NavigationReadingOrderNode
 import org.librarysimplified.r2.vanilla.internal.SR2NavigationTarget
 import org.mockito.Mockito
+import org.readium.r2.shared.publication.Href
 import org.slf4j.LoggerFactory
 import java.io.File
 
@@ -77,18 +79,18 @@ class SR2NavigationGraphsTest {
     val graph = SR2NavigationGraphs.create(publication)
 
     fun List<SR2NavigationNode>.firstWithHref(href: String): SR2NavigationNode =
-      this.first { it.navigationPoint.locator.chapterHref == href }
+      this.first { it.navigationPoint.locator.chapterHref == Href(href)!! }
 
     assertEquals(1, graph.readingOrder.size)
     assertEquals(4, graph.resources.size)
     assertEquals("Something", graph.readingOrder[0].navigationPoint.title)
 
     var target: SR2NavigationTarget? = null
-    target = graph.findNavigationNode(SR2Locator.SR2LocatorPercent.start("/epub/text/p1.xhtml"))
+    target = graph.findNavigationNode(SR2LocatorPercent.start(Href("/epub/text/p1.xhtml")!!))
     assertEquals("Something Nested", target!!.node.navigationPoint.title)
     assertEquals(null, target.extraFragment)
 
-    target = graph.findNavigationNode(SR2Locator.SR2LocatorPercent.start("/epub/text/p2.xhtml"))
+    target = graph.findNavigationNode(SR2LocatorPercent.start(Href("/epub/text/p2.xhtml")!!))
     assertEquals("Something Else Nested", target!!.node.navigationPoint.title)
     assertEquals(null, target.extraFragment)
 
@@ -141,27 +143,27 @@ class SR2NavigationGraphsTest {
     assertEquals(null, node)
 
     var target: SR2NavigationTarget? = null
-    target = graph.findNavigationNode(SR2Locator.SR2LocatorPercent.start("/epub/text/p0.xhtml"))
+    target = graph.findNavigationNode(SR2LocatorPercent.start(Href("/epub/text/p0.xhtml")!!))
     assertEquals("Chapter 0", target!!.node.navigationPoint.title)
     assertEquals(null, target.extraFragment)
 
-    target = graph.findNavigationNode(SR2Locator.SR2LocatorPercent.start("/epub/text/p0.xhtml#p0_02"))
+    target = graph.findNavigationNode(SR2LocatorPercent.start(Href("/epub/text/p0.xhtml#p0_02")!!))
     assertEquals("Chapter 0", target!!.node.navigationPoint.title)
     assertEquals("p0_02", target.extraFragment)
 
-    target = graph.findNavigationNode(SR2Locator.SR2LocatorPercent.start("/epub/text/p1.xhtml#p1_01"))
+    target = graph.findNavigationNode(SR2LocatorPercent.start(Href("/epub/text/p1.xhtml#p1_01")!!))
     assertEquals("Chapter 1", target!!.node.navigationPoint.title)
     assertEquals("p1_01", target.extraFragment)
 
-    target = graph.findNavigationNode(SR2Locator.SR2LocatorPercent.start("/epub/text/p1.xhtml#p1_02"))
+    target = graph.findNavigationNode(SR2LocatorPercent.start(Href("/epub/text/p1.xhtml#p1_02")!!))
     assertEquals("Chapter 1", target!!.node.navigationPoint.title)
     assertEquals("p1_02", target.extraFragment)
 
-    target = graph.findNavigationNode(SR2Locator.SR2LocatorPercent.start("/epub/text/p2.xhtml#p2_01"))
+    target = graph.findNavigationNode(SR2LocatorPercent.start(Href("/epub/text/p2.xhtml#p2_01")!!))
     assertEquals("Chapter 2", target!!.node.navigationPoint.title)
     assertEquals("p2_01", target.extraFragment)
 
-    target = graph.findNavigationNode(SR2Locator.SR2LocatorPercent.start("/epub/text/p2.xhtml#p2_02"))
+    target = graph.findNavigationNode(SR2LocatorPercent.start(Href("/epub/text/p2.xhtml#p2_02")!!))
     assertEquals("Chapter 2", target!!.node.navigationPoint.title)
     assertEquals("p2_02", target.extraFragment)
   }

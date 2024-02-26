@@ -36,8 +36,7 @@ the project and functionality that must be provided by the hosting application.
 
 The [org.librarysimplified.r2.api](org.librarysimplified.r2.api) module defines a _controller API_ that accepts
 commands and publishes events in response to those commands. A _controller_ encapsulates
-a Readium [Publication](https://readium.org/webpub-manifest/) and an internal server
-used to expose resources from that `Publication`. A single _controller_ instance has
+a Readium [Publication](https://readium.org/webpub-manifest/). A single _controller_ instance has
 a lifetime matching that of the `Publication`; when the user wants to open a book,
 a new _controller_ instance is created for that book, and then destroyed when the
 user closes the book.
@@ -70,9 +69,7 @@ restoring this state each time a `WebView` is (re)connected.
 The [org.librarysimplified.r2.views](org.librarysimplified.r2.views) module defines a set of Android [Fragments](https://developer.android.com/guide/fragments)
 that implement a simple user interface for displaying a book and allowing the user to
 manage bookmarks and choose items from the book's table of contents. The fragments are
-conceptually stateless views that simply respond to events published by the current
-_controller_ instance. The fragments communicate by a shared, public [ViewModel](https://developer.android.com/topic/libraries/architecture/viewmodel),
-with the _controller_ instance being stored in this `ViewModel`.
+stateless views that simply respond to events published by the current _controller_ instance.
 
 ### Usage
 
@@ -85,11 +82,10 @@ The user's application has the following responsibilities:
     database. Failing to handle events will merely result in bookmarks not being saved.
     
   * The application _must_ respond to requests from the fragments to instantiate other
-    fragments, and to pop the backstack as necessary. For example, when the user clicks
-    the _table of contents_ button in the `SR2ReaderFragment`, the `ViewModel` will
-    publish an event indicating that the user's application should now instantiate and
-    attach a `SR2TOCFragment` in order to show the table of contents. Failing to handle
-    these events will merely result in a UI that does nothing when the user selects
+    fragments. For example, when the user clicks the _table of contents_ button in the
+    `SR2ReaderFragment`, an event will be published indicating that the user's application
+    should now instantiate and attach a `SR2TOCFragment` in order to show the table of contents. 
+    Failing to handle these events will merely result in a UI that does nothing when the user selects
     various menu items.
 
 An extremely minimal [demo application](org.librarysimplified.r2.demo) is included that

@@ -3,21 +3,16 @@ package org.librarysimplified.r2.demo
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
-import android.view.View
-import android.widget.Button
-import android.widget.CheckBox
 import android.widget.Toast
 import androidx.annotation.UiThread
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
-import io.reactivex.disposables.Disposable
+import io.reactivex.disposables.CompositeDisposable
+import kotlinx.coroutines.runBlocking
 import org.librarysimplified.r2.api.SR2Command
-import org.librarysimplified.r2.api.SR2ControllerType
 import org.librarysimplified.r2.api.SR2Event
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkCreate
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkCreated
@@ -36,25 +31,26 @@ import org.librarysimplified.r2.api.SR2Event.SR2ExternalLinkSelected
 import org.librarysimplified.r2.api.SR2Event.SR2OnCenterTapped
 import org.librarysimplified.r2.api.SR2Event.SR2ReadingPositionChanged
 import org.librarysimplified.r2.api.SR2Event.SR2ThemeChanged
-import org.librarysimplified.r2.api.SR2PageNumberingMode
-import org.librarysimplified.r2.api.SR2ScrollingMode
 import org.librarysimplified.r2.ui_thread.SR2UIThread
 import org.librarysimplified.r2.vanilla.SR2Controllers
 import org.librarysimplified.r2.views.SR2ControllerReference
+import org.librarysimplified.r2.views.SR2Fragment
 import org.librarysimplified.r2.views.SR2ReaderFragment
-import org.librarysimplified.r2.views.SR2ReaderFragmentFactory
-import org.librarysimplified.r2.views.SR2ReaderParameters
+import org.librarysimplified.r2.views.SR2ReaderModel
+import org.librarysimplified.r2.views.SR2ReaderViewCommand
+import org.librarysimplified.r2.views.SR2ReaderViewCommand.SR2ReaderViewNavigationReaderClose
+import org.librarysimplified.r2.views.SR2ReaderViewCommand.SR2ReaderViewNavigationSearchClose
+import org.librarysimplified.r2.views.SR2ReaderViewCommand.SR2ReaderViewNavigationSearchOpen
+import org.librarysimplified.r2.views.SR2ReaderViewCommand.SR2ReaderViewNavigationTOCClose
+import org.librarysimplified.r2.views.SR2ReaderViewCommand.SR2ReaderViewNavigationTOCOpen
 import org.librarysimplified.r2.views.SR2ReaderViewEvent
 import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewBookEvent.SR2BookLoadingFailed
 import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewControllerEvent.SR2ControllerBecameAvailable
-import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewNavigationEvent.SR2ReaderViewNavigationClose
-import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewNavigationEvent.SR2ReaderViewNavigationOpenSearch
-import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewNavigationEvent.SR2ReaderViewNavigationOpenTOC
-import org.librarysimplified.r2.views.SR2ReaderViewModel
-import org.librarysimplified.r2.views.SR2ReaderViewModelFactory
+import org.librarysimplified.r2.views.SR2SearchFragment
 import org.librarysimplified.r2.views.SR2TOCFragment
-import org.librarysimplified.r2.views.search.SR2SearchFragment
-import org.readium.r2.shared.publication.asset.FileAsset
+import org.readium.r2.shared.util.Try
+import org.readium.r2.shared.util.asset.AssetRetriever
+import org.readium.r2.shared.util.http.DefaultHttpClient
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.FileNotFoundException
@@ -66,42 +62,26 @@ import java.security.MessageDigest
 
 class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
 
+  private val logger =
+    LoggerFactory.getLogger(DemoActivity::class.java)
+
   companion object {
     const val PICK_DOCUMENT = 1001
   }
 
-  private val logger =
-    LoggerFactory.getLogger(DemoActivity::class.java)
-
-  private lateinit var readerFragmentFactory: SR2ReaderFragmentFactory
-  private lateinit var readerParameters: SR2ReaderParameters
-  private var controller: SR2ControllerType? = null
-  private var controllerSubscription: Disposable? = null
-  private var epubFile: File? = null
-  private var epubId: String? = null
-  private var viewSubscription: Disposable? = null
-  private lateinit var scrollMode: CheckBox
-  private lateinit var perChapterPageNumbering: CheckBox
-  private lateinit var readerFragment: Fragment
-  private lateinit var searchFragment: Fragment
-  private lateinit var tocFragment: Fragment
+  private lateinit var subscriptions: CompositeDisposable
+  private var fragmentNow: Fragment? = null
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
 
     val toolbar = this.findViewById(R.id.mainToolbar) as Toolbar
     this.setSupportActionBar(toolbar)
-
-    if (savedInstanceState == null) {
-      this.setContentView(R.layout.demo_fragment_host)
-
-      val browseButton = this.findViewById<Button>(R.id.browse_button)!!
-      browseButton.setOnClickListener { this.startDocumentPickerForResult() }
-      this.scrollMode = this.findViewById(R.id.scrollMode)
-      this.perChapterPageNumbering = this.findViewById(R.id.perChapterPageNumbering)
-    }
+    this.fragmentNow = null
+    this.subscriptions = CompositeDisposable()
   }
 
+  @Deprecated("Deprecated in Java")
   override fun onActivityResult(
     requestCode: Int,
     resultCode: Int,
@@ -116,56 +96,49 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
 
   override fun onStart() {
     super.onStart()
-    this.epubFile?.let(this::startReader)
+
+    this.subscriptions = CompositeDisposable()
+    this.subscriptions.add(
+      SR2ReaderModel.controllerEvents.subscribe(this::onControllerEvent),
+    )
+    this.subscriptions.add(
+      SR2ReaderModel.viewCommands.subscribe(this::onViewCommandReceived),
+    )
+    this.subscriptions.add(
+      SR2ReaderModel.viewEvents.subscribe(this::onViewEventReceived),
+    )
+
+    if (DemoModel.epubFile == null) {
+      this.switchFragment(DemoFileSelectionFragment())
+    } else {
+      this.switchFragment(SR2ReaderFragment())
+    }
   }
 
   override fun onStop() {
     super.onStop()
-    this.controllerSubscription?.dispose()
-    this.viewSubscription?.dispose()
-  }
 
-  override fun onBackPressed() {
-    if (this.tocFragment.isVisible) {
-      this.tocClose()
-    } else if (this.searchFragment.isVisible) {
-      this.searchClose()
-    } else {
-      super.onBackPressed()
+    val fragment = this.fragmentNow
+    if (fragment != null) {
+      this.supportFragmentManager.beginTransaction()
+        .remove(fragment)
+        .commitAllowingStateLoss()
     }
+
+    this.subscriptions.dispose()
   }
 
-  private fun tocClose() {
-    SR2UIThread.checkIsUIThread()
-
-    this.supportFragmentManager.beginTransaction()
-      .hide(this.tocFragment)
-      .show(this.readerFragment)
-      .commit()
-  }
-
-  private fun searchClose() {
-    SR2UIThread.checkIsUIThread()
-
-    this.supportFragmentManager.beginTransaction()
-      .hide(this.searchFragment)
-      .show(this.readerFragment)
-      .commit()
-  }
-
+  @UiThread
   private fun onControllerBecameAvailable(reference: SR2ControllerReference) {
-    this.controller = reference.controller
-
-    // Listen for messages from the controller.
-    this.controllerSubscription =
-      reference.controller.events.subscribe(this::onControllerEvent)
+    this.switchFragment(SR2ReaderFragment())
 
     if (reference.isFirstStartup) {
       // Navigate to the first chapter or saved reading position.
-      val database = DemoApplication.application.database()
       val bookId = reference.controller.bookMetadata.id
-      reference.controller.submitCommand(SR2Command.BookmarksLoad(database.bookmarksFor(bookId)))
-      val lastRead = database.bookmarkFindLastReadLocation(bookId)
+      reference.controller.submitCommand(
+        SR2Command.BookmarksLoad(DemoModel.database.bookmarksFor(bookId)),
+      )
+      val lastRead = DemoModel.database.bookmarkFindLastReadLocation(bookId)
       val startLocator = lastRead?.locator ?: reference.controller.bookMetadata.start
       reference.controller.submitCommand(SR2Command.OpenChapter(startLocator))
     } else {
@@ -179,85 +152,113 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
    */
 
   @UiThread
-  private fun startReader(file: File) {
+  private fun startReader() {
     SR2UIThread.checkIsUIThread()
 
-    val database =
-      DemoApplication.application.database()
-
-    this.readerParameters =
-      SR2ReaderParameters(
-        contentProtections = emptyList(),
-        bookFile = FileAsset(file),
-        bookId = this.epubId!!,
-        isPreview = false,
-        theme = database.theme(),
-        controllers = SR2Controllers(),
-        scrollingMode = if (this.scrollMode.isChecked) {
-          SR2ScrollingMode.SCROLLING_MODE_CONTINUOUS
-        } else {
-          SR2ScrollingMode.SCROLLING_MODE_PAGINATED
-        },
-        pageNumberingMode = if (this.perChapterPageNumbering.isChecked) {
-          SR2PageNumberingMode.PER_CHAPTER
-        } else {
-          SR2PageNumberingMode.WHOLE_BOOK
-        },
+    this.logger.debug("Opening asset...")
+    val assetRetriever =
+      AssetRetriever(
+        contentResolver = this.contentResolver,
+        httpClient = DefaultHttpClient(),
       )
 
-    this.readerFragmentFactory =
-      SR2ReaderFragmentFactory(this.readerParameters)
+    val file = DemoModel.epubFile!!
+    val id = DemoModel.epubId!!
 
-    if (!::readerFragment.isInitialized) {
-      this.readerFragment =
-        this.readerFragmentFactory.instantiate(this.classLoader, SR2ReaderFragment::class.java.name)
+    val asset =
+      when (val a = runBlocking { assetRetriever.retrieve(file) }) {
+        is Try.Failure -> TODO()
+        is Try.Success -> a.value
+      }
 
-      this.searchFragment =
-        this.readerFragmentFactory.instantiate(this.classLoader, SR2SearchFragment::class.java.name)
-
-      this.tocFragment =
-        this.readerFragmentFactory.instantiate(this.classLoader, SR2TOCFragment::class.java.name)
-    }
-
-    val readerModel =
-      ViewModelProvider(this, SR2ReaderViewModelFactory(this.readerParameters))
-        .get(SR2ReaderViewModel::class.java)
-
-    this.viewSubscription =
-      readerModel.viewEvents.subscribe(this::onViewEvent)
-
-    val selectFileArea =
-      this.findViewById<View>(R.id.selectFileArea)
-
-    selectFileArea.visibility = View.GONE
-
-    if (!readerFragment.isAdded) {
-      this.supportFragmentManager.beginTransaction()
-        .add(R.id.demoFragmentArea, readerFragment)
-        .commit()
-    }
+    SR2ReaderModel.controllerCreate(
+      contentProtections = emptyList(),
+      bookFile = asset,
+      bookId = id,
+      theme = DemoModel.database.theme(),
+      context = DemoApplication.application,
+      controllers = SR2Controllers(),
+    )
   }
 
   /**
    * Handle incoming messages from the view fragments.
    */
 
-  private fun onViewEvent(event: SR2ReaderViewEvent) {
+  @UiThread
+  private fun onViewEventReceived(event: SR2ReaderViewEvent) {
     SR2UIThread.checkIsUIThread()
 
     return when (event) {
-      SR2ReaderViewNavigationClose ->
-        this.onBackPressed()
-      SR2ReaderViewNavigationOpenTOC ->
-        this.openTOC()
       is SR2ControllerBecameAvailable ->
         this.onControllerBecameAvailable(event.reference)
+
       is SR2BookLoadingFailed ->
         this.onBookLoadingFailed(event.exception)
-      SR2ReaderViewNavigationOpenSearch -> {
-        this.openSearch()
+    }
+  }
+
+  @Deprecated("Deprecated in Java")
+  override fun onBackPressed() {
+    return when (val f = this.fragmentNow) {
+      is DemoFileSelectionFragment -> {
+        super.onBackPressed()
+      }
+      is DemoLoadingFragment -> {
+        super.onBackPressed()
+      }
+      is SR2Fragment -> {
+        when (f) {
+          is SR2ReaderFragment -> {
+            this.switchFragment(DemoFileSelectionFragment())
+          }
+
+          is SR2SearchFragment -> {
+            this.switchFragment(SR2ReaderFragment())
+          }
+
+          is SR2TOCFragment -> {
+            this.switchFragment(SR2ReaderFragment())
+          }
+        }
+      }
+      null -> {
+        super.onBackPressed()
+      }
+      else -> {
+        throw IllegalStateException("Unrecognized fragment: $f")
       }
     }
+  }
+
+  @UiThread
+  private fun onViewCommandReceived(command: SR2ReaderViewCommand) {
+    SR2UIThread.checkIsUIThread()
+
+    return when (command) {
+      SR2ReaderViewNavigationSearchOpen -> {
+        this.switchFragment(SR2SearchFragment())
+      }
+      SR2ReaderViewNavigationTOCOpen -> {
+        this.switchFragment(SR2TOCFragment())
+      }
+      SR2ReaderViewNavigationReaderClose -> {
+        this.switchFragment(DemoFileSelectionFragment())
+      }
+      SR2ReaderViewNavigationSearchClose -> {
+        this.switchFragment(SR2ReaderFragment())
+      }
+      SR2ReaderViewNavigationTOCClose -> {
+        this.switchFragment(SR2ReaderFragment())
+      }
+    }
+  }
+
+  private fun switchFragment(fragment: Fragment) {
+    this.fragmentNow = fragment
+    this.supportFragmentManager.beginTransaction()
+      .replace(R.id.mainFragmentHolder, fragment)
+      .commit()
   }
 
   private fun onBookLoadingFailed(exception: Throwable) {
@@ -268,32 +269,6 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
       .show()
   }
 
-  private fun openSearch() {
-    val transaction = this.supportFragmentManager.beginTransaction()
-      .hide(readerFragment)
-
-    if (searchFragment.isAdded) {
-      transaction.show(searchFragment)
-    } else {
-      transaction.add(R.id.demoFragmentArea, searchFragment)
-    }
-
-    transaction.commit()
-  }
-
-  private fun openTOC() {
-    val transaction = this.supportFragmentManager.beginTransaction()
-      .hide(readerFragment)
-
-    if (tocFragment.isAdded) {
-      transaction.show(tocFragment)
-    } else {
-      transaction.add(R.id.demoFragmentArea, tocFragment)
-    }
-
-    transaction.commit()
-  }
-
   /**
    * Handle incoming messages from the controller.
    */
@@ -301,19 +276,22 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
   private fun onControllerEvent(event: SR2Event) {
     when (event) {
       is SR2BookmarkCreate -> {
-        val database = DemoApplication.application.database()
-        database.bookmarkSave(this.controller!!.bookMetadata.id, event.bookmark)
+        DemoModel.database.bookmarkSave(
+          SR2ReaderModel.controller().bookMetadata.id,
+          event.bookmark,
+        )
         event.onBookmarkCreationCompleted(event.bookmark)
       }
 
       is SR2BookmarkDeleted -> {
-        val database = DemoApplication.application.database()
-        database.bookmarkDelete(this.controller!!.bookMetadata.id, event.bookmark)
+        DemoModel.database.bookmarkDelete(
+          SR2ReaderModel.controller().bookMetadata.id,
+          event.bookmark,
+        )
       }
 
       is SR2ThemeChanged -> {
-        val database = DemoApplication.application.database()
-        database.themeSet(event.theme)
+        DemoModel.database.themeSet(event.theme)
       }
 
       is SR2BookmarkCreated,
@@ -341,14 +319,19 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
    */
 
   private fun onPickDocumentResult(resultCode: Int, intent: Intent?) {
+    SR2UIThread.checkIsUIThread()
+    this.switchFragment(DemoLoadingFragment())
+
     // Assume the user picked a valid EPUB file. In reality, we'd want to verify
     // this is a supported file type.
     if (resultCode == Activity.RESULT_OK) {
       intent?.data?.let { uri ->
         // This copy operation should be done on a worker thread; omitted for brevity.
         val data = this.copyToStorage(uri)!!
-        this.epubFile = data.first
-        this.epubId = data.second
+        DemoModel.setEpubAndId(data)
+
+        this.logger.debug("Starting reader...")
+        this.startReader()
       }
     }
   }
@@ -374,7 +357,7 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
       ips = this.contentResolver.openInputStream(uri)
       ops = file.outputStream()
       ips?.copyTo(ops)
-      return Pair(file, hashOf(file))
+      return Pair(file, this.hashOf(file))
     } catch (e: FileNotFoundException) {
       this.logger.warn("File not found", e)
       this.showError("File not found")
@@ -405,26 +388,5 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
   private class NullOutputStream : OutputStream() {
     override fun write(b: Int) {
     }
-  }
-
-  /**
-   * Present the native document picker and prompt the user to select an EPUB.
-   */
-
-  private fun startDocumentPickerForResult() {
-    val pickIntent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-      this.type = "*/*"
-      this.addCategory(Intent.CATEGORY_OPENABLE)
-
-      // Filter by MIME type; Android versions prior to Marshmallow don't seem
-      // to understand the 'application/epub+zip' MIME type.
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-        this.putExtra(
-          Intent.EXTRA_MIME_TYPES,
-          arrayOf("application/epub+zip"),
-        )
-      }
-    }
-    this.startActivityForResult(pickIntent, PICK_DOCUMENT)
   }
 }

@@ -20,7 +20,7 @@ object SR2Books {
 
     return SR2BookMetadata(
       id = bookId,
-      title = publication.metadata.title,
+      title = publication.metadata.title ?: "",
       tableOfContents = this.makeTableOfContents(publication),
       start = startLocator,
     )
@@ -55,7 +55,7 @@ object SR2Books {
     results: MutableList<SR2TOCEntry>,
   ) {
     // Items in tableOfContents are unlikely to have no title because it makes no sense.
-    val title = link.title?.takeUnless(String::isBlank) ?: link.href
+    val title = link.title?.takeUnless(String::isBlank) ?: link.href.toString()
     results.add(SR2TOCEntry(title, link.href, depth))
     for (child in link.children) {
       this.flattenTOCNode(child, depth + 1, results)

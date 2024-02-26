@@ -6,23 +6,6 @@ package org.librarysimplified.r2.views
 
 sealed class SR2ReaderViewEvent {
 
-  sealed class SR2ReaderViewNavigationEvent : SR2ReaderViewEvent() {
-    object SR2ReaderViewNavigationClose : SR2ReaderViewNavigationEvent() {
-      override fun toString(): String =
-        "[SR2ReaderViewNavigationClose]"
-    }
-
-    object SR2ReaderViewNavigationOpenTOC : SR2ReaderViewNavigationEvent() {
-      override fun toString(): String =
-        "[SR2ReaderViewNavigationOpenTOC]"
-    }
-
-    object SR2ReaderViewNavigationOpenSearch : SR2ReaderViewNavigationEvent() {
-      override fun toString(): String =
-        "[SR2ReaderViewNavigationOpenSearch]"
-    }
-  }
-
   sealed class SR2ReaderViewControllerEvent : SR2ReaderViewEvent() {
     data class SR2ControllerBecameAvailable(
       val reference: SR2ControllerReference,

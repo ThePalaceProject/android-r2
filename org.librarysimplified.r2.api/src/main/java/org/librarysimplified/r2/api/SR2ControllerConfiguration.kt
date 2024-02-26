@@ -1,9 +1,8 @@
 package org.librarysimplified.r2.api
 
 import android.content.Context
-import com.google.common.util.concurrent.ListeningExecutorService
-import org.readium.r2.shared.publication.ContentProtection
-import org.readium.r2.shared.publication.asset.PublicationAsset
+import org.readium.r2.shared.publication.protection.ContentProtection
+import org.readium.r2.shared.util.asset.Asset
 
 /**
  * Configuration values for an R2 controller.
@@ -15,7 +14,7 @@ data class SR2ControllerConfiguration(
    * A publication asset containing a book.
    */
 
-  val bookFile: PublicationAsset,
+  val bookFile: Asset,
 
   /**
    * An identifier used to uniquely identify a publication. Unfortunately, identifier are optional
@@ -41,12 +40,6 @@ data class SR2ControllerConfiguration(
    */
 
   val contentProtections: List<ContentProtection>,
-
-  /**
-   * An executor service used to execute I/O code on one or more background threads.
-   */
-
-  val ioExecutor: ListeningExecutorService,
 
   /**
    * A function that executes `f` on the Android UI thread.

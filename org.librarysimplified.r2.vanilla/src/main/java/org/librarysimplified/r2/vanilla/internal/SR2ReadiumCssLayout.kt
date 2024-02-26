@@ -44,14 +44,14 @@ internal enum class SR2ReadiumCssLayout(val cssId: String) {
         }
 
       return when (readingProgression) {
-        ReadingProgression.RTL, ReadingProgression.BTT ->
+        ReadingProgression.RTL ->
           if (isCjk) {
             CJK_VERTICAL
           } else {
             RTL
           }
 
-        ReadingProgression.LTR, ReadingProgression.TTB, ReadingProgression.AUTO ->
+        ReadingProgression.LTR ->
           if (isCjk) {
             CJK_HORIZONTAL
           } else {

@@ -80,7 +80,7 @@ class SR2HtmlInjectingResource(
       resourceHtml = StringBuilder(resourceHtml).insert(endHeadIndex, element).toString()
       endHeadIndex += element.length
     }
-    resourceHtml = StringBuilder(resourceHtml).insert(endHeadIndex, getHtmlFont(fontFamily = "OpenDyslexic", href = "/fonts/OpenDyslexic-Regular.otf")).toString()
+    resourceHtml = StringBuilder(resourceHtml).insert(endHeadIndex, getHtmlFont(fontFamily = "OpenDyslexic", href = "fonts/OpenDyslexic-Regular.otf")).toString()
     resourceHtml = StringBuilder(resourceHtml).insert(endHeadIndex, "<style>@import url('https://fonts.googleapis.com/css?family=PT+Serif|Roboto|Source+Sans+Pro|Vollkorn');</style>\n").toString()
     resourceHtml = applyDirectionAttribute(resourceHtml, this.publication.manifest)
     return resourceHtml
@@ -138,7 +138,7 @@ class SR2HtmlInjectingResource(
   ): String {
     val prefix = "<style type=\"text/css\"> @font-face{font-family: \"$fontFamily\"; src:url(\""
     val suffix = "\") format('truetype');}</style>\n"
-    return prefix + href + suffix
+    return prefix + PREFIX_ASSETS + href + suffix
   }
 
   private fun linkToCSS(resourceName: String): String {

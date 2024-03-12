@@ -67,9 +67,9 @@
     <c:release date="2023-11-03T00:00:00+00:00" is-open="false" ticket-system="org.nypl.jira" version="2.1.1">
       <c:changes/>
     </c:release>
-    <c:release date="2024-03-05T10:43:04+00:00" is-open="true" ticket-system="org.lyrasis.jira" version="3.1.0">
+    <c:release date="2024-03-12T13:41:03+00:00" is-open="false" ticket-system="org.lyrasis.jira" version="3.1.0">
       <c:changes>
-        <c:change date="2024-03-05T10:43:04+00:00" summary="Fix OpenDyslexic font injection.">
+        <c:change date="2024-03-05T00:00:00+00:00" summary="Fix OpenDyslexic font injection.">
           <c:tickets>
             <c:ticket id="PP-1015"/>
           </c:tickets>

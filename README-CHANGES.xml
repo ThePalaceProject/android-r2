@@ -76,7 +76,7 @@
         </c:change>
       </c:changes>
     </c:release>
-    <c:release date="2024-04-03T16:12:21+00:00" is-open="false" ticket-system="org.lyrasis.jira" version="4.0.0">
+    <c:release date="2024-04-03T00:00:00+00:00" is-open="false" ticket-system="org.lyrasis.jira" version="4.0.0">
       <c:changes>
         <c:change date="2024-04-03T00:00:00+00:00" summary="Refactor internal navigation and bookmark handling.">
           <c:tickets>
@@ -85,6 +85,9 @@
           </c:tickets>
         </c:change>
       </c:changes>
+    </c:release>
+    <c:release date="2024-04-03T16:30:08+00:00" is-open="true" ticket-system="org.lyrasis.jira" version="4.0.1">
+      <c:changes/>
     </c:release>
   </c:releases>
   <c:ticket-systems>

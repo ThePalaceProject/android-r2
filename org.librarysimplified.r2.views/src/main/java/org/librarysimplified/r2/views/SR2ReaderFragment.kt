@@ -11,7 +11,6 @@ import android.view.ViewGroup
 import android.webkit.WebView
 import android.widget.ProgressBar
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.MenuItemCompat
 import androidx.core.view.forEach
@@ -22,12 +21,8 @@ import org.librarysimplified.r2.api.SR2Bookmark.Type.EXPLICIT
 import org.librarysimplified.r2.api.SR2Command
 import org.librarysimplified.r2.api.SR2ControllerType
 import org.librarysimplified.r2.api.SR2Event
-import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkCreate
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkCreated
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkDeleted
-import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkFailedToBeDeleted
-import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkTryToDelete
-import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarksLoaded
 import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandEventCompleted.SR2CommandExecutionFailed
 import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandEventCompleted.SR2CommandExecutionSucceeded
 import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandExecutionRunningLong
@@ -309,25 +304,8 @@ class SR2ReaderFragment : SR2Fragment() {
         this.onReadingPositionChanged(event)
       }
 
-      SR2BookmarksLoaded,
-      is SR2BookmarkDeleted,
-      is SR2BookmarkTryToDelete,
-      is SR2BookmarkCreated,
-      -> {
-        this.onBookmarksChanged()
-      }
-
-      is SR2BookmarkCreate -> {
-        // Nothing
-      }
-
-      SR2BookmarkFailedToBeDeleted -> {
-        this.onBookmarksChanged()
-        Toast.makeText(
-          this.requireContext(),
-          R.string.tocBookmarkDeleteErrorMessage,
-          Toast.LENGTH_SHORT,
-        ).show()
+      is SR2BookmarkCreated -> {
+        this.reconfigureBookmarkMenuItem(event.bookmark.locator)
       }
 
       is SR2ThemeChanged -> {
@@ -363,6 +341,10 @@ class SR2ReaderFragment : SR2Fragment() {
       is SR2Event.SR2ExternalLinkSelected -> {
         val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(event.link))
         this.startActivity(browserIntent)
+      }
+
+      is SR2BookmarkDeleted -> {
+        this.reconfigureBookmarkMenuItem(event.bookmark.locator)
       }
     }
   }

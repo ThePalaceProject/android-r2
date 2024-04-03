@@ -44,12 +44,6 @@ data class SR2Bookmark(
    */
 
   val uri: URI?,
-
-  /**
-   * A flag that indicates if the bookmark is being deleted or not.
-   */
-
-  var isBeingDeleted: Boolean = false,
 ) {
 
   init {

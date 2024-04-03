@@ -58,4 +58,10 @@ data class SR2ControllerConfiguration(
    */
 
   val pageNumberingMode: SR2PageNumberingMode,
+
+  /**
+   * The initial set of bookmarks.
+   */
+
+  val initialBookmarks: List<SR2Bookmark>,
 )

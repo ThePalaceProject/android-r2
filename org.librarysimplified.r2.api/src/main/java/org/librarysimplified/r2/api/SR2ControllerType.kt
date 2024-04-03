@@ -51,7 +51,7 @@ interface SR2ControllerType : Closeable, SR2ControllerCommandQueueType {
 
   /**
    * The list of bookmarks currently loaded into the controller. This list is an immutable
-   * snapshots, and subsequent updates to bookmarks will not be reflected in the returned list.
+   * snapshot, and subsequent updates to bookmarks will not be reflected in the returned list.
    */
 
   fun bookmarksNow(): List<SR2Bookmark>

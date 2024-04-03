@@ -8,10 +8,12 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.subjects.BehaviorSubject
 import io.reactivex.subjects.PublishSubject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import org.librarysimplified.r2.api.SR2Bookmark
 import org.librarysimplified.r2.api.SR2ControllerConfiguration
 import org.librarysimplified.r2.api.SR2ControllerProviderType
 import org.librarysimplified.r2.api.SR2ControllerType
@@ -59,7 +61,7 @@ object SR2ReaderModel {
       .toSerialized()
 
   private val viewEventSource =
-    PublishSubject.create<SR2ReaderViewEvent>()
+    BehaviorSubject.create<SR2ReaderViewEvent>()
       .toSerialized()
 
   private val controllerEventSource =
@@ -122,6 +124,7 @@ object SR2ReaderModel {
     bookId: String,
     theme: SR2Theme,
     controllers: SR2ControllerProviderType,
+    bookmarks: List<SR2Bookmark>,
   ): CompletableFuture<SR2ControllerType> {
     val future = CompletableFuture<SR2ControllerType>()
     SR2Executors.ioExecutor.execute {
@@ -138,6 +141,7 @@ object SR2ReaderModel {
               uiExecutor = SR2UIThread::runOnUIThread,
               scrollingMode = this.scrollMode,
               pageNumberingMode = this.perChapterNumbering,
+              initialBookmarks = bookmarks,
             ),
           ),
         )

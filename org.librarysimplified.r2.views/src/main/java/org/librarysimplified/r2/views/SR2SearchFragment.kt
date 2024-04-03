@@ -21,6 +21,18 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.librarysimplified.r2.api.SR2Command
 import org.librarysimplified.r2.api.SR2Event
+import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkCreated
+import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkDeleted
+import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandEventCompleted.SR2CommandExecutionFailed
+import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandEventCompleted.SR2CommandExecutionSucceeded
+import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandExecutionRunningLong
+import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandExecutionStarted
+import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandSearchResults
+import org.librarysimplified.r2.api.SR2Event.SR2Error
+import org.librarysimplified.r2.api.SR2Event.SR2ExternalLinkSelected
+import org.librarysimplified.r2.api.SR2Event.SR2OnCenterTapped
+import org.librarysimplified.r2.api.SR2Event.SR2ReadingPositionChanged
+import org.librarysimplified.r2.api.SR2Event.SR2ThemeChanged
 import org.librarysimplified.r2.api.SR2Locator
 import org.librarysimplified.r2.ui_thread.SR2UIThread
 import org.librarysimplified.r2.views.SR2ReaderViewCommand.SR2ReaderViewNavigationSearchClose
@@ -204,27 +216,23 @@ class SR2SearchFragment : SR2Fragment() {
     SR2UIThread.checkIsUIThread()
 
     when (event) {
-      is SR2Event.SR2ReadingPositionChanged,
-      SR2Event.SR2BookmarkEvent.SR2BookmarksLoaded,
-      is SR2Event.SR2BookmarkEvent.SR2BookmarkDeleted,
-      is SR2Event.SR2BookmarkEvent.SR2BookmarkTryToDelete,
-      is SR2Event.SR2BookmarkEvent.SR2BookmarkCreated,
-      SR2Event.SR2BookmarkEvent.SR2BookmarkFailedToBeDeleted,
-      is SR2Event.SR2ThemeChanged,
-      is SR2Event.SR2Error.SR2ChapterNonexistent,
-      is SR2Event.SR2Error.SR2WebViewInaccessible,
-      is SR2Event.SR2OnCenterTapped,
-      is SR2Event.SR2BookmarkEvent.SR2BookmarkCreate,
-      is SR2Event.SR2CommandEvent.SR2CommandExecutionRunningLong,
-      is SR2Event.SR2CommandEvent.SR2CommandExecutionStarted,
-      is SR2Event.SR2CommandEvent.SR2CommandEventCompleted.SR2CommandExecutionSucceeded,
-      is SR2Event.SR2CommandEvent.SR2CommandEventCompleted.SR2CommandExecutionFailed,
-      is SR2Event.SR2ExternalLinkSelected,
+      is SR2ReadingPositionChanged,
+      is SR2BookmarkDeleted,
+      is SR2BookmarkCreated,
+      is SR2ThemeChanged,
+      is SR2Error.SR2ChapterNonexistent,
+      is SR2Error.SR2WebViewInaccessible,
+      is SR2OnCenterTapped,
+      is SR2CommandExecutionRunningLong,
+      is SR2CommandExecutionStarted,
+      is SR2CommandExecutionSucceeded,
+      is SR2CommandExecutionFailed,
+      is SR2ExternalLinkSelected,
       -> {
         // Nothing
       }
 
-      is SR2Event.SR2CommandEvent.SR2CommandSearchResults -> {
+      is SR2CommandSearchResults -> {
         SR2ReaderModel.consumeSearchResults(event)
       }
     }

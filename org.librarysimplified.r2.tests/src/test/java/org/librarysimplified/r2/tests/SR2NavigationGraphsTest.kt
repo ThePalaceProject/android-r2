@@ -85,7 +85,7 @@ class SR2NavigationGraphsTest {
     assertEquals(4, graph.resources.size)
     assertEquals("Something", graph.readingOrder[0].navigationPoint.title)
 
-    var target: SR2NavigationTarget? = null
+    var target: SR2NavigationTarget?
     target = graph.findNavigationNode(SR2LocatorPercent.start(Href("/epub/text/p1.xhtml")!!))
     assertEquals("Something Nested", target!!.node.navigationPoint.title)
     assertEquals(null, target.extraFragment)
@@ -142,7 +142,7 @@ class SR2NavigationGraphsTest {
     node = graph.findNextNode(node)
     assertEquals(null, node)
 
-    var target: SR2NavigationTarget? = null
+    var target: SR2NavigationTarget?
     target = graph.findNavigationNode(SR2LocatorPercent.start(Href("/epub/text/p0.xhtml")!!))
     assertEquals("Chapter 0", target!!.node.navigationPoint.title)
     assertEquals(null, target.extraFragment)

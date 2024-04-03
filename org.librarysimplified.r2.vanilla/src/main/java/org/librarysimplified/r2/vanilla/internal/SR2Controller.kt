@@ -16,17 +16,14 @@ import net.jcip.annotations.GuardedBy
 import org.joda.time.DateTime
 import org.librarysimplified.r2.api.SR2BookMetadata
 import org.librarysimplified.r2.api.SR2Bookmark
+import org.librarysimplified.r2.api.SR2Bookmark.Type.EXPLICIT
 import org.librarysimplified.r2.api.SR2Bookmark.Type.LAST_READ
 import org.librarysimplified.r2.api.SR2Command
 import org.librarysimplified.r2.api.SR2ControllerConfiguration
 import org.librarysimplified.r2.api.SR2ControllerType
 import org.librarysimplified.r2.api.SR2Event
-import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkCreate
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkCreated
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkDeleted
-import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkFailedToBeDeleted
-import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkTryToDelete
-import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarksLoaded
 import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandEventCompleted.SR2CommandExecutionFailed
 import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandEventCompleted.SR2CommandExecutionSucceeded
 import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandExecutionRunningLong
@@ -80,6 +77,15 @@ internal class SR2Controller private constructor(
   private val configuration: SR2ControllerConfiguration,
   private val publication: Publication,
   private val assetRetriever: AssetRetriever,
+
+  /*
+   * All navigation changes are implemented by first having the code atomically set the
+   * _navigation intent_, and then running a command that satisfies this intent by either
+   * opening a new chapter in the webview, scrolling the webview, or both.
+   */
+
+  @Volatile private var currentNavigationIntent: SR2Locator,
+  private val navigationGraph: SR2NavigationGraph,
 ) : SR2ControllerType {
 
   companion object {
@@ -149,10 +155,35 @@ internal class SR2Controller private constructor(
       }
 
       this.logger.debug("Publication title: {}", publication.metadata.title)
+
+      /*
+       * If the list of bookmarks used to open the controller contains a "last read" position,
+       * set this as the initial position for the controller.
+       */
+
+      val navigationGraph =
+        SR2NavigationGraphs.create(publication)
+
+      val lastRead =
+        configuration.initialBookmarks.find { bookmark -> bookmark.type == LAST_READ }
+
+      val navigationIntent =
+        if (lastRead != null) {
+          this.logger.debug("LastRead: Attempting to start from {}", lastRead)
+          lastRead.locator
+        } else {
+          SR2LocatorPercent(
+            chapterHref = navigationGraph.start().node.navigationPoint.locator.chapterHref,
+            chapterProgress = 0.0,
+          )
+        }
+
       return SR2Controller(
         configuration = configuration,
         publication = publication,
         assetRetriever = assetRetriever,
+        navigationGraph = navigationGraph,
+        currentNavigationIntent = navigationIntent,
       )
     }
   }
@@ -177,6 +208,21 @@ internal class SR2Controller private constructor(
     }
 
   private val closed = AtomicBoolean(false)
+
+  /*
+   * Should the navigation intent be updated on the next chapter progress update?
+   *
+   * The web view will provide us with an endless stream of chapter progress updates, and not all
+   * of them should be used to update the [currentNavigationIntent], because often the published
+   * updates will be intermediate events while the web view loads and scrolls to locations.
+   * Typically we only want to be told about a reading position update after we've explicitly turned
+   * to the next (or previous) page. For all of the other explicit movements such as opening
+   * chapters, we don't trust the WebView to safely update the navigation intent, and we already
+   * know where we should be anyway!
+   */
+
+  private val updateNavigationIntentOnNextChapterProgressUpdate =
+    AtomicBoolean(false)
 
   @OptIn(ExperimentalReadiumApi::class)
   private var searchIterator: SearchIterator? = null
@@ -203,21 +249,11 @@ internal class SR2Controller private constructor(
       bookId = this.configuration.bookId,
     )
 
-  private val navigationGraph: SR2NavigationGraph =
-    SR2NavigationGraphs.create(this.publication)
-
-  @Volatile
-  private var currentTarget: SR2NavigationTarget =
-    this.navigationGraph.start()
-
-  @Volatile
-  private var currentTargetProgress: Double = 0.0
-
   @Volatile
   private var currentBookProgress: Double? = 0.0
 
   @Volatile
-  private var bookmarks = listOf<SR2Bookmark>()
+  private var bookmarks = this.configuration.initialBookmarks.toList()
 
   @Volatile
   private var uiVisible: Boolean = true
@@ -228,6 +264,7 @@ internal class SR2Controller private constructor(
     this.subscriptions.add(
       this.eventSubject.subscribe { event -> this.logger.trace("event: {}", event) },
     )
+
     this.subscriptions.add(
       this.eventSubject.ofType(SR2ReadingPositionChanged::class.java)
         .distinctUntilChanged()
@@ -239,62 +276,24 @@ internal class SR2Controller private constructor(
     runBlocking { this@SR2Controller.publication.positionsByReadingOrder() }
   }
 
-  private fun serverLocationOfTarget(
-    target: SR2NavigationTarget,
-  ): Url {
-    return target.node.navigationPoint.locator.chapterHref.resolve(Url(PREFIX_PUBLICATION))
-  }
-
-  private fun setCurrentNode(target: SR2NavigationTarget) {
-    this.logger.debug("currentNode: {}", target.node.javaClass)
-    this.currentTarget = target
-    this.currentTargetProgress = when (val locator = target.node.navigationPoint.locator) {
-      is SR2LocatorPercent -> locator.chapterProgress
-      is SR2LocatorChapterEnd -> 1.0
-    }
-  }
-
   private fun updateBookmarkLastRead(
     position: SR2ReadingPositionChanged,
   ) {
-    /*
-     * This is pure paranoia; we only update the last-read location if the new position
-     * doesn't appear to point to the very start of the book. This is to defend against
-     * any future bugs that might cause a "reading position change" event to be published
-     * before the user's _real_ last-read position has been restored using a command or
-     * bookmark. If this happened, we'd accidentally overwrite the user's reading position with
-     * a pointer to the start of the book, so this check prevents that.
-     */
+    this.queueExecutor.execute {
+      val newBookmark = SR2Bookmark(
+        date = DateTime.now(),
+        type = LAST_READ,
+        title = position.chapterTitle.orEmpty(),
+        locator = position.locator,
+        bookProgress = this.currentBookProgress,
+        uri = null,
+      )
 
-    val currentNode = this.currentTarget.node
-    if (currentNode !is SR2NavigationNode.SR2NavigationReadingOrderNode ||
-      currentNode.index != 0 || position.chapterProgress > 0.000_001
-    ) {
-      this.queueExecutor.execute {
-        val newBookmark = SR2Bookmark(
-          date = DateTime.now(),
-          type = LAST_READ,
-          title = position.chapterTitle.orEmpty(),
-          locator = position.locator,
-          bookProgress = this.currentBookProgress,
-          uri = null,
-        )
-
-        this.publishEvent(
-          SR2BookmarkCreate(
-            newBookmark,
-            onBookmarkCreationCompleted = { createdBookmark ->
-              if (createdBookmark != null) {
-                val newBookmarks = this.bookmarks.toMutableList()
-                newBookmarks.removeAll { bookmark -> bookmark.type == LAST_READ }
-                newBookmarks.add(createdBookmark)
-                this.bookmarks = newBookmarks.distinct().toList()
-                this.publishEvent(SR2BookmarkCreated(createdBookmark))
-              }
-            },
-          ),
-        )
-      }
+      val newBookmarks = this.bookmarks.toMutableList()
+      newBookmarks.removeAll { bookmark -> bookmark.type == LAST_READ }
+      newBookmarks.add(newBookmark)
+      this.bookmarks = newBookmarks.distinct().toList()
+      this.publishEvent(SR2BookmarkCreated(newBookmark))
     }
   }
 
@@ -330,9 +329,6 @@ internal class SR2Controller private constructor(
       is SR2Command.OpenChapterPrevious ->
         this.executeCommandOpenChapterPrevious(command)
 
-      is SR2Command.BookmarksLoad ->
-        this.executeCommandBookmarksLoad(apiCommand)
-
       SR2Command.Refresh ->
         this.executeCommandRefresh(command)
 
@@ -360,6 +356,43 @@ internal class SR2Controller private constructor(
       SR2Command.HighlightCurrentTerms ->
         this.executeCommandHighlightCurrentTerms()
     }
+  }
+
+  private fun executeCommandBookmarkDelete(
+    apiCommand: SR2Command.BookmarkDelete,
+  ): CompletableFuture<*> {
+    val target = apiCommand.bookmark
+    return when (target.type) {
+      EXPLICIT -> {
+        this.bookmarks = this.bookmarks.filter { existing -> existing != apiCommand.bookmark }
+        this.publishEvent(SR2BookmarkDeleted(apiCommand.bookmark))
+        CompletableFuture.completedFuture(Unit)
+      }
+
+      LAST_READ -> {
+        CompletableFuture.completedFuture(Unit)
+      }
+    }
+  }
+
+  private fun executeCommandBookmarkCreate(): CompletableFuture<*> {
+    val node =
+      this.navigationGraph.findNavigationNode(this.currentNavigationIntent)
+        ?: return CompletableFuture.completedFuture(Unit)
+
+    val newBookmark =
+      SR2Bookmark(
+        date = DateTime.now(),
+        type = SR2Bookmark.Type.EXPLICIT,
+        title = node.node.title,
+        locator = this.positionNow(),
+        bookProgress = this.currentBookProgress,
+        uri = null,
+      )
+
+    this.bookmarks = this.bookmarks.plus(newBookmark).distinct().toList()
+    this.publishEvent(SR2BookmarkCreated(newBookmark))
+    return CompletableFuture.completedFuture(Unit)
   }
 
   /**
@@ -395,108 +428,13 @@ internal class SR2Controller private constructor(
   }
 
   /**
-   * Execute the [SR2Command.BookmarkDelete] command.
-   */
-
-  private fun executeCommandBookmarkDelete(
-    apiCommand: SR2Command.BookmarkDelete,
-  ): CompletableFuture<*> {
-    this.bookmarks = this.bookmarks.map { bookmark ->
-      bookmark.copy(
-        isBeingDeleted = bookmark == apiCommand.bookmark,
-      )
-    }.distinct().toList()
-    this.publishEvent(
-      SR2BookmarkTryToDelete(
-        bookmark = apiCommand.bookmark,
-        onDeleteOperationFinished = { wasDeleted ->
-          if (wasDeleted) {
-            val newBookmarks = this.bookmarks.toMutableList()
-            newBookmarks.remove(apiCommand.bookmark)
-            this.bookmarks = newBookmarks.distinct().toList()
-            this.publishEvent(SR2BookmarkDeleted(apiCommand.bookmark))
-          } else {
-            this.bookmarks = this.bookmarks.map { bookmark ->
-              bookmark.copy(
-                isBeingDeleted = if (bookmark == apiCommand.bookmark) {
-                  false
-                } else {
-                  bookmark.isBeingDeleted
-                },
-              )
-            }.distinct().toList()
-            this.publishEvent(SR2BookmarkFailedToBeDeleted)
-          }
-        },
-      ),
-    )
-
-    return CompletableFuture.completedFuture(Unit)
-  }
-
-  /**
-   * Execute the [SR2Command.BookmarkCreate] command.
-   */
-
-  private fun executeCommandBookmarkCreate(): CompletableFuture<*> {
-    val bookmark =
-      SR2Bookmark(
-        date = DateTime.now(),
-        type = SR2Bookmark.Type.EXPLICIT,
-        title = this.currentTarget.node.title,
-        locator = SR2LocatorPercent(
-          this.currentTarget.node.navigationPoint.locator.chapterHref,
-          this.currentTargetProgress,
-        ),
-        bookProgress = this.currentBookProgress,
-        uri = null,
-      )
-
-    this.publishEvent(
-      SR2BookmarkCreate(
-        bookmark = bookmark,
-        onBookmarkCreationCompleted = { createdBookmark ->
-          if (createdBookmark != null) {
-            val newBookmarks = this.bookmarks.toMutableList()
-            newBookmarks.add(createdBookmark)
-            this.bookmarks = newBookmarks.distinct().toList()
-            this.publishEvent(SR2BookmarkCreated(createdBookmark))
-          }
-        },
-      ),
-    )
-
-    return CompletableFuture.completedFuture(Unit)
-  }
-
-  /**
    * Execute the [SR2Command.Refresh] command.
    */
 
   private fun executeCommandRefresh(
     command: SR2CommandSubmission,
   ): CompletableFuture<*> {
-    return this.openNodeForLocator(
-      command,
-      SR2LocatorPercent(
-        chapterHref = this.currentTarget.node.navigationPoint.locator.chapterHref,
-        chapterProgress = this.currentTargetProgress,
-      ),
-    )
-  }
-
-  /**
-   * Execute the [SR2Command.BookmarksLoad] command.
-   */
-
-  private fun executeCommandBookmarksLoad(
-    apiCommand: SR2Command.BookmarksLoad,
-  ): CompletableFuture<*> {
-    val newBookmarks = this.bookmarks.toMutableList()
-    newBookmarks.addAll(apiCommand.bookmarks)
-    this.bookmarks = newBookmarks.distinct().toList()
-    this.publishEvent(SR2BookmarksLoaded)
-    return CompletableFuture.completedFuture(Unit)
+    return this.moveToSatisfyNavigationIntent(command)
   }
 
   /**
@@ -506,14 +444,16 @@ internal class SR2Controller private constructor(
   private fun executeCommandOpenChapterPrevious(
     command: SR2CommandSubmission,
   ): CompletableFuture<*> {
-    val previousNode =
-      this.navigationGraph.findPreviousNode(this.currentTarget.node)
+    val currentNode =
+      this.navigationGraph.findNavigationNode(this.currentNavigationIntent)
         ?: return CompletableFuture.completedFuture(Unit)
 
-    return this.openNodeForLocator(
-      command,
-      SR2LocatorChapterEnd(chapterHref = previousNode.navigationPoint.locator.chapterHref),
-    )
+    val previousNode =
+      this.navigationGraph.findPreviousNode(currentNode.node)
+        ?: return CompletableFuture.completedFuture(Unit)
+    val locator = SR2LocatorChapterEnd(previousNode.navigationPoint.locator.chapterHref)
+    this.setCurrentNavigationIntent(locator)
+    return this.moveToSatisfyNavigationIntent(command)
   }
 
   /**
@@ -523,17 +463,16 @@ internal class SR2Controller private constructor(
   private fun executeCommandOpenChapterNext(
     command: SR2CommandSubmission,
   ): CompletableFuture<*> {
-    val nextNode =
-      this.navigationGraph.findNextNode(this.currentTarget.node)
+    val currentNode =
+      this.navigationGraph.findNavigationNode(this.currentNavigationIntent)
         ?: return CompletableFuture.completedFuture(Unit)
 
-    return this.openNodeForLocator(
-      command,
-      SR2LocatorPercent(
-        chapterHref = nextNode.navigationPoint.locator.chapterHref,
-        chapterProgress = 0.0,
-      ),
-    )
+    val nextNode =
+      this.navigationGraph.findNextNode(currentNode.node)
+        ?: return CompletableFuture.completedFuture(Unit)
+
+    this.setCurrentNavigationIntent(nextNode.navigationPoint.locator)
+    return this.moveToSatisfyNavigationIntent(command)
   }
 
   /**
@@ -541,6 +480,7 @@ internal class SR2Controller private constructor(
    */
 
   private fun executeCommandOpenPagePrevious(): CompletableFuture<*> {
+    this.updateNavigationIntentOnNextChapterProgressUpdate.set(true)
     return this.waitForWebViewAvailability().executeJS(SR2JavascriptAPIType::openPagePrevious)
   }
 
@@ -594,6 +534,7 @@ internal class SR2Controller private constructor(
    */
 
   private fun executeCommandOpenPageNext(): CompletableFuture<*> {
+    this.updateNavigationIntentOnNextChapterProgressUpdate.set(true)
     return this.waitForWebViewAvailability().executeJS(SR2JavascriptAPIType::openPageNext)
   }
 
@@ -605,7 +546,11 @@ internal class SR2Controller private constructor(
     command: SR2CommandSubmission,
     apiCommand: SR2Command.OpenChapter,
   ): CompletableFuture<*> {
-    return this.openNodeForLocator(command, apiCommand.locator)
+    this.navigationGraph.findNavigationNode(apiCommand.locator)
+      ?: return CompletableFuture.completedFuture(Unit)
+
+    this.setCurrentNavigationIntent(apiCommand.locator)
+    return this.moveToSatisfyNavigationIntent(command)
   }
 
   /**
@@ -669,7 +614,6 @@ internal class SR2Controller private constructor(
       this@SR2Controller.searchIterator?.close()
       this@SR2Controller.searchIterator = null
     }
-
     return CompletableFuture.completedFuture(Unit)
   }
 
@@ -677,28 +621,21 @@ internal class SR2Controller private constructor(
    * Load the node for the given locator, and set the reading position appropriately.
    */
 
-  private fun openNodeForLocator(
+  private fun moveToSatisfyNavigationIntent(
     command: SR2CommandSubmission,
-    locator: SR2Locator,
   ): CompletableFuture<*> {
-    val previousNode = this.currentTarget
-
     return try {
       this.publishCommandRunningLong(command)
 
-      val target =
-        this.navigationGraph.findNavigationNode(locator)
-          ?: throw IllegalStateException("Unable to locate a chapter for locator $locator")
-
-      val targetLocation = this.serverLocationOfTarget(target)
-      this.logger.debug("openNodeForLocator: {}", targetLocation)
-      this.setCurrentNode(target)
-
       val connection =
         this.waitForWebViewAvailability()
+      val chapterURL =
+        this.currentNavigationIntent.chapterHref
+      val resolvedURL =
+        chapterURL.resolve(Url(PREFIX_PUBLICATION))
 
       val future =
-        connection.openURL(targetLocation.toString())
+        connection.openURL(resolvedURL.toString())
           .thenCompose {
             this.executeThemeSet(connection, this.themeMostRecent)
           }
@@ -706,14 +643,14 @@ internal class SR2Controller private constructor(
             connection.executeJS { js -> js.setScrollMode(this.configuration.scrollingMode) }
           }
           .thenCompose {
-            this.executeLocatorSet(connection, locator)
+            this.executeLocatorSet(connection, this.currentNavigationIntent)
           }
 
       /*
        * If there's a fragment, attempt to scroll to it.
        */
 
-      when (val fragment = locator.chapterHref.toString().substringAfter('#', "")) {
+      when (val fragment = chapterURL.toString().substringAfter('#', "")) {
         "" -> future
 
         else ->
@@ -722,12 +659,12 @@ internal class SR2Controller private constructor(
           }
       }
     } catch (e: Exception) {
-      this.logger.error("Unable to open chapter ${locator.chapterHref}: ", e)
-      this.setCurrentNode(previousNode)
+      this.logger.error("Unable to open chapter ${this.currentNavigationIntent.chapterHref}: ", e)
       this.publishEvent(
         SR2Event.SR2Error.SR2ChapterNonexistent(
-          chapterHref = locator.chapterHref.toString(),
-          message = e.message ?: "Unable to open chapter ${locator.chapterHref}",
+          chapterHref = this.currentNavigationIntent.chapterHref.toString(),
+          message = e.message
+            ?: "Unable to open chapter ${this.currentNavigationIntent.chapterHref}",
         ),
       )
       val future = CompletableFuture<Any>()
@@ -754,22 +691,28 @@ internal class SR2Controller private constructor(
       "Progress must be in [0, 1]; was $chapterProgress"
     }
 
-    val currentNode = this.currentTarget.node
-    if (currentNode !is SR2NavigationNode.SR2NavigationReadingOrderNode) {
+    val currentNode =
+      this.navigationGraph.findNavigationNode(this.currentNavigationIntent)
+        ?: return null
+
+    if (currentNode.node !is SR2NavigationNode.SR2NavigationReadingOrderNode) {
       return null
     }
 
-    val currentIndex = currentNode.index
+    val currentIndex = currentNode.node.index
     val chapterCount = this.publication.readingOrder.size
 
     val result = ((currentIndex + 1 * chapterProgress) / chapterCount)
-    this.logger.debug("$result = ($currentIndex + 1 * $chapterProgress) / $chapterCount")
+    this.logger.debug("BookProgress: $result = ($currentIndex + 1 * $chapterProgress) / $chapterCount")
     return result
   }
 
   private suspend fun getCurrentPage(chapterProgress: Double): Pair<Int?, Int?> {
-    val currentNode = this.currentTarget.node
-    if (currentNode !is SR2NavigationNode.SR2NavigationReadingOrderNode) {
+    val currentNode =
+      this.navigationGraph.findNavigationNode(this.currentNavigationIntent)
+        ?: return null to null
+
+    if (currentNode.node !is SR2NavigationNode.SR2NavigationReadingOrderNode) {
       return null to null
     }
 
@@ -779,7 +722,7 @@ internal class SR2Controller private constructor(
         else -> this.configuration.pageNumberingMode
       }
 
-    val indexInReadingOrder = currentNode.index
+    val indexInReadingOrder = currentNode.node.index
     val positionsByChapter = this.publication.positionsByReadingOrder()
     val currentChapterPositions = positionsByChapter[indexInReadingOrder]
 
@@ -820,31 +763,57 @@ internal class SR2Controller private constructor(
       currentPage: Int,
       pageCount: Int,
     ) {
-      this@SR2Controller.coroutineScope.launch {
-        this@SR2Controller.currentBookProgress =
-          this@SR2Controller.getBookProgress(chapterProgress)
-        this@SR2Controller.currentTargetProgress =
-          chapterProgress
+      /*
+       * If the controller is indicating that the user explicitly performed some kind of
+       * navigation action, then this reading position update should be used to update the
+       * navigation intent. Typically, this _only_ applies for page turns.
+       */
+
+      val controller = this@SR2Controller
+      if (controller.updateNavigationIntentOnNextChapterProgressUpdate.compareAndSet(true, false)) {
+        controller.setCurrentNavigationIntent(
+          when (val i = controller.currentNavigationIntent) {
+            is SR2LocatorChapterEnd -> {
+              i
+            }
+            is SR2LocatorPercent -> {
+              SR2LocatorPercent(
+                i.chapterHref,
+                chapterProgress,
+              )
+            }
+          },
+        )
+      }
+
+      controller.coroutineScope.launch {
+        controller.currentBookProgress =
+          controller.getBookProgress(chapterProgress)
 
         val currentTarget =
-          this@SR2Controller.currentTarget
-        val targetHref =
-          currentTarget.node.navigationPoint.locator.chapterHref
-        val targetTitle =
-          currentTarget.node.title
-        val (currentPage, pageCount) =
-          this@SR2Controller.getCurrentPage(chapterProgress)
+          controller.navigationGraph.findNavigationNode(controller.currentNavigationIntent)
 
-        this@SR2Controller.publishEvent(
-          SR2ReadingPositionChanged(
-            chapterHref = targetHref,
-            chapterTitle = targetTitle,
-            chapterProgress = chapterProgress,
-            currentPage = currentPage,
-            pageCount = pageCount,
-            bookProgress = this@SR2Controller.currentBookProgress,
-          ),
-        )
+        if (currentTarget != null) {
+          val targetHref =
+            currentTarget.node.navigationPoint.locator.chapterHref
+          val targetTitle =
+            currentTarget.node.title
+          val (resultCurrentPage, resultPageCount) =
+            controller.getCurrentPage(chapterProgress)
+
+          controller.publishEvent(
+            SR2ReadingPositionChanged(
+              chapterHref = targetHref,
+              chapterTitle = targetTitle,
+              chapterProgress = chapterProgress,
+              currentPage = resultCurrentPage,
+              pageCount = resultPageCount,
+              bookProgress = controller.currentBookProgress,
+            ),
+          )
+        } else {
+          this@JavascriptAPIReceiver.logger.warn("onReadingPositionChanged: currentTarget -> null")
+        }
       }
     }
 
@@ -927,6 +896,11 @@ internal class SR2Controller private constructor(
     }
   }
 
+  private fun setCurrentNavigationIntent(locator: SR2Locator) {
+    this.logger.debug("Navigation intent is now {}", locator)
+    this.currentNavigationIntent = locator
+  }
+
   private fun submitCommandActual(
     command: SR2CommandSubmission,
   ) {
@@ -944,7 +918,7 @@ internal class SR2Controller private constructor(
             throw e.cause!!
           }
         } catch (e: SR2WebViewDisconnectedException) {
-          this.logger.debug("Webview disconnected: could not execute {}", command)
+          this.logger.warn("Webview disconnected: could not execute {}", command)
           this.publishEvent(SR2Event.SR2Error.SR2WebViewInaccessible("No web view is connected"))
           this.publishCommandFailed(command, e)
         } catch (e: Exception) {
@@ -999,10 +973,7 @@ internal class SR2Controller private constructor(
     this.bookmarks
 
   override fun positionNow(): SR2Locator {
-    return SR2LocatorPercent(
-      this.currentTarget.node.navigationPoint.locator.chapterHref,
-      this.currentTargetProgress,
-    )
+    return this.currentNavigationIntent
   }
 
   override fun themeNow(): SR2Theme {
@@ -1112,7 +1083,7 @@ internal class SR2Controller private constructor(
 
     return resourceURL.openStream().use { stream ->
       WebResourceResponse(
-        guessMimeType(path),
+        this.guessMimeType(path),
         null,
         200,
         "OK",

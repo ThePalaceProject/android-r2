@@ -18,7 +18,7 @@ internal object SR2DiffUtils {
         oldItem: SR2Bookmark,
         newItem: SR2Bookmark,
       ): Boolean =
-        oldItem == newItem && oldItem.isBeingDeleted == newItem.isBeingDeleted
+        oldItem == newItem
     }
 
   val tocEntryCallback: DiffUtil.ItemCallback<SR2TOCEntry> =

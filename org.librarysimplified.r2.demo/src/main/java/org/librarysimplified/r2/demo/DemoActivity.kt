@@ -12,14 +12,9 @@ import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.runBlocking
-import org.librarysimplified.r2.api.SR2Command
 import org.librarysimplified.r2.api.SR2Event
-import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkCreate
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkCreated
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkDeleted
-import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkFailedToBeDeleted
-import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkTryToDelete
-import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarksLoaded
 import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandEventCompleted.SR2CommandExecutionFailed
 import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandEventCompleted.SR2CommandExecutionSucceeded
 import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandExecutionRunningLong
@@ -131,20 +126,6 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
   @UiThread
   private fun onControllerBecameAvailable(reference: SR2ControllerReference) {
     this.switchFragment(SR2ReaderFragment())
-
-    if (reference.isFirstStartup) {
-      // Navigate to the first chapter or saved reading position.
-      val bookId = reference.controller.bookMetadata.id
-      reference.controller.submitCommand(
-        SR2Command.BookmarksLoad(DemoModel.database.bookmarksFor(bookId)),
-      )
-      val lastRead = DemoModel.database.bookmarkFindLastReadLocation(bookId)
-      val startLocator = lastRead?.locator ?: reference.controller.bookMetadata.start
-      reference.controller.submitCommand(SR2Command.OpenChapter(startLocator))
-    } else {
-      // Refresh whatever the controller was looking at previously.
-      reference.controller.submitCommand(SR2Command.Refresh)
-    }
   }
 
   /**
@@ -178,6 +159,7 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
       theme = DemoModel.database.theme(),
       context = DemoApplication.application,
       controllers = SR2Controllers(),
+      bookmarks = DemoModel.database.bookmarksFor(id),
     )
   }
 
@@ -275,12 +257,11 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
 
   private fun onControllerEvent(event: SR2Event) {
     when (event) {
-      is SR2BookmarkCreate -> {
+      is SR2BookmarkCreated -> {
         DemoModel.database.bookmarkSave(
           SR2ReaderModel.controller().bookMetadata.id,
           event.bookmark,
         )
-        event.onBookmarkCreationCompleted(event.bookmark)
       }
 
       is SR2BookmarkDeleted -> {
@@ -294,12 +275,8 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
         DemoModel.database.themeSet(event.theme)
       }
 
-      is SR2BookmarkCreated,
       is SR2OnCenterTapped,
       is SR2ReadingPositionChanged,
-      SR2BookmarksLoaded,
-      SR2BookmarkFailedToBeDeleted,
-      is SR2BookmarkTryToDelete,
       is SR2ChapterNonexistent,
       is SR2WebViewInaccessible,
       is SR2ExternalLinkSelected,

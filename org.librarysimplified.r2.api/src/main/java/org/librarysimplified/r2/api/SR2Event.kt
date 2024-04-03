@@ -1,6 +1,5 @@
 package org.librarysimplified.r2.api
 
-import org.readium.r2.shared.Search
 import org.readium.r2.shared.publication.Href
 import org.readium.r2.shared.publication.services.search.SearchIterator
 
@@ -83,54 +82,20 @@ sealed class SR2Event {
   sealed class SR2BookmarkEvent : SR2Event() {
 
     /**
-     * Create a bookmark.
+     * A bookmark was created in the reader. The observer of this event should save the bookmark
+     * into persistent storage.
      */
-    data class SR2BookmarkCreate(
-      val bookmark: SR2Bookmark,
-      val onBookmarkCreationCompleted: (SR2Bookmark?) -> Unit,
-    ) : SR2BookmarkEvent()
-
-    /**
-     * A bookmark was created.
-     */
-
-    @Deprecated("This event will stop being published soon.")
     data class SR2BookmarkCreated(
       val bookmark: SR2Bookmark,
     ) : SR2BookmarkEvent()
 
     /**
-     * A bookmark was deleted.
+     * A bookmark was deleted in the reader. The observer of this event should delete the bookmark
+     * from persistent storage.
      */
-
-    @Deprecated("This event will stop being published soon.")
     data class SR2BookmarkDeleted(
       val bookmark: SR2Bookmark,
     ) : SR2BookmarkEvent()
-
-    /**
-     * A bookmark failed to be deleted.
-     */
-
-    object SR2BookmarkFailedToBeDeleted : SR2BookmarkEvent()
-
-    /**
-     * Try to delete a bookmark.
-     */
-
-    data class SR2BookmarkTryToDelete(
-      val bookmark: SR2Bookmark,
-      val onDeleteOperationFinished: (Boolean) -> Unit,
-    ) : SR2BookmarkEvent()
-
-    /**
-     * Bookmarks were loaded into the controller.
-     */
-
-    object SR2BookmarksLoaded : SR2BookmarkEvent() {
-      override fun toString(): String =
-        "[SR2BookmarksLoaded]"
-    }
   }
 
   /**
@@ -182,7 +147,6 @@ sealed class SR2Event {
      * The searching command is finished and returns a search iterator containing the results
      */
 
-    @OptIn(Search::class)
     data class SR2CommandSearchResults constructor(
       override val command: SR2Command,
       val searchIterator: SearchIterator?,

@@ -100,16 +100,6 @@ sealed class SR2Command {
   data object CancelSearch : SR2Command()
 
   /**
-   * Load a set of bookmarks into the controller. This merely has the effect of making
-   * the bookmarks available to the table of contents; it does not trigger any changes
-   * in navigation.
-   */
-
-  data class BookmarksLoad(
-    val bookmarks: List<SR2Bookmark>,
-  ) : SR2Command()
-
-  /**
    * Create a new (explicit) bookmark at the current reading position.
    */
 

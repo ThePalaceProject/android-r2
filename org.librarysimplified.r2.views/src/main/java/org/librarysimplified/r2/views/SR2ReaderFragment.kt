@@ -371,9 +371,4 @@ class SR2ReaderFragment : SR2Fragment() {
       this.loadingView.visibility = loadingVisibility
     }
   }
-
-  private fun onBookmarksChanged() {
-    SR2UIThread.checkIsUIThread()
-    this.reconfigureBookmarkMenuItem(SR2ReaderModel.controller().positionNow())
-  }
 }

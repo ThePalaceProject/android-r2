@@ -89,6 +89,9 @@
     <c:release date="2024-04-03T18:29:20+00:00" is-open="false" ticket-system="org.lyrasis.jira" version="4.0.1">
       <c:changes/>
     </c:release>
+    <c:release date="2024-04-04T08:25:34+00:00" is-open="false" ticket-system="org.lyrasis.jira" version="4.0.2">
+      <c:changes/>
+    </c:release>
   </c:releases>
   <c:ticket-systems>
     <c:ticket-system default="true" id="org.lyrasis.jira" url="https://ebce-lyrasis.atlassian.net/browse/"/>

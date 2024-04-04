@@ -92,7 +92,7 @@
     <c:release date="2024-04-04T00:00:00+00:00" is-open="false" ticket-system="org.lyrasis.jira" version="4.0.2">
       <c:changes/>
     </c:release>
-    <c:release date="2024-04-04T11:37:35+00:00" is-open="false" ticket-system="org.lyrasis.jira" version="4.1.0">
+    <c:release date="2024-04-04T00:00:00+00:00" is-open="false" ticket-system="org.lyrasis.jira" version="4.1.0">
       <c:changes>
         <c:change date="2024-04-04T00:00:00+00:00" summary="Use the correct page numbering mode.">
           <c:tickets>
@@ -100,6 +100,9 @@
           </c:tickets>
         </c:change>
       </c:changes>
+    </c:release>
+    <c:release date="2024-04-04T11:56:41+00:00" is-open="true" ticket-system="org.lyrasis.jira" version="4.1.1">
+      <c:changes/>
     </c:release>
   </c:releases>
   <c:ticket-systems>

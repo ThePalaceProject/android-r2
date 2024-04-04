@@ -164,6 +164,14 @@ internal class SR2Controller private constructor(
       val navigationGraph =
         SR2NavigationGraphs.create(publication)
 
+      if (configuration.initialBookmarks.isNotEmpty()) {
+        configuration.initialBookmarks.forEachIndexed { index, bookmark ->
+          this.logger.debug("Bookmark [{}]: {}", index, bookmark)
+        }
+      } else {
+        this.logger.debug("No bookmarks provided.")
+      }
+
       val lastRead =
         configuration.initialBookmarks.find { bookmark -> bookmark.type == LAST_READ }
 
@@ -172,11 +180,14 @@ internal class SR2Controller private constructor(
           this.logger.debug("LastRead: Attempting to start from {}", lastRead)
           lastRead.locator
         } else {
+          this.logger.debug("LastRead: No last-read position, starting from start of book.")
           SR2LocatorPercent(
             chapterHref = navigationGraph.start().node.navigationPoint.locator.chapterHref,
             chapterProgress = 0.0,
           )
         }
+
+      this.logger.debug("Navigation: Intent starting at {}", navigationIntent)
 
       return SR2Controller(
         configuration = configuration,
@@ -481,6 +492,7 @@ internal class SR2Controller private constructor(
 
   private fun executeCommandOpenPagePrevious(): CompletableFuture<*> {
     this.updateNavigationIntentOnNextChapterProgressUpdate.set(true)
+    this.logger.debug("Navigation: Page Previous")
     return this.waitForWebViewAvailability().executeJS(SR2JavascriptAPIType::openPagePrevious)
   }
 
@@ -535,6 +547,7 @@ internal class SR2Controller private constructor(
 
   private fun executeCommandOpenPageNext(): CompletableFuture<*> {
     this.updateNavigationIntentOnNextChapterProgressUpdate.set(true)
+    this.logger.debug("Navigation: Page Next")
     return this.waitForWebViewAvailability().executeJS(SR2JavascriptAPIType::openPageNext)
   }
 
@@ -625,6 +638,7 @@ internal class SR2Controller private constructor(
     command: SR2CommandSubmission,
   ): CompletableFuture<*> {
     return try {
+      this.logger.debug("Navigation: Move to {}", this.currentNavigationIntent)
       this.publishCommandRunningLong(command)
 
       val connection =
@@ -771,6 +785,7 @@ internal class SR2Controller private constructor(
 
       val controller = this@SR2Controller
       if (controller.updateNavigationIntentOnNextChapterProgressUpdate.compareAndSet(true, false)) {
+        this.logger.debug("Navigation: Updating intent from reading position change.")
         controller.setCurrentNavigationIntent(
           when (val i = controller.currentNavigationIntent) {
             is SR2LocatorChapterEnd -> {
@@ -897,7 +912,7 @@ internal class SR2Controller private constructor(
   }
 
   private fun setCurrentNavigationIntent(locator: SR2Locator) {
-    this.logger.debug("Navigation intent is now {}", locator)
+    this.logger.debug("Navigation: Intent is now {}", locator)
     this.currentNavigationIntent = locator
   }
 

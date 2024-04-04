@@ -50,11 +50,13 @@ object SR2ReaderModel {
   var searchTerm: String =
     ""
 
+  @Volatile
   var scrollMode: SR2ScrollingMode =
     SR2ScrollingMode.SCROLLING_MODE_PAGINATED
 
+  @Volatile
   var perChapterNumbering: SR2PageNumberingMode =
-    SR2PageNumberingMode.PER_CHAPTER
+    SR2PageNumberingMode.WHOLE_BOOK
 
   private val viewCommandSource =
     PublishSubject.create<SR2ReaderViewCommand>()

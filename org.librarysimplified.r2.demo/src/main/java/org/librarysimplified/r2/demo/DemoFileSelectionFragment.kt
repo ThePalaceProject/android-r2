@@ -11,6 +11,7 @@ import android.widget.CheckBox
 import androidx.fragment.app.Fragment
 import org.librarysimplified.r2.api.SR2PageNumberingMode
 import org.librarysimplified.r2.api.SR2ScrollingMode
+import org.librarysimplified.r2.views.SR2ReaderModel
 
 class DemoFileSelectionFragment : Fragment(R.layout.demo_file_selection) {
 
@@ -45,12 +46,13 @@ class DemoFileSelectionFragment : Fragment(R.layout.demo_file_selection) {
     }
 
     this.demoLoaderPerChapterPageNumbering.setOnCheckedChangeListener { _, isChecked ->
-      DemoModel.perChapterNumbering = when (isChecked) {
+      SR2ReaderModel.perChapterNumbering = when (isChecked) {
         true -> SR2PageNumberingMode.PER_CHAPTER
         false -> SR2PageNumberingMode.WHOLE_BOOK
       }
     }
 
+    SR2ReaderModel.perChapterNumbering = SR2PageNumberingMode.WHOLE_BOOK
     return layout
   }
 

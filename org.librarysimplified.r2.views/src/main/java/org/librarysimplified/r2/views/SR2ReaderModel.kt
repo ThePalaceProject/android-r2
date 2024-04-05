@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.librarysimplified.r2.api.SR2Bookmark
+import org.librarysimplified.r2.api.SR2Command
 import org.librarysimplified.r2.api.SR2ControllerConfiguration
 import org.librarysimplified.r2.api.SR2ControllerProviderType
 import org.librarysimplified.r2.api.SR2ControllerType
@@ -26,6 +27,7 @@ import org.librarysimplified.r2.api.SR2Theme
 import org.librarysimplified.r2.ui_thread.SR2UIThread
 import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewBookEvent.SR2BookLoadingFailed
 import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewControllerEvent.SR2ControllerBecameAvailable
+import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewControllerEvent.SR2ControllerBecameUnavailable
 import org.librarysimplified.r2.views.search.SR2SearchPagingSource
 import org.librarysimplified.r2.views.search.SR2SearchPagingSourceListener
 import org.readium.r2.shared.ExperimentalReadiumApi
@@ -38,6 +40,7 @@ import org.readium.r2.shared.util.Try
 import org.readium.r2.shared.util.asset.Asset
 import org.slf4j.LoggerFactory
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.atomic.AtomicInteger
 
 object SR2ReaderModel {
 
@@ -66,6 +69,9 @@ object SR2ReaderModel {
     BehaviorSubject.create<SR2ReaderViewEvent>()
       .toSerialized()
 
+  private val viewEventIds =
+    AtomicInteger(0)
+
   private val controllerEventSource =
     PublishSubject.create<SR2Event>()
       .toSerialized()
@@ -89,7 +95,7 @@ object SR2ReaderModel {
   private val pagingSourceFactory = InvalidatingPagingSourceFactory {
     SR2SearchPagingSource(object : SR2SearchPagingSourceListener {
       override suspend fun getIteratorNext(): SearchTry<LocatorCollection?> {
-        val iterator = searchIterator ?: return Try.success(null)
+        val iterator = this@SR2ReaderModel.searchIterator ?: return Try.success(null)
         return iterator.next().onSuccess {
           this@SR2ReaderModel.mutableSearchLocators.value += (it?.locators.orEmpty())
         }
@@ -111,14 +117,6 @@ object SR2ReaderModel {
 
   private var controllerField: SR2ControllerType? = null
 
-  fun controller(): SR2ControllerType {
-    val c = this.controllerField
-    if (c != null) {
-      return c
-    }
-    throw IllegalStateException("No controller has been created!")
-  }
-
   fun controllerCreate(
     context: Application,
     contentProtections: List<ContentProtection>,
@@ -128,6 +126,10 @@ object SR2ReaderModel {
     controllers: SR2ControllerProviderType,
     bookmarks: List<SR2Bookmark>,
   ): CompletableFuture<SR2ControllerType> {
+    val existingController = this.controllerField
+    this.closeAndPublishUnavailability(existingController)
+    this.controllerField = null
+
     val future = CompletableFuture<SR2ControllerType>()
     SR2Executors.ioExecutor.execute {
       try {
@@ -157,31 +159,61 @@ object SR2ReaderModel {
 
       if (exception != null) {
         this.logger.error("Failed to open controller: ", exception)
-        this.viewEventSource.onNext(SR2BookLoadingFailed(exception))
+        this.viewEventSource.onNext(
+          SR2BookLoadingFailed(this.viewEventIds.getAndIncrement(), exception),
+        )
         return@whenComplete
       }
 
       check(newController != null)
-      val oldController = this.controllerField
-      if (oldController != null) {
-        try {
-          oldController.close()
-        } catch (e: Exception) {
-          logger.error("Could not close old controller: ", e)
-        }
-      }
 
       this.controllerField = newController
-      val reference = SR2ControllerReference(controller = newController, isFirstStartup = true)
-      this.viewEventSource.onNext(SR2ControllerBecameAvailable(reference))
+      this.viewEventSource.onNext(
+        SR2ControllerBecameAvailable(this.viewEventIds.getAndIncrement(), newController),
+      )
       newController.events.subscribe(this.controllerEventSource::onNext)
     }
     return future
+  }
+
+  private fun closeAndPublishUnavailability(
+    existingController: SR2ControllerType?,
+  ) {
+    if (existingController != null) {
+      this.viewEventSource.onNext(
+        SR2ControllerBecameUnavailable(this.viewEventIds.getAndIncrement(), existingController),
+      )
+      existingController.close()
+    }
   }
 
   @OptIn(ExperimentalReadiumApi::class)
   fun consumeSearchResults(event: SR2CommandSearchResults) {
     this.searchIterator = event.searchIterator
     this.pagingSourceFactory.invalidate()
+  }
+
+  fun isBookmarkHere(): Boolean {
+    return this.controllerField?.isBookmarkHere() ?: false
+  }
+
+  fun bookmarkToggle() {
+    this.controllerField?.bookmarkToggle()
+  }
+
+  fun viewDisconnect() {
+    this.controllerField?.viewDisconnect()
+  }
+
+  fun submitCommand(command: SR2Command) {
+    this.controllerField?.submitCommand(command)
+  }
+
+  fun theme(): SR2Theme {
+    return this.controllerField?.themeNow() ?: SR2Theme()
+  }
+
+  fun bookmarks(): List<SR2Bookmark> {
+    return this.controllerField?.bookmarksNow() ?: listOf()
   }
 }

@@ -60,8 +60,7 @@ internal class SR2SettingsDialog private constructor() {
     private fun updateTheme(
       updater: (SR2Theme) -> SR2Theme,
     ) {
-      val controller = SR2ReaderModel.controller()
-      controller.submitCommand(SR2Command.ThemeSet(updater.invoke(controller.themeNow())))
+      SR2ReaderModel.submitCommand(SR2Command.ThemeSet(updater.invoke(SR2ReaderModel.theme())))
     }
 
     fun create(
@@ -116,7 +115,8 @@ internal class SR2SettingsDialog private constructor() {
       })
 
       val currentTabIndex =
-        FontSelectionTab.fromTheme(SR2ReaderModel.controller().themeNow()).ordinal
+        FontSelectionTab.fromTheme(SR2ReaderModel.theme()).ordinal
+
       setFontTabs.selectTab(setFontTabs.getTabAt(currentTabIndex))
 
       val setThemeLight =
@@ -156,16 +156,15 @@ internal class SR2SettingsDialog private constructor() {
       }
 
       fun updateSetText() {
-        val themeNow = SR2ReaderModel.controller().themeNow()
+        val themeNow = SR2ReaderModel.theme()
         setTextSmaller.isEnabled = !themeNow.isTextSizeMinimized
         setTextLarger.isEnabled = !themeNow.isTextSizeMaximized
       }
 
       eventSubscriptions.add(
-        SR2ReaderModel.controller()
-          .events
+        SR2ReaderModel.controllerEvents
           .ofType(SR2Event.SR2ThemeChanged::class.java)
-          .subscribe { updateSetText() },
+          .subscribe { event -> updateSetText() },
       )
 
       updateSetText()

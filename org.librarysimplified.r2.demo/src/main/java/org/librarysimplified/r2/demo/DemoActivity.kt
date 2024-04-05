@@ -12,6 +12,7 @@ import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.runBlocking
+import org.librarysimplified.r2.api.SR2ControllerType
 import org.librarysimplified.r2.api.SR2Event
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkCreated
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkDeleted
@@ -28,7 +29,6 @@ import org.librarysimplified.r2.api.SR2Event.SR2ReadingPositionChanged
 import org.librarysimplified.r2.api.SR2Event.SR2ThemeChanged
 import org.librarysimplified.r2.ui_thread.SR2UIThread
 import org.librarysimplified.r2.vanilla.SR2Controllers
-import org.librarysimplified.r2.views.SR2ControllerReference
 import org.librarysimplified.r2.views.SR2Fragment
 import org.librarysimplified.r2.views.SR2ReaderFragment
 import org.librarysimplified.r2.views.SR2ReaderModel
@@ -41,6 +41,7 @@ import org.librarysimplified.r2.views.SR2ReaderViewCommand.SR2ReaderViewNavigati
 import org.librarysimplified.r2.views.SR2ReaderViewEvent
 import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewBookEvent.SR2BookLoadingFailed
 import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewControllerEvent.SR2ControllerBecameAvailable
+import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewControllerEvent.SR2ControllerBecameUnavailable
 import org.librarysimplified.r2.views.SR2SearchFragment
 import org.librarysimplified.r2.views.SR2TOCFragment
 import org.readium.r2.shared.util.Try
@@ -93,15 +94,9 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
     super.onStart()
 
     this.subscriptions = CompositeDisposable()
-    this.subscriptions.add(
-      SR2ReaderModel.controllerEvents.subscribe(this::onControllerEvent),
-    )
-    this.subscriptions.add(
-      SR2ReaderModel.viewCommands.subscribe(this::onViewCommandReceived),
-    )
-    this.subscriptions.add(
-      SR2ReaderModel.viewEvents.subscribe(this::onViewEventReceived),
-    )
+    this.subscriptions.add(SR2ReaderModel.controllerEvents.subscribe(this::onControllerEvent))
+    this.subscriptions.add(SR2ReaderModel.viewCommands.subscribe(this::onViewCommandReceived))
+    this.subscriptions.add(SR2ReaderModel.viewEvents.subscribe(this::onViewEventReceived))
 
     if (DemoModel.epubFile == null) {
       this.switchFragment(DemoFileSelectionFragment())
@@ -124,7 +119,7 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
   }
 
   @UiThread
-  private fun onControllerBecameAvailable(reference: SR2ControllerReference) {
+  private fun onControllerBecameAvailable(controller: SR2ControllerType) {
     this.switchFragment(SR2ReaderFragment())
   }
 
@@ -170,13 +165,19 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
   @UiThread
   private fun onViewEventReceived(event: SR2ReaderViewEvent) {
     SR2UIThread.checkIsUIThread()
+    this.logger.debug("onViewEventReceived: {}", event)
 
     return when (event) {
-      is SR2ControllerBecameAvailable ->
-        this.onControllerBecameAvailable(event.reference)
+      is SR2ControllerBecameAvailable -> {
+        this.onControllerBecameAvailable(event.controller)
+      }
 
       is SR2BookLoadingFailed ->
         this.onBookLoadingFailed(event.exception)
+
+      is SR2ControllerBecameUnavailable -> {
+        // Nothing to do here.
+      }
     }
   }
 
@@ -184,14 +185,19 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
   override fun onBackPressed() {
     return when (val f = this.fragmentNow) {
       is DemoFileSelectionFragment -> {
+        DemoModel.clearEpubAndId()
         super.onBackPressed()
       }
+
       is DemoLoadingFragment -> {
+        DemoModel.clearEpubAndId()
         super.onBackPressed()
       }
+
       is SR2Fragment -> {
         when (f) {
           is SR2ReaderFragment -> {
+            DemoModel.clearEpubAndId()
             this.switchFragment(DemoFileSelectionFragment())
           }
 
@@ -204,9 +210,12 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
           }
         }
       }
+
       null -> {
+        DemoModel.clearEpubAndId()
         super.onBackPressed()
       }
+
       else -> {
         throw IllegalStateException("Unrecognized fragment: $f")
       }
@@ -225,6 +234,7 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
         this.switchFragment(SR2TOCFragment())
       }
       SR2ReaderViewNavigationReaderClose -> {
+        DemoModel.clearEpubAndId()
         this.switchFragment(DemoFileSelectionFragment())
       }
       SR2ReaderViewNavigationSearchClose -> {
@@ -237,6 +247,7 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
   }
 
   private fun switchFragment(fragment: Fragment) {
+    this.logger.debug("Switching fragment {} -> {}", this.fragmentNow, fragment)
     this.fragmentNow = fragment
     this.supportFragmentManager.beginTransaction()
       .replace(R.id.mainFragmentHolder, fragment)
@@ -259,14 +270,14 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
     when (event) {
       is SR2BookmarkCreated -> {
         DemoModel.database.bookmarkSave(
-          SR2ReaderModel.controller().bookMetadata.id,
+          DemoModel.epubId!!,
           event.bookmark,
         )
       }
 
       is SR2BookmarkDeleted -> {
         DemoModel.database.bookmarkDelete(
-          SR2ReaderModel.controller().bookMetadata.id,
+          DemoModel.epubId!!,
           event.bookmark,
         )
       }

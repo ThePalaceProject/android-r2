@@ -9,6 +9,7 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.SimpleItemAnimator
+import io.reactivex.disposables.CompositeDisposable
 import org.librarysimplified.r2.api.SR2Command
 import org.librarysimplified.r2.api.SR2Locator.SR2LocatorPercent
 import org.librarysimplified.r2.api.SR2TOCEntry
@@ -16,9 +17,14 @@ import org.librarysimplified.r2.ui_thread.SR2UIThread
 import org.librarysimplified.r2.views.R
 import org.librarysimplified.r2.views.SR2ReaderModel
 import org.librarysimplified.r2.views.SR2ReaderViewCommand.SR2ReaderViewNavigationTOCClose
+import org.librarysimplified.r2.views.SR2ReaderViewEvent
+import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewBookEvent.SR2BookLoadingFailed
+import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewControllerEvent.SR2ControllerBecameAvailable
+import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewControllerEvent.SR2ControllerBecameUnavailable
 
 internal class SR2TOCChaptersFragment : Fragment() {
 
+  private lateinit var eventSubscriptions: CompositeDisposable
   private lateinit var chaptersError: View
   private lateinit var chapterList: RecyclerView
   private lateinit var chapterAdapter: SR2TOCChapterAdapter
@@ -55,26 +61,48 @@ internal class SR2TOCChaptersFragment : Fragment() {
   override fun onStart() {
     super.onStart()
 
-    val toc = SR2ReaderModel.controller().bookMetadata.tableOfContents
-    if (toc.isEmpty()) {
-      this.chaptersError.isVisible = true
-      this.chapterList.isGone = true
-      return
-    }
+    this.eventSubscriptions = CompositeDisposable()
+    this.eventSubscriptions.add(SR2ReaderModel.viewEvents.subscribe(this::onViewEvent))
+  }
 
-    this.chapterAdapter.setTableOfContentsEntries(toc)
+  override fun onStop() {
+    super.onStop()
+    this.eventSubscriptions.dispose()
+  }
+
+  private fun onViewEvent(
+    event: SR2ReaderViewEvent,
+  ) {
+    when (event) {
+      is SR2BookLoadingFailed -> {
+        // Nothing to do here.
+      }
+
+      is SR2ControllerBecameAvailable -> {
+        val toc = event.controller.bookMetadata.tableOfContents
+        if (toc.isEmpty()) {
+          this.chaptersError.isVisible = true
+          this.chapterList.isGone = true
+          return
+        }
+        this.chapterAdapter.setTableOfContentsEntries(toc)
+      }
+
+      is SR2ControllerBecameUnavailable -> {
+        // Nothing to do here.
+      }
+    }
   }
 
   private fun onTOCEntrySelected(entry: SR2TOCEntry) {
-    SR2ReaderModel.controller()
-      .submitCommand(
-        SR2Command.OpenChapter(
-          SR2LocatorPercent(
-            chapterHref = entry.href,
-            chapterProgress = 0.0,
-          ),
+    SR2ReaderModel.submitCommand(
+      SR2Command.OpenChapter(
+        SR2LocatorPercent(
+          chapterHref = entry.href,
+          chapterProgress = 0.0,
         ),
-      )
+      ),
+    )
 
     SR2UIThread.runOnUIThreadDelayed(
       { SR2ReaderModel.submitViewCommand(SR2ReaderViewNavigationTOCClose) },

@@ -73,4 +73,17 @@ interface SR2ControllerType : Closeable, SR2ControllerCommandQueueType {
    */
 
   fun uiVisibleNow(): Boolean
+
+  /**
+   * Is the current position bookmarked explicitly?
+   */
+
+  fun isBookmarkHere(): Boolean
+
+  /**
+   * If the current location is bookmarked explicitly, delete the bookmark. If the current
+   * location is _not_ bookmarked explicitly, create a bookmark.
+   */
+
+  fun bookmarkToggle()
 }

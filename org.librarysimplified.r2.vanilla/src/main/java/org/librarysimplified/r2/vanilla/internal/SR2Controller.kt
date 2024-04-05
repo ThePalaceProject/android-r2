@@ -285,6 +285,11 @@ internal class SR2Controller private constructor(
 
     // Pre-compute positions
     runBlocking { this@SR2Controller.publication.positionsByReadingOrder() }
+    this.logger.debug(
+      "[0x{}] Controller: Now Open {}",
+      Integer.toUnsignedString(this.hashCode(), 16),
+      this,
+    )
   }
 
   private fun updateBookmarkLastRead(
@@ -311,10 +316,10 @@ internal class SR2Controller private constructor(
   private fun executeInternalCommand(
     command: SR2CommandSubmission,
   ): CompletableFuture<*> {
-    this.logger.debug("executing {}", command)
+    this.debug("executing {}", command)
 
     if (this.closed.get()) {
-      this.logger.debug("Executor has been shut down")
+      this.debug("Executor has been shut down")
       return CompletableFuture.completedFuture(Unit)
     }
 
@@ -492,7 +497,7 @@ internal class SR2Controller private constructor(
 
   private fun executeCommandOpenPagePrevious(): CompletableFuture<*> {
     this.updateNavigationIntentOnNextChapterProgressUpdate.set(true)
-    this.logger.debug("Navigation: Page Previous")
+    this.debug("Navigation: Page Previous")
     return this.waitForWebViewAvailability().executeJS(SR2JavascriptAPIType::openPagePrevious)
   }
 
@@ -547,7 +552,7 @@ internal class SR2Controller private constructor(
 
   private fun executeCommandOpenPageNext(): CompletableFuture<*> {
     this.updateNavigationIntentOnNextChapterProgressUpdate.set(true)
-    this.logger.debug("Navigation: Page Next")
+    this.debug("Navigation: Page Next")
     return this.waitForWebViewAvailability().executeJS(SR2JavascriptAPIType::openPageNext)
   }
 
@@ -580,8 +585,8 @@ internal class SR2Controller private constructor(
        */
 
       val link = apiCommand.link
-      if (apiCommand.link.startsWith(PREFIX_PUBLICATION)) {
-        val target = Href(link.removePrefix(PREFIX_PUBLICATION))!!
+      if (apiCommand.link.startsWith(org.librarysimplified.r2.vanilla.internal.SR2Controller.Companion.PREFIX_PUBLICATION)) {
+        val target = Href(link.removePrefix(org.librarysimplified.r2.vanilla.internal.SR2Controller.Companion.PREFIX_PUBLICATION))!!
         this.submitCommand(SR2Command.OpenChapter(SR2LocatorPercent(target, 0.0)))
         return CompletableFuture.completedFuture(Unit)
       }
@@ -589,7 +594,7 @@ internal class SR2Controller private constructor(
       this.publishEvent(SR2ExternalLinkSelected(apiCommand.link))
       return CompletableFuture.completedFuture(Unit)
     } catch (e: Exception) {
-      this.logger.error("Unable to open link ${apiCommand.link}: ", e)
+      this.error("Unable to open link ${apiCommand.link}: ", e)
       this.publishEvent(
         SR2Event.SR2Error.SR2ChapterNonexistent(
           chapterHref = apiCommand.link,
@@ -638,7 +643,7 @@ internal class SR2Controller private constructor(
     command: SR2CommandSubmission,
   ): CompletableFuture<*> {
     return try {
-      this.logger.debug("Navigation: Move to {}", this.currentNavigationIntent)
+      this.debug("Navigation: Move to {}", this.currentNavigationIntent)
       this.publishCommandRunningLong(command)
 
       val connection =
@@ -646,7 +651,7 @@ internal class SR2Controller private constructor(
       val chapterURL =
         this.currentNavigationIntent.chapterHref
       val resolvedURL =
-        chapterURL.resolve(Url(PREFIX_PUBLICATION))
+        chapterURL.resolve(Url(org.librarysimplified.r2.vanilla.internal.SR2Controller.Companion.PREFIX_PUBLICATION))
 
       val future =
         connection.openURL(resolvedURL.toString())
@@ -673,7 +678,7 @@ internal class SR2Controller private constructor(
           }
       }
     } catch (e: Exception) {
-      this.logger.error("Unable to open chapter ${this.currentNavigationIntent.chapterHref}: ", e)
+      this.error("Unable to open chapter ${this.currentNavigationIntent.chapterHref}: ", e)
       this.publishEvent(
         SR2Event.SR2Error.SR2ChapterNonexistent(
           chapterHref = this.currentNavigationIntent.chapterHref.toString(),
@@ -717,7 +722,7 @@ internal class SR2Controller private constructor(
     val chapterCount = this.publication.readingOrder.size
 
     val result = ((currentIndex + 1 * chapterProgress) / chapterCount)
-    this.logger.debug("BookProgress: $result = ($currentIndex + 1 * $chapterProgress) / $chapterCount")
+    this.debug("BookProgress: $result = ($currentIndex + 1 * $chapterProgress) / $chapterCount")
     return result
   }
 
@@ -785,12 +790,13 @@ internal class SR2Controller private constructor(
 
       val controller = this@SR2Controller
       if (controller.updateNavigationIntentOnNextChapterProgressUpdate.compareAndSet(true, false)) {
-        this.logger.debug("Navigation: Updating intent from reading position change.")
+        controller.debug("Navigation: Updating intent from reading position change.")
         controller.setCurrentNavigationIntent(
           when (val i = controller.currentNavigationIntent) {
             is SR2LocatorChapterEnd -> {
               i
             }
+
             is SR2LocatorPercent -> {
               SR2LocatorPercent(
                 i.chapterHref,
@@ -827,26 +833,26 @@ internal class SR2Controller private constructor(
             ),
           )
         } else {
-          this@JavascriptAPIReceiver.logger.warn("onReadingPositionChanged: currentTarget -> null")
+          this@SR2Controller.warn("onReadingPositionChanged: currentTarget -> null")
         }
       }
     }
 
     @android.webkit.JavascriptInterface
     override fun onCenterTapped() {
-      this.logger.debug("onCenterTapped")
+      this@SR2Controller.debug("onCenterTapped")
       this@SR2Controller.uiVisible = !this@SR2Controller.uiVisible
       this@SR2Controller.publishEvent(SR2OnCenterTapped(this@SR2Controller.uiVisible))
     }
 
     @android.webkit.JavascriptInterface
     override fun onClicked() {
-      this.logger.debug("onClicked")
+      this@SR2Controller.debug("onClicked")
     }
 
     @android.webkit.JavascriptInterface
     override fun onLeftTapped() {
-      this.logger.debug("onLeftTapped")
+      this@SR2Controller.debug("onLeftTapped")
 
       return when (this@SR2Controller.publication.metadata.presentation.layout) {
         FIXED ->
@@ -907,19 +913,19 @@ internal class SR2Controller private constructor(
       file: String?,
       line: String?,
     ) {
-      this.logger.error("logError: {}:{}: {}", file, line, message)
+      this@SR2Controller.error("logError: {}:{}: {}", file, line, message)
     }
   }
 
   private fun setCurrentNavigationIntent(locator: SR2Locator) {
-    this.logger.debug("Navigation: Intent is now {}", locator)
+    this.debug("Navigation: Intent is now {}", locator)
     this.currentNavigationIntent = locator
   }
 
   private fun submitCommandActual(
     command: SR2CommandSubmission,
   ) {
-    this.logger.debug("submitCommand: {}", command)
+    this.debug("submitCommand: {}", command)
 
     try {
       this.queueExecutor.execute {
@@ -933,16 +939,16 @@ internal class SR2Controller private constructor(
             throw e.cause!!
           }
         } catch (e: SR2WebViewDisconnectedException) {
-          this.logger.warn("Webview disconnected: could not execute {}", command)
+          this.warn("Webview disconnected: could not execute {}", command)
           this.publishEvent(SR2Event.SR2Error.SR2WebViewInaccessible("No web view is connected"))
           this.publishCommandFailed(command, e)
         } catch (e: Exception) {
-          this.logger.error("{}: ", command, e)
+          this.error("{}: ", command, e)
           this.publishCommandFailed(command, e)
         }
       }
     } catch (e: Exception) {
-      this.logger.error("{}: ", command, e)
+      this.error("{}: ", command, e)
       this.publishCommandFailed(command, e)
     }
   }
@@ -959,7 +965,7 @@ internal class SR2Controller private constructor(
     try {
       this.eventSubject.onNext(event)
     } catch (e: Exception) {
-      this.logger.warn("Could not submit event: ", e)
+      this.warn("Could not submit event: ", e)
     }
   }
 
@@ -999,8 +1005,27 @@ internal class SR2Controller private constructor(
     return this.uiVisible
   }
 
+  override fun isBookmarkHere(): Boolean {
+    return this.findExplicitBookmarkForCurrentPosition() != null
+  }
+
+  private fun findExplicitBookmarkForCurrentPosition(): SR2Bookmark? {
+    return this.bookmarks.find { bookmark ->
+      bookmark.locator == this.currentNavigationIntent && bookmark.type == EXPLICIT
+    }
+  }
+
+  override fun bookmarkToggle() {
+    val existing = this.findExplicitBookmarkForCurrentPosition()
+    if (existing != null) {
+      this.submitCommand(SR2Command.BookmarkDelete(existing))
+    } else {
+      this.submitCommand(SR2Command.BookmarkCreate)
+    }
+  }
+
   override fun viewConnect(webView: WebView) {
-    this.logger.debug("viewConnect")
+    this.debug("viewConnect")
 
     val newConnection =
       SR2WebViewConnection.create(
@@ -1020,7 +1045,7 @@ internal class SR2Controller private constructor(
   }
 
   override fun viewDisconnect() {
-    this.logger.debug("viewDisconnect")
+    this.debug("viewDisconnect")
 
     synchronized(this.webViewConnectionLock) {
       this.webViewConnection = null
@@ -1050,12 +1075,19 @@ internal class SR2Controller private constructor(
 
   override fun close() {
     if (this.closed.compareAndSet(false, true)) {
+      this.debug("Closing")
       this.coroutineScope.cancel()
+
+      try {
+        this.subscriptions.dispose()
+      } catch (e: Exception) {
+        this.error("Could not dispose of subscriptions: ", e)
+      }
 
       try {
         this.viewDisconnect()
       } catch (e: Exception) {
-        this.logger.error("Could not disconnect view: ", e)
+        this.error("Could not disconnect view: ", e)
       }
 
       try {
@@ -1063,25 +1095,25 @@ internal class SR2Controller private constructor(
           this@SR2Controller.publication.close()
         }
       } catch (e: Exception) {
-        this.logger.error("Could not close publication: ", e)
+        this.error("Could not close publication: ", e)
       }
 
       try {
         this.queueExecutor.shutdown()
       } catch (e: Exception) {
-        this.logger.error("Could not stop command queue: ", e)
+        this.error("Could not stop command queue: ", e)
       }
 
       try {
         this.eventSubject.onComplete()
       } catch (e: Exception) {
-        this.logger.error("Could not complete event stream: ", e)
+        this.error("Could not complete event stream: ", e)
       }
     }
   }
 
   internal fun openAsset(path: String): WebResourceResponse {
-    this.logger.debug("openAsset: {}", path)
+    this.debug("openAsset: {}", path)
 
     val resourcePath =
       "/org/librarysimplified/r2/vanilla/readium/$path"
@@ -1132,7 +1164,7 @@ internal class SR2Controller private constructor(
   }
 
   internal fun openPublicationResource(path: String): WebResourceResponse? {
-    this.logger.debug("openPublicationResource: {}", path)
+    this.debug("openPublicationResource: {}", path)
 
     val urlPath = Url(path)
     if (urlPath == null) {
@@ -1150,7 +1182,7 @@ internal class SR2Controller private constructor(
       val c = this@SR2Controller
       when (val result = c.assetRetriever.retrieve(resourceValue)) {
         is Try.Failure -> {
-          c.logger.error(
+          c.error(
             "Failed to retrieve publication resource for {}: {}",
             urlPath,
             result.value.message,
@@ -1184,5 +1216,47 @@ internal class SR2Controller private constructor(
         }
       }
     }
+  }
+
+  private fun debug(
+    message: String,
+    vararg arguments: Any,
+  ) {
+    this.logger.debug(
+      "[SR2Controller 0x{}] $message",
+      Integer.toUnsignedString(this.hashCode(), 16),
+      arguments,
+    )
+  }
+
+  private fun error(
+    message: String,
+    vararg arguments: Any?,
+  ) {
+    this.logger.error(
+      "[SR2Controller 0x{}] $message",
+      Integer.toUnsignedString(this.hashCode(), 16),
+      arguments,
+    )
+  }
+
+  private fun warn(
+    message: String,
+    vararg arguments: Any,
+  ) {
+    this.logger.warn(
+      "[SR2Controller 0x{}] $message",
+      Integer.toUnsignedString(this.hashCode(), 16),
+      arguments,
+    )
+  }
+
+  override fun toString(): String {
+    return "[SR2Controller 0x${
+      Integer.toUnsignedString(
+        this.hashCode(),
+        16,
+      )
+    } \"${this.publication.metadata.title}\"]"
   }
 }

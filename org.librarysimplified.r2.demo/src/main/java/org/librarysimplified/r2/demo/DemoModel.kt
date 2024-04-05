@@ -2,9 +2,13 @@ package org.librarysimplified.r2.demo
 
 import android.content.Context
 import org.librarysimplified.r2.api.SR2ScrollingMode
+import org.slf4j.LoggerFactory
 import java.io.File
 
 object DemoModel {
+
+  private val logger =
+    LoggerFactory.getLogger(DemoModel::class.java)
 
   private lateinit var databaseField: DemoDatabase
 
@@ -34,5 +38,12 @@ object DemoModel {
   fun setEpubAndId(data: Pair<File, String>) {
     this.epubFileField = data.first
     this.epubIdField = data.second
+    this.logger.debug("setEpubAndId: {}", data)
+  }
+
+  fun clearEpubAndId() {
+    this.epubFileField = null
+    this.epubIdField = null
+    this.logger.debug("clearEpubAndId")
   }
 }

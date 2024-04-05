@@ -74,16 +74,14 @@ class SR2SearchFragment : SR2Fragment() {
 
     this.searchAdapter = SR2SearchResultAdapter(
       onItemClicked = { locator ->
-        val controller = SR2ReaderModel.controller()
-
-        controller.submitCommand(
+        SR2ReaderModel.submitCommand(
           SR2Command.HighlightTerms(
             searchingTerms = this.searchView.query.toString(),
             clearHighlight = false,
           ),
         )
 
-        controller.submitCommand(
+        SR2ReaderModel.submitCommand(
           SR2Command.OpenChapter(
             SR2Locator.SR2LocatorPercent(
               chapterHref = Href(locator.href),
@@ -155,12 +153,12 @@ class SR2SearchFragment : SR2Fragment() {
     this.searchView.inputType = InputType.TYPE_CLASS_TEXT
     this.searchView.isIconified = false
     this.searchView.setOnCloseListener {
-      SR2ReaderModel.controller().submitCommand(SR2Command.CancelSearch)
+      SR2ReaderModel.submitCommand(SR2Command.CancelSearch)
 
       if (this.searchView.query.isNotBlank()) {
         this.searchView.setQuery("", false)
       } else {
-        SR2ReaderModel.controller().submitCommand(
+        SR2ReaderModel.submitCommand(
           SR2Command.HighlightTerms(
             searchingTerms = SR2ReaderModel.searchTerm,
             clearHighlight = true,
@@ -175,7 +173,7 @@ class SR2SearchFragment : SR2Fragment() {
 
     this.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
       override fun onQueryTextSubmit(query: String): Boolean {
-        SR2ReaderModel.controller().submitCommand(SR2Command.Search(query))
+        SR2ReaderModel.submitCommand(SR2Command.Search(query))
         this@SR2SearchFragment.searchView.clearFocus()
         return true
       }

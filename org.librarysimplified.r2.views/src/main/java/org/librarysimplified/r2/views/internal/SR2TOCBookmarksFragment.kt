@@ -98,8 +98,8 @@ internal class SR2TOCBookmarksFragment : Fragment() {
   private fun reloadBookmarksUI() {
     SR2UIThread.checkIsUIThread()
 
-    val bookmarksNow = SR2ReaderModel.controller().bookmarksNow()
-    this.logger.debug("received {} bookmarks", bookmarksNow.size)
+    val bookmarksNow = SR2ReaderModel.bookmarks()
+    this.logger.debug("Received {} bookmarks", bookmarksNow.size)
     val bookmarks = bookmarksNow.filter { it.type != LAST_READ }
     this.bookmarkAdapter.setBookmarks(bookmarks)
 
@@ -124,7 +124,7 @@ internal class SR2TOCBookmarksFragment : Fragment() {
   }
 
   private fun onBookmarkSelected(bookmark: SR2Bookmark) {
-    SR2ReaderModel.controller().submitCommand(SR2Command.OpenChapter(bookmark.locator))
+    SR2ReaderModel.submitCommand(SR2Command.OpenChapter(bookmark.locator))
 
     SR2UIThread.runOnUIThreadDelayed(
       { SR2ReaderModel.submitViewCommand(SR2ReaderViewNavigationTOCClose) },
@@ -133,6 +133,6 @@ internal class SR2TOCBookmarksFragment : Fragment() {
   }
 
   private fun onBookmarkDeleteRequested(bookmark: SR2Bookmark) {
-    SR2ReaderModel.controller().submitCommand(SR2Command.BookmarkDelete(bookmark))
+    SR2ReaderModel.submitCommand(SR2Command.BookmarkDelete(bookmark))
   }
 }

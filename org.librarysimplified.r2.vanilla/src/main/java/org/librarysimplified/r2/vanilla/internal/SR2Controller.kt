@@ -656,15 +656,21 @@ internal class SR2Controller private constructor(
       val future =
         connection.openURL(resolvedURL.toString())
           .handle { _, exception ->
-            this.debug("Failed to completely open URL: ", exception)
+            if (exception != null) {
+              this.debug("Failed to completely open URL: ", exception)
+            }
           }.thenCompose {
             connection.executeJS { js -> js.setScrollMode(this.configuration.scrollingMode) }
           }.handle { _, exception ->
-            this.debug("Failed to set scroll mode: ", exception)
+            if (exception != null) {
+              this.debug("Failed to set scroll mode: ", exception)
+            }
           }.thenCompose {
             this.executeLocatorSet(connection, this.currentNavigationIntent)
           }.handle { _, exception ->
-            this.debug("Failed to scroll to navigation intent: ", exception)
+            if (exception != null) {
+              this.debug("Failed to scroll to navigation intent: ", exception)
+            }
           }
 
       /*
@@ -677,6 +683,10 @@ internal class SR2Controller private constructor(
         else ->
           future.thenCompose {
             connection.executeJS { js -> js.scrollToId(fragment) }
+          }.handle { _, exception ->
+            if (exception != null) {
+              this.debug("Failed to scroll to fragment ID: ", exception)
+            }
           }
       }
     } catch (e: Exception) {
@@ -775,22 +785,26 @@ internal class SR2Controller private constructor(
     private val webView: WebView,
   ) : SR2JavascriptAPIReceiverType {
 
-    private val logger =
-      LoggerFactory.getLogger(JavascriptAPIReceiver::class.java)
-
     @android.webkit.JavascriptInterface
     override fun onReadingPositionChanged(
       chapterProgress: Double,
       currentPage: Int,
       pageCount: Int,
     ) {
+      val controller = this@SR2Controller
+      controller.debug(
+        "onReadingPositionChanged: {} {} {}",
+        chapterProgress,
+        currentPage,
+        pageCount,
+      )
+
       /*
        * If the controller is indicating that the user explicitly performed some kind of
        * navigation action, then this reading position update should be used to update the
        * navigation intent. Typically, this _only_ applies for page turns.
        */
 
-      val controller = this@SR2Controller
       if (controller.updateNavigationIntentOnNextChapterProgressUpdate.compareAndSet(true, false)) {
         controller.debug("Navigation: Updating intent from reading position change.")
         controller.setCurrentNavigationIntent(
@@ -867,7 +881,7 @@ internal class SR2Controller private constructor(
 
     @android.webkit.JavascriptInterface
     override fun onRightTapped() {
-      this.logger.debug("onRightTapped")
+      this@SR2Controller.debug("onRightTapped")
 
       return when (this@SR2Controller.publication.metadata.presentation.layout) {
         FIXED ->
@@ -880,7 +894,7 @@ internal class SR2Controller private constructor(
 
     @android.webkit.JavascriptInterface
     override fun onLeftSwiped() {
-      this.logger.debug("onLeftSwiped")
+      this@SR2Controller.debug("onLeftSwiped")
 
       return when (this@SR2Controller.publication.metadata.presentation.layout) {
         FIXED ->
@@ -893,7 +907,7 @@ internal class SR2Controller private constructor(
 
     @android.webkit.JavascriptInterface
     override fun onRightSwiped() {
-      this.logger.debug("onRightSwiped")
+      this@SR2Controller.debug("onRightSwiped")
 
       return when (this@SR2Controller.publication.metadata.presentation.layout) {
         FIXED ->

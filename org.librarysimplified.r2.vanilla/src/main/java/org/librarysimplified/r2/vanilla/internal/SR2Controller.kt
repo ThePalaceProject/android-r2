@@ -585,8 +585,8 @@ internal class SR2Controller private constructor(
        */
 
       val link = apiCommand.link
-      if (apiCommand.link.startsWith(org.librarysimplified.r2.vanilla.internal.SR2Controller.Companion.PREFIX_PUBLICATION)) {
-        val target = Href(link.removePrefix(org.librarysimplified.r2.vanilla.internal.SR2Controller.Companion.PREFIX_PUBLICATION))!!
+      if (apiCommand.link.startsWith(PREFIX_PUBLICATION)) {
+        val target = Href(link.removePrefix(PREFIX_PUBLICATION))!!
         this.submitCommand(SR2Command.OpenChapter(SR2LocatorPercent(target, 0.0)))
         return CompletableFuture.completedFuture(Unit)
       }
@@ -651,18 +651,20 @@ internal class SR2Controller private constructor(
       val chapterURL =
         this.currentNavigationIntent.chapterHref
       val resolvedURL =
-        chapterURL.resolve(Url(org.librarysimplified.r2.vanilla.internal.SR2Controller.Companion.PREFIX_PUBLICATION))
+        chapterURL.resolve(Url(PREFIX_PUBLICATION))
 
       val future =
         connection.openURL(resolvedURL.toString())
-          .thenCompose {
-            this.executeThemeSet(connection, this.themeMostRecent)
-          }
-          .thenCompose {
+          .handle { _, exception ->
+            this.debug("Failed to completely open URL: ", exception)
+          }.thenCompose {
             connection.executeJS { js -> js.setScrollMode(this.configuration.scrollingMode) }
-          }
-          .thenCompose {
+          }.handle { _, exception ->
+            this.debug("Failed to set scroll mode: ", exception)
+          }.thenCompose {
             this.executeLocatorSet(connection, this.currentNavigationIntent)
+          }.handle { _, exception ->
+            this.debug("Failed to scroll to navigation intent: ", exception)
           }
 
       /*

@@ -62,6 +62,7 @@ import org.readium.r2.streamer.parser.DefaultPublicationParser
 import org.slf4j.LoggerFactory
 import java.io.ByteArrayInputStream
 import java.io.IOException
+import java.net.URI
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executors
@@ -653,9 +654,18 @@ internal class SR2Controller private constructor(
       val connection =
         this.waitForWebViewAvailability()
       val chapterURL =
-        this.currentNavigationIntent.chapterHref
+        this.currentNavigationIntent.chapterHref.toString()
+
+      /*
+       * If we pass a URL with a fragment into the web view, this will result in
+       * a URL with a fragment going into the underlying DRM engine, and this causes
+       * Adobe DRM to go insane and fail to decrypt.
+       */
+
+      val chapterURLWithoutFragment =
+        chapterURL.substringBefore('#')
       val resolvedURL =
-        chapterURL.resolve(Url(PREFIX_PUBLICATION))
+        URI(PREFIX_PUBLICATION).resolve(chapterURLWithoutFragment)
 
       val future =
         connection.openURL(resolvedURL.toString())
@@ -685,7 +695,7 @@ internal class SR2Controller private constructor(
        * If there's a fragment, attempt to scroll to it.
        */
 
-      when (val fragment = chapterURL.toString().substringAfter('#', "")) {
+      when (val fragment = chapterURL.substringAfter('#', "")) {
         "" -> future
 
         else ->

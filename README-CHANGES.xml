@@ -106,9 +106,9 @@
         <c:change date="2024-04-04T00:00:00+00:00" summary="Add more logging around bookmarks and navigation."/>
       </c:changes>
     </c:release>
-    <c:release date="2024-04-08T09:51:59+00:00" is-open="true" ticket-system="org.lyrasis.jira" version="5.0.0">
+    <c:release date="2024-04-08T09:53:15+00:00" is-open="false" ticket-system="org.lyrasis.jira" version="5.0.0">
       <c:changes>
-        <c:change date="2024-04-08T09:51:59+00:00" summary="Improve bookmark handling."/>
+        <c:change date="2024-04-08T00:00:00+00:00" summary="Improve bookmark handling."/>
       </c:changes>
     </c:release>
   </c:releases>

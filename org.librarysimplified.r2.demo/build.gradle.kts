@@ -64,6 +64,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.coroutines.core.jvm)
+    implementation(libs.kotlinx.datetime)
     implementation(libs.logback.android)
     implementation(libs.palace.theme)
     implementation(libs.r2.shared)

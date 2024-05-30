@@ -27,7 +27,7 @@ internal enum class SR2ReadiumCssLayout(val cssId: String) {
   companion object {
 
     operator fun invoke(metadata: Metadata): SR2ReadiumCssLayout =
-      invoke(languages = metadata.languages, readingProgression = metadata.effectiveReadingProgression)
+      invoke(languages = metadata.languages, readingProgression = ReadingProgression.LTR)
 
     /**
      * Determines the [SR2ReadiumCssLayout] for the given BCP 47 language codes and

@@ -120,9 +120,9 @@
         </c:change>
       </c:changes>
     </c:release>
-    <c:release date="2024-05-30T19:40:41+00:00" is-open="true" ticket-system="org.lyrasis.jira" version="6.0.0">
+    <c:release date="2024-05-30T19:41:10+00:00" is-open="false" ticket-system="org.lyrasis.jira" version="6.0.0">
       <c:changes>
-        <c:change date="2024-05-30T19:40:41+00:00" summary="Upgrade to R2 3.0.0-beta.1."/>
+        <c:change date="2024-05-30T00:00:00+00:00" summary="Upgrade to R2 3.0.0-beta.1."/>
       </c:changes>
     </c:release>
   </c:releases>

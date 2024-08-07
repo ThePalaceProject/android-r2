@@ -68,6 +68,7 @@ import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.regex.Pattern
 import kotlin.math.round
 
 /**
@@ -95,6 +96,9 @@ internal class SR2Controller private constructor(
       "https://org.librarysimplified.r2/publication/"
     const val PREFIX_ASSETS =
       "https://org.librarysimplified.r2/assets/"
+
+    private val LEADING_SLASHES =
+      Pattern.compile("^/+")
 
     private val logger =
       LoggerFactory.getLogger(SR2Controller::class.java)
@@ -660,12 +664,21 @@ internal class SR2Controller private constructor(
        * If we pass a URL with a fragment into the web view, this will result in
        * a URL with a fragment going into the underlying DRM engine, and this causes
        * Adobe DRM to go insane and fail to decrypt.
+       *
+       * Additionally, leading slashes are removed as this can cause an "absolute" URL
+       * to be resolved against the absolute URL [PREFIX_PUBLICATION]. This tends to result
+       * in URLs missing the "publication" path element.
        */
 
       val chapterURLWithoutFragment =
         chapterURL.substringBefore('#')
+      val chapterWithoutSlashes =
+        LEADING_SLASHES.matcher(chapterURLWithoutFragment)
+          .replaceFirst("")
       val resolvedURL =
-        URI(PREFIX_PUBLICATION).resolve(chapterURLWithoutFragment)
+        URI(PREFIX_PUBLICATION).resolve(chapterWithoutSlashes)
+
+      this.logger.debug("Translated {} to {}", chapterURL, resolvedURL)
 
       val future =
         connection.openURL(resolvedURL.toString())

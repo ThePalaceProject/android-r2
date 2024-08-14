@@ -60,10 +60,12 @@ import org.readium.r2.shared.util.mediatype.MediaType
 import org.readium.r2.streamer.PublicationOpener
 import org.readium.r2.streamer.parser.DefaultPublicationParser
 import org.slf4j.LoggerFactory
+import org.slf4j.MDC
 import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.net.URI
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -204,6 +206,8 @@ internal class SR2Controller private constructor(
     }
   }
 
+  private val errorAttributes =
+    ConcurrentHashMap<String, String>()
   private val subscriptions =
     CompositeDisposable()
   private val logger =
@@ -277,6 +281,9 @@ internal class SR2Controller private constructor(
   private var lastQuery = ""
 
   init {
+    this.publication.metadata.identifier?.let { x -> this.errorAttributes.put("Book ID", x) }
+    this.publication.metadata.title?.let { x -> this.errorAttributes.put("Book Title", x) }
+
     this.subscriptions.add(
       this.eventSubject.subscribe { event -> this.logger.trace("event: {}", event) },
     )
@@ -1263,36 +1270,49 @@ internal class SR2Controller private constructor(
   internal fun openPublicationResource(path: String): WebResourceResponse? {
     this.logger.debug("{} openPublicationResource: {}", this.name(), path)
 
+    this.errorAttributes.put("Resource Path", path)
+
     val urlPath = Url(path)
     if (urlPath == null) {
+      val error = SR2CustomErrorPage.create(
+        this.errorAttributes.toMap(),
+        "We could not decode the given publication resource path.",
+      )
+      this.errorAttributes.forEach { (k, v) -> MDC.put(k, v) }
       this.logger.error("Could not decode publication resource path: {}", path)
-      return null
+      return error.toResourceResponse()
     }
 
     val resourceValue = this.publication.get(urlPath)
     if (resourceValue == null) {
+      val error = SR2CustomErrorPage.create(
+        this.errorAttributes.toMap(),
+        "The book appears to be missing the requested resource.",
+      )
+      this.errorAttributes.forEach { (k, v) -> MDC.put(k, v) }
       this.logger.error("Could not retrieve publication resource for URL: {}", urlPath)
-      return null
+      return error.toResourceResponse()
     }
 
     return runBlocking {
       val c = this@SR2Controller
       when (val result = c.assetRetriever.retrieve(resourceValue)) {
         is Try.Failure -> {
+          c.errorAttributes.put("Message", result.value.message)
+          val error = SR2CustomErrorPage.create(
+            c.errorAttributes.toMap(),
+            "There was a problem reading the requested resource: ${result.value.message}",
+          )
+          c.errorAttributes.forEach { (k, v) -> MDC.put(k, v) }
           c.logger.error(
             "{} Failed to retrieve publication resource for {}: {}",
             c.name(),
             urlPath,
             result.value.message,
           )
-          WebResourceResponse(
-            result.value.message,
-            "text/plain",
-            500,
-            result.value.message,
-            null,
-            result.value.message.byteInputStream(),
-          )
+          MDC.remove("Message")
+          c.errorAttributes.remove("Message")
+          error.toResourceResponse()
         }
 
         is Try.Success -> {

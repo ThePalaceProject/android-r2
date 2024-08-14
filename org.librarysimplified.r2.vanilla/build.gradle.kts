@@ -3,6 +3,7 @@ dependencies {
     implementation(project(":org.librarysimplified.r2.ui_thread"))
 
     implementation(libs.androidx.annotation)
+    implementation(libs.google.guava)
     implementation(libs.jcip.annotations)
     implementation(libs.joda.time)
     implementation(libs.kotlin.stdlib)

@@ -82,6 +82,7 @@ internal class SR2WebViewClient(
         )
       }
     }
+
     return super.shouldInterceptRequest(view, request)
   }
 

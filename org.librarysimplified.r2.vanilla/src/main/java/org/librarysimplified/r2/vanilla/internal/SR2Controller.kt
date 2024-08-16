@@ -57,6 +57,7 @@ import org.readium.r2.shared.util.data.asInputStream
 import org.readium.r2.shared.util.getOrElse
 import org.readium.r2.shared.util.http.DefaultHttpClient
 import org.readium.r2.shared.util.mediatype.MediaType
+import org.readium.r2.shared.util.resource.Resource
 import org.readium.r2.streamer.PublicationOpener
 import org.readium.r2.streamer.parser.DefaultPublicationParser
 import org.slf4j.LoggerFactory
@@ -1283,14 +1284,30 @@ internal class SR2Controller private constructor(
       return error.toResourceResponse()
     }
 
-    val resourceValue = this.publication.get(urlPath)
-    if (resourceValue == null) {
+    /*
+     * Actually read the resource. This can result in calls made to various DRM systems
+     * for decryption, and so can fail catastrophically.
+     */
+
+    val resourceValue: Resource = try {
+      val r = this.publication.get(urlPath)
+      if (r == null) {
+        val error = SR2CustomErrorPage.create(
+          this.errorAttributes.toMap(),
+          "The book appears to be missing the requested resource.",
+        )
+        this.errorAttributes.forEach { (k, v) -> MDC.put(k, v) }
+        this.logger.error("Could not retrieve publication resource for URL: {}", urlPath)
+        return error.toResourceResponse()
+      }
+      r
+    } catch (e: Throwable) {
       val error = SR2CustomErrorPage.create(
         this.errorAttributes.toMap(),
-        "The book appears to be missing the requested resource.",
+        "There was a problem retrieving a resource from the book; the book may be damaged.",
       )
       this.errorAttributes.forEach { (k, v) -> MDC.put(k, v) }
-      this.logger.error("Could not retrieve publication resource for URL: {}", urlPath)
+      this.logger.error("Could not read/decrypt publication resource.", e)
       return error.toResourceResponse()
     }
 

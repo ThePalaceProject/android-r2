@@ -688,7 +688,7 @@ internal class SR2Controller private constructor(
 
       this.logger.debug("Translated {} to {}", chapterURL, resolvedURL)
 
-      val future =
+      val openFuture =
         connection.openURL(resolvedURL.toString())
           .handle { _, exception ->
             if (exception != null) {
@@ -716,17 +716,28 @@ internal class SR2Controller private constructor(
        * If there's a fragment, attempt to scroll to it.
        */
 
-      when (val fragment = chapterURL.substringAfter('#', "")) {
-        "" -> future
+      val scrollFuture =
+        when (val fragment = chapterURL.substringAfter('#', "")) {
+          "" -> openFuture
 
-        else ->
-          future.thenCompose {
-            connection.executeJS { js -> js.scrollToId(fragment) }
-          }.handle { _, exception ->
-            if (exception != null) {
-              this.logger.debug("{} Failed to scroll to fragment ID: ", this.name(), exception)
+          else ->
+            openFuture.thenCompose {
+              connection.executeJS { js -> js.scrollToId(fragment) }
+            }.handle { _, exception ->
+              if (exception != null) {
+                this.logger.debug("{} Failed to scroll to fragment ID: ", this.name(), exception)
+              }
             }
-          }
+        }
+
+      /*
+       * Evidently, web views on more modern platforms will no longer preserve the theme state.
+       * We therefore need to set the theme information every time the chapter changes for
+       * any reason.
+       */
+
+      scrollFuture.thenCompose {
+        this.executeThemeSet(this.waitForWebViewAvailability(), this.themeNow())
       }
     } catch (e: Exception) {
       this.logger.error(

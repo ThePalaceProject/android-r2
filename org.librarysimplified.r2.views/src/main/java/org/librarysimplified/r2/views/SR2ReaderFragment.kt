@@ -16,9 +16,6 @@ import androidx.core.view.MenuItemCompat
 import androidx.core.view.forEach
 import androidx.core.view.isVisible
 import io.reactivex.disposables.CompositeDisposable
-import org.librarysimplified.r2.api.SR2Bookmark
-import org.librarysimplified.r2.api.SR2Bookmark.Type.EXPLICIT
-import org.librarysimplified.r2.api.SR2ControllerType
 import org.librarysimplified.r2.api.SR2Event
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkCreated
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkDeleted
@@ -32,7 +29,6 @@ import org.librarysimplified.r2.api.SR2Event.SR2Error.SR2WebViewInaccessible
 import org.librarysimplified.r2.api.SR2Event.SR2OnCenterTapped
 import org.librarysimplified.r2.api.SR2Event.SR2ReadingPositionChanged
 import org.librarysimplified.r2.api.SR2Event.SR2ThemeChanged
-import org.librarysimplified.r2.api.SR2Locator
 import org.librarysimplified.r2.api.SR2ScrollingMode.SCROLLING_MODE_CONTINUOUS
 import org.librarysimplified.r2.api.SR2ScrollingMode.SCROLLING_MODE_PAGINATED
 import org.librarysimplified.r2.api.SR2Theme
@@ -295,21 +291,6 @@ class SR2ReaderFragment : SR2Fragment() {
       )
     }
     this.menuBookmarkItem.icon?.colorFilter = currentColorFilter
-  }
-
-  private fun findBookmarkForCurrentPage(
-    controllerNow: SR2ControllerType,
-    currentPosition: SR2Locator,
-  ): SR2Bookmark? {
-    return controllerNow.bookmarksNow()
-      .find { bookmark -> this.locationMatchesBookmark(bookmark, currentPosition) }
-  }
-
-  private fun locationMatchesBookmark(
-    bookmark: SR2Bookmark,
-    location: SR2Locator,
-  ): Boolean {
-    return bookmark.type == EXPLICIT && location.compareTo(bookmark.locator) == 0
   }
 
   private fun onControllerEvent(event: SR2Event) {

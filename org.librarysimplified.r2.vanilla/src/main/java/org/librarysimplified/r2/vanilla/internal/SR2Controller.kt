@@ -1196,33 +1196,31 @@ internal class SR2Controller private constructor(
 
       try {
         this.subscriptions.dispose()
-      } catch (e: Exception) {
+      } catch (e: Throwable) {
         this.logger.error("{} Could not dispose of subscriptions: ", this.name(), e)
       }
 
       try {
         this.viewDisconnect()
-      } catch (e: Exception) {
+      } catch (e: Throwable) {
         this.logger.error("{} Could not disconnect view: ", this.name(), e)
       }
 
       try {
-        runBlocking {
-          this@SR2Controller.publication.close()
-        }
-      } catch (e: Exception) {
+        this@SR2Controller.publication.close()
+      } catch (e: Throwable) {
         this.logger.error("{} Could not close publication: ", this.name(), e)
       }
 
       try {
         this.queueExecutor.shutdown()
-      } catch (e: Exception) {
+      } catch (e: Throwable) {
         this.logger.error("{} Could not stop command queue: ", this.name(), e)
       }
 
       try {
         this.eventSubject.onComplete()
-      } catch (e: Exception) {
+      } catch (e: Throwable) {
         this.logger.error("{} Could not complete event stream: ", this.name(), e)
       }
     }

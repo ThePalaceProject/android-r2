@@ -38,6 +38,7 @@ internal class SR2WebViewClient(
   private val errors =
     ConcurrentHashMap<String, String>()
 
+  @Deprecated("Deprecated in Java")
   override fun shouldOverrideUrlLoading(
     view: WebView,
     url: String,
@@ -60,30 +61,46 @@ internal class SR2WebViewClient(
     view: WebView?,
     request: WebResourceRequest?,
   ): WebResourceResponse? {
-    if (request != null) {
-      val url = request.url?.toString() ?: ""
+    try {
+      if (request != null) {
+        val url = request.url?.toString() ?: ""
 
-      if (url.startsWith(PREFIX_ASSETS)) {
-        return this.commandQueue.openAsset(url.removePrefix(PREFIX_ASSETS))
+        if (url.startsWith(PREFIX_ASSETS)) {
+          return this.commandQueue.openAsset(url.removePrefix(PREFIX_ASSETS))
+        }
+
+        if (url.startsWith(PREFIX_PUBLICATION)) {
+          return this.commandQueue.openPublicationResource(url.removePrefix(PREFIX_PUBLICATION))
+        }
+
+        if (url.endsWith("favicon.ico")) {
+          return WebResourceResponse(
+            "image/vnd.microsoft.icon",
+            null,
+            200,
+            "OK",
+            null,
+            faviconData.inputStream(),
+          )
+        }
       }
 
-      if (url.startsWith(PREFIX_PUBLICATION)) {
-        return this.commandQueue.openPublicationResource(url.removePrefix(PREFIX_PUBLICATION))
-      }
+      return super.shouldInterceptRequest(view, request)
+    } catch (e: Throwable) {
+      /*
+       * Exceptions can be raised here by the DRM connector, amongst other things.
+       */
 
-      if (url.endsWith("favicon.ico")) {
-        return WebResourceResponse(
-          "image/vnd.microsoft.icon",
-          null,
-          200,
-          "OK",
-          null,
-          faviconData.inputStream(),
-        )
+      this.logger.debug("shouldInterceptRequest: ", e)
+      val attributes = mutableMapOf<String, String>()
+      if (request != null) {
+        attributes["URL"] = request.url.toString()
       }
+      return SR2CustomErrorPage.create(
+        attributes.toMap(),
+        e.message ?: e.javaClass.name,
+      ).toResourceResponse()
     }
-
-    return super.shouldInterceptRequest(view, request)
   }
 
   override fun onLoadResource(

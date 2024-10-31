@@ -1,4 +1,6 @@
 dependencies {
+    coreLibraryDesugaring(libs.android.desugaring)
+
     val dependencyObjects = setOf(
         project(":org.librarysimplified.r2.api"),
         project(":org.librarysimplified.r2.vanilla"),

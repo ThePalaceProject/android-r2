@@ -1,4 +1,6 @@
 dependencies {
+    coreLibraryDesugaring(libs.android.desugaring)
+
     implementation(project(":org.librarysimplified.r2.api"))
     implementation(project(":org.librarysimplified.r2.ui_thread"))
     implementation(project(":org.librarysimplified.r2.vanilla"))

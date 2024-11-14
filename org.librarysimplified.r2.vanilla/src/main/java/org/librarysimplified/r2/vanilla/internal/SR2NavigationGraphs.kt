@@ -53,7 +53,7 @@ object SR2NavigationGraphs {
         ?: ""
     return SR2NavigationPoint(
       title,
-      SR2Locator.SR2LocatorPercent(link.href, 0.0),
+      SR2Locator.SR2LocatorPercent.create(link.href, 0.0),
     )
   }
 

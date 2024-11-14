@@ -72,7 +72,7 @@ sealed class SR2Event {
       get() = this.bookProgress?.let { (it * 100.0).toInt() }
 
     val locator =
-      SR2Locator.SR2LocatorPercent(this.chapterHref, this.chapterProgress)
+      SR2Locator.SR2LocatorPercent.create(this.chapterHref, this.chapterProgress)
   }
 
   /**

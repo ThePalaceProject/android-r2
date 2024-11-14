@@ -72,7 +72,10 @@ class DemoDatabase(private val baseDirectory: File) {
           date = bookmark.time,
           type = bookmark.type,
           title = bookmark.title,
-          locator = SR2LocatorPercent(Href(bookmark.chapterHref)!!, bookmark.chapterProgress),
+          locator = SR2LocatorPercent.create(
+            chapterHref = Href(bookmark.chapterHref)!!,
+            chapterProgress = bookmark.chapterProgress,
+          ),
           bookProgress = bookmark.bookProgress,
           uri = bookmark.uri,
         )

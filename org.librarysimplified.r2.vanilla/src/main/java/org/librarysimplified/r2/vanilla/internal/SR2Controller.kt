@@ -189,7 +189,7 @@ internal class SR2Controller private constructor(
           lastRead.locator
         } else {
           this.logger.debug("LastRead: No last-read position, starting from start of book.")
-          SR2LocatorPercent(
+          SR2LocatorPercent.create(
             chapterHref = navigationGraph.start().node.navigationPoint.locator.chapterHref,
             chapterProgress = 0.0,
           )
@@ -480,7 +480,7 @@ internal class SR2Controller private constructor(
     val previousNode =
       this.navigationGraph.findPreviousNode(currentNode.node)
         ?: return CompletableFuture.completedFuture(Unit)
-    val locator = SR2LocatorChapterEnd(previousNode.navigationPoint.locator.chapterHref)
+    val locator = SR2LocatorChapterEnd.create(previousNode.navigationPoint.locator.chapterHref)
     this.setCurrentNavigationIntent(locator)
     return this.moveToSatisfyNavigationIntent(command)
   }
@@ -600,7 +600,7 @@ internal class SR2Controller private constructor(
       val link = apiCommand.link
       if (apiCommand.link.startsWith(PREFIX_PUBLICATION)) {
         val target = Href(link.removePrefix(PREFIX_PUBLICATION))!!
-        this.submitCommand(SR2Command.OpenChapter(SR2LocatorPercent(target, 0.0)))
+        this.submitCommand(SR2Command.OpenChapter(SR2LocatorPercent.create(target, 0.0)))
         return CompletableFuture.completedFuture(Unit)
       }
 
@@ -879,7 +879,7 @@ internal class SR2Controller private constructor(
             }
 
             is SR2LocatorPercent -> {
-              SR2LocatorPercent(
+              SR2LocatorPercent.create(
                 i.chapterHref,
                 chapterProgress,
               )

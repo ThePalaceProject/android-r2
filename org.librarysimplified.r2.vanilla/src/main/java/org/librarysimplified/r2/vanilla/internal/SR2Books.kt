@@ -13,7 +13,7 @@ object SR2Books {
     bookId: String,
   ): SR2BookMetadata {
     val startLocator =
-      SR2Locator.SR2LocatorPercent(
+      SR2Locator.SR2LocatorPercent.create(
         chapterHref = publication.readingOrder.first().href,
         chapterProgress = 0.0,
       )

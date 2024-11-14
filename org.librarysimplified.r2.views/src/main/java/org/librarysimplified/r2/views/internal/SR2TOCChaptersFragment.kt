@@ -97,7 +97,7 @@ internal class SR2TOCChaptersFragment : Fragment() {
   private fun onTOCEntrySelected(entry: SR2TOCEntry) {
     SR2ReaderModel.submitCommand(
       SR2Command.OpenChapter(
-        SR2LocatorPercent(
+        SR2LocatorPercent.create(
           chapterHref = entry.href,
           chapterProgress = 0.0,
         ),

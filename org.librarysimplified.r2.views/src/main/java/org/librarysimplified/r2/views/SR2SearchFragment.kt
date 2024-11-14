@@ -83,7 +83,7 @@ class SR2SearchFragment : SR2Fragment() {
 
         SR2ReaderModel.submitCommand(
           SR2Command.OpenChapter(
-            SR2Locator.SR2LocatorPercent(
+            SR2Locator.SR2LocatorPercent.create(
               chapterHref = Href(locator.href),
               chapterProgress = locator.locations.progression ?: 0.0,
             ),

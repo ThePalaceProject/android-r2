@@ -49,7 +49,7 @@ object SR2NavigationGraphs {
   private fun makeNavigationPoint(publication: Publication, link: Link): SR2NavigationPoint {
     val title =
       link.title?.takeIf(String::isNotBlank)
-        ?: titleFromTOC(publication.tableOfContents, link)
+        ?: titleFromTOC(null, publication.tableOfContents, link)
         ?: ""
     return SR2NavigationPoint(
       title,
@@ -62,9 +62,9 @@ object SR2NavigationGraphs {
    * In case of multiples matches, deeper items have precedence because they're likely to be more specific.
    */
 
-  private fun titleFromTOC(toc: List<Link>, link: Link): String? {
+  private fun titleFromTOC(tocEntryParent: Link?, toc: List<Link>, link: Link): String? {
     for (entry in toc) {
-      this.titleFromTOC(entry.children, link)?.let {
+      this.titleFromTOC(entry, entry.children, link)?.let {
         return it
       }
     }
@@ -75,6 +75,9 @@ object SR2NavigationGraphs {
       }
     }
 
+    if (tocEntryParent?.href == link.href && tocEntryParent.title != null) {
+      return tocEntryParent.title
+    }
     return null
   }
 }

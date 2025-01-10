@@ -688,6 +688,19 @@ internal class SR2Controller private constructor(
 
       this.logger.debug("Translated {} to {}", chapterURL, resolvedURL)
 
+      /*
+       * The order of operations performed here is significant:
+       *
+       * 1. The URL must be opened first.
+       * 2. When the URL is opened, the scroll mode must be set.
+       * 3. After the scroll mode, the theme must be set. The reason the theme must be set is that the theme
+       *    affects pagination due to setting font families and sizes. If the webview is being restored, then
+       *    the position to which it is being restored will have been generated when the theme was active, and
+       *    if we try to restore a position _before_ the theme is restored, then we'll end up scrolling to the
+       *    wrong position.
+       * 4. Finally, the actual position is set.
+       */
+
       val openFuture =
         connection.openURL(resolvedURL.toString())
           .handle { _, exception ->
@@ -699,6 +712,12 @@ internal class SR2Controller private constructor(
           }.handle { _, exception ->
             if (exception != null) {
               this.logger.debug("{} Failed to set scroll mode: ", this.name(), exception)
+            }
+          }.thenCompose {
+            this.executeThemeSet(this.waitForWebViewAvailability(), this.themeNow())
+          }.handle { _, exception ->
+            if (exception != null) {
+              this.logger.debug("{} Failed to set theme: ", this.name(), exception)
             }
           }.thenCompose {
             this.executeLocatorSet(connection, this.currentNavigationIntent)
@@ -730,15 +749,7 @@ internal class SR2Controller private constructor(
             }
         }
 
-      /*
-       * Evidently, web views on more modern platforms will no longer preserve the theme state.
-       * We therefore need to set the theme information every time the chapter changes for
-       * any reason.
-       */
-
-      scrollFuture.thenCompose {
-        this.executeThemeSet(this.waitForWebViewAvailability(), this.themeNow())
-      }
+      return scrollFuture
     } catch (e: Exception) {
       this.logger.error(
         "{} moveToSatisfyNavigationIntent: {}: ",

@@ -180,11 +180,16 @@
         </c:change>
       </c:changes>
     </c:release>
-    <c:release date="2024-11-26T18:06:43+00:00" is-open="true" ticket-system="org.lyrasis.jira" version="6.7.0">
+    <c:release date="2025-01-13T20:03:08+00:00" is-open="true" ticket-system="org.lyrasis.jira" version="6.7.0">
       <c:changes>
         <c:change date="2024-11-26T00:00:00+00:00" summary="Improve title handling again.">
           <c:tickets>
             <c:ticket id="PP-1954"/>
+          </c:tickets>
+        </c:change>
+        <c:change date="2025-01-13T20:03:08+00:00" summary="Fix an issue restoring book positions after backgrounding.">
+          <c:tickets>
+            <c:ticket id="PP-1953"/>
           </c:tickets>
         </c:change>
       </c:changes>

@@ -53,6 +53,9 @@ import org.readium.r2.shared.util.ErrorException
 import org.readium.r2.shared.util.Try
 import org.readium.r2.shared.util.Url
 import org.readium.r2.shared.util.asset.AssetRetriever
+import org.readium.r2.shared.util.asset.DefaultArchiveOpener
+import org.readium.r2.shared.util.asset.DefaultFormatSniffer
+import org.readium.r2.shared.util.asset.DefaultResourceFactory
 import org.readium.r2.shared.util.data.asInputStream
 import org.readium.r2.shared.util.getOrElse
 import org.readium.r2.shared.util.http.DefaultHttpClient
@@ -120,7 +123,13 @@ internal class SR2Controller private constructor(
       val httpClient =
         DefaultHttpClient(userAgent = "${BuildConfig.LIBRARY_PACKAGE_NAME}/${BuildConfig.R2_VERSION_NAME}")
       val assetRetriever =
-        AssetRetriever(context.contentResolver, httpClient)
+        AssetRetriever(
+          DefaultResourceFactory(context.contentResolver, httpClient),
+          DefaultArchiveOpener(),
+          DefaultFormatSniffer(
+            listOf(SVGSniffer()),
+          ),
+        )
 
       val publicationParser =
         DefaultPublicationParser(

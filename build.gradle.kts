@@ -1,5 +1,6 @@
 import com.android.build.api.dsl.ApplicationExtension
 import com.android.build.gradle.LibraryExtension
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinAndroidProjectExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinProjectExtension
 
@@ -16,11 +17,11 @@ plugins {
     signing
 
     id("org.jetbrains.kotlin.jvm")
-        .version("1.9.0")
+        .version("2.2.10")
         .apply(false)
 
     id("org.jetbrains.kotlin.android")
-        .version("1.9.0")
+        .version("2.2.10")
         .apply(false)
 
     id("com.github.ben-manes.versions")
@@ -534,7 +535,9 @@ allprojects {
              */
 
             tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-                kotlinOptions.jvmTarget = jdkBytecodeTarget.toString()
+                compilerOptions {
+                    compilerOptions.jvmTarget.set(JvmTarget.fromTarget(jdkBytecodeTarget.toString()))
+                }
             }
             java.sourceCompatibility = JavaVersion.toVersion(jdkBytecodeTarget)
             java.targetCompatibility = JavaVersion.toVersion(jdkBytecodeTarget)
@@ -590,7 +593,9 @@ allprojects {
              */
 
             tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-                kotlinOptions.jvmTarget = jdkBytecodeTarget.toString()
+                compilerOptions {
+                    compilerOptions.jvmTarget.set(JvmTarget.fromTarget(jdkBytecodeTarget.toString()))
+                }
             }
             java.sourceCompatibility = JavaVersion.toVersion(jdkBytecodeTarget)
             java.targetCompatibility = JavaVersion.toVersion(jdkBytecodeTarget)
@@ -667,7 +672,9 @@ allprojects {
              */
 
             tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-                kotlinOptions.jvmTarget = jdkBytecodeTarget.toString()
+                compilerOptions {
+                    compilerOptions.jvmTarget.set(JvmTarget.fromTarget(jdkBytecodeTarget.toString()))
+                }
             }
             java.sourceCompatibility = JavaVersion.toVersion(jdkBytecodeTarget)
             java.targetCompatibility = JavaVersion.toVersion(jdkBytecodeTarget)

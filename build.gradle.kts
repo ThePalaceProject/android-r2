@@ -1,7 +1,5 @@
 import com.android.build.api.dsl.ApplicationExtension
 import com.android.build.gradle.LibraryExtension
-import org.jetbrains.kotlin.de.undercouch.gradle.tasks.download.Download
-import org.jetbrains.kotlin.de.undercouch.gradle.tasks.download.Verify
 import org.jetbrains.kotlin.gradle.dsl.KotlinAndroidProjectExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinProjectExtension
 
@@ -45,16 +43,6 @@ plugins {
 
     id("de.mannodermaus.android-junit5")
         .version("1.9.3.0")
-        .apply(false)
-
-    /*
-     * Download plugin. Used to fetch artifacts such as Scando during the build.
-     *
-     * https://plugins.gradle.org/plugin/de.undercouch.download
-     */
-
-    id("de.undercouch.download")
-        .version("5.4.0")
         .apply(false)
 
     /*
@@ -318,24 +306,15 @@ fun createScandoDownloadTask(project: Project): Task {
     val scandoSource =
         "https://repo1.maven.org/maven2/com/io7m/scando/com.io7m.scando.cmdline/$scandoVersion/com.io7m.scando.cmdline-$scandoVersion-main.jar"
 
-    val scandoMakeDirectory =
-        project.task("ScandoMakeDirectory") {
-            mkdir(palaceRootBuildDirectory)
-        }
-
-    val scandoDownload =
-        project.task("ScandoDownload", Download::class) {
-            src(scandoSource)
-            dest(file(palaceScandoJarFile))
-            overwrite(true)
-            this.dependsOn.add(scandoMakeDirectory)
-        }
-
-    return project.task("ScandoDownloadVerify", Verify::class) {
-        src(file(palaceScandoJarFile))
-        checksum(scandoSHA256)
-        algorithm("SHA-256")
-        this.dependsOn(scandoDownload)
+    val commandLineArguments: ArrayList<String> = arrayListOf(
+        "java",
+        "org.thepalaceproject.android.platform/DownloadVerify.java",
+        scandoSource,
+        palaceScandoJarFile,
+        scandoSHA256,
+    )
+    return project.task("ScandoDownload", Exec::class) {
+        commandLine = commandLineArguments
     }
 }
 
@@ -393,7 +372,6 @@ fun createScandoAnalyzeTask(project: Project): Task {
 lateinit var scandoDownloadTask: Task
 
 rootProject.afterEvaluate {
-    apply(plugin = "de.undercouch.download")
     scandoDownloadTask = createScandoDownloadTask(this)
 }
 
@@ -406,30 +384,15 @@ rootProject.afterEvaluate {
 fun createKtlintDownloadTask(project: Project): Task {
     val ktlintVersion =
         "0.50.0"
-    val ktlintSHA256 =
-        "c704fbc28305bb472511a1e98a7e0b014aa13378a571b716bbcf9d99d59a5092"
-    val ktlintSource =
-        "https://repo1.maven.org/maven2/com/pinterest/ktlint/$ktlintVersion/ktlint-$ktlintVersion-all.jar"
-
-    val ktlintMakeDirectory =
-        project.task("KtlintMakeDirectory") {
-            mkdir(palaceRootBuildDirectory)
-        }
-
-    val ktlintDownload =
-        project.task("KtlintDownload", Download::class) {
-            src(ktlintSource)
-            dest(file(palaceKtlintJarFile))
-            overwrite(true)
-            onlyIfModified(true)
-            this.dependsOn.add(ktlintMakeDirectory)
-        }
-
-    return project.task("KtlintDownloadVerify", Verify::class) {
-        src(file(palaceKtlintJarFile))
-        checksum(ktlintSHA256)
-        algorithm("SHA-256")
-        this.dependsOn(ktlintDownload)
+    val commandLineArguments: ArrayList<String> = arrayListOf(
+        "java",
+        "org.thepalaceproject.android.platform/DownloadVerify.java",
+        "https://repo1.maven.org/maven2/com/pinterest/ktlint/$ktlintVersion/ktlint-$ktlintVersion-all.jar",
+        palaceKtlintJarFile,
+        "c704fbc28305bb472511a1e98a7e0b014aa13378a571b716bbcf9d99d59a5092",
+    )
+    return project.task("KtlintDownload", Exec::class) {
+        commandLine = commandLineArguments
     }
 }
 
@@ -482,7 +445,6 @@ fun createKtlintFormatTask(project: Project): Task {
 lateinit var ktlintDownloadTask: Task
 
 rootProject.afterEvaluate {
-    apply(plugin = "de.undercouch.download")
     ktlintDownloadTask = createKtlintDownloadTask(this)
 
     val enableKtlintChecks =

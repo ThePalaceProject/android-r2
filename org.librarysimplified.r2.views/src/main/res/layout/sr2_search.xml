@@ -8,14 +8,61 @@
   android:gravity="center"
   android:orientation="vertical">
 
-  <androidx.appcompat.widget.Toolbar
-    android:id="@+id/searchToolbar"
+  <androidx.constraintlayout.widget.ConstraintLayout
+    android:id="@+id/searchToolbar2"
     android:layout_width="match_parent"
-    android:layout_height="@dimen/PalaceToolbarHeight"
-    android:theme="@style/Palace.Legacy.ToolbarTheme"
-    app:popupTheme="@style/Palace.Legacy.ToolbarPopupTheme"
-    app:navigationIcon="@drawable/sr2_arrow_back"
-    tools:title="Placeholder" />
+    android:layout_height="64dp"
+    android:background="@color/PalaceScreenBackgroundColor"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toTopOf="parent">
+
+    <FrameLayout
+      android:id="@+id/searchToolbarBackTouch"
+      android:layout_width="64dp"
+      android:layout_height="64dp"
+      android:focusable="true"
+      android:clickable="true"
+      app:layout_constraintBottom_toBottomOf="parent"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintTop_toTopOf="parent">
+
+      <ImageView
+        android:id="@+id/searchToolbarBack"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_gravity="center"
+        android:src="@drawable/sr2_arrow_back" />
+    </FrameLayout>
+
+    <EditText
+      android:id="@+id/searchToolbarSearchText"
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_marginStart="16dp"
+      android:layout_marginEnd="16dp"
+      android:ellipsize="end"
+      android:imeOptions="actionDone"
+      android:maxLines="1"
+      android:singleLine="true"
+      android:textSize="18sp"
+      android:inputType="text"
+      android:autofillHints=""
+      android:hint="@string/readerSearch"
+      app:layout_constraintBottom_toBottomOf="parent"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintStart_toEndOf="@id/searchToolbarBackTouch"
+      app:layout_constraintTop_toTopOf="parent"
+      tools:visibility="visible" />
+
+    <View
+      android:layout_width="0dp"
+      android:layout_height="1dp"
+      android:background="?android:attr/listDivider"
+      app:layout_constraintBottom_toBottomOf="parent"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintStart_toStartOf="parent" />
+  </androidx.constraintlayout.widget.ConstraintLayout>
 
   <FrameLayout
     android:layout_width="match_parent"

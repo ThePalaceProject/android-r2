@@ -1,21 +1,21 @@
 package org.librarysimplified.r2.views
 
 import android.content.Intent
-import android.graphics.PorterDuff
 import android.net.Uri
 import android.os.Bundle
+import android.view.KeyEvent
 import android.view.LayoutInflater
-import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import android.webkit.WebView
+import android.view.ViewTreeObserver.OnGlobalFocusChangeListener
+import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
-import androidx.appcompat.widget.Toolbar
-import androidx.core.view.MenuItemCompat
-import androidx.core.view.forEach
-import androidx.core.view.isVisible
 import io.reactivex.disposables.CompositeDisposable
+import org.librarysimplified.r2.api.SR2ColorScheme.DARK_TEXT_LIGHT_BACKGROUND
+import org.librarysimplified.r2.api.SR2ColorScheme.DARK_TEXT_ON_SEPIA
+import org.librarysimplified.r2.api.SR2ColorScheme.LIGHT_TEXT_DARK_BACKGROUND
+import org.librarysimplified.r2.api.SR2Command
 import org.librarysimplified.r2.api.SR2Event
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkCreated
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkDeleted
@@ -40,6 +40,9 @@ import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewBookEvent.
 import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewControllerEvent.SR2ControllerBecameAvailable
 import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewControllerEvent.SR2ControllerBecameUnavailable
 import org.librarysimplified.r2.views.internal.SR2BrightnessService
+import org.librarysimplified.r2.views.internal.SR2ColorFilters
+import org.librarysimplified.r2.views.internal.SR2LimitedWebView
+import org.librarysimplified.r2.views.internal.SR2Ripples
 import org.librarysimplified.r2.views.internal.SR2SettingsDialog
 import org.slf4j.LoggerFactory
 
@@ -48,23 +51,30 @@ class SR2ReaderFragment : SR2Fragment() {
   private val logger =
     LoggerFactory.getLogger(SR2ReaderFragment::class.java)
 
+  private lateinit var buttonBack: View
+  private lateinit var buttonBackIcon: ImageView
+  private lateinit var buttonBookmark: View
+  private lateinit var buttonBookmarkIcon: ImageView
+  private lateinit var buttonSearch: View
+  private lateinit var buttonSearchIcon: ImageView
+  private lateinit var buttonSettings: View
+  private lateinit var buttonSettingsIcon: ImageView
+  private lateinit var buttonTOC: View
+  private lateinit var buttonTOCIcon: ImageView
   private lateinit var container: ViewGroup
+  private lateinit var eventSubscriptions: CompositeDisposable
   private lateinit var loadingView: ProgressBar
-  private lateinit var menuBookmarkItem: MenuItem
   private lateinit var positionPageView: TextView
   private lateinit var positionPercentView: TextView
   private lateinit var positionTitleView: TextView
   private lateinit var progressContainer: ViewGroup
   private lateinit var progressView: ProgressBar
   private lateinit var titleText: TextView
-  private lateinit var toolbar: Toolbar
-  private lateinit var webView: WebView
-  private lateinit var eventSubscriptions: CompositeDisposable
-
-  override fun onCreate(savedInstanceState: Bundle?) {
-    super.onCreate(savedInstanceState)
-    this.setHasOptionsMenu(true)
-  }
+  private lateinit var toolbar: ViewGroup
+  private lateinit var toolbarButtonIcons: List<ImageView>
+  private lateinit var toolbarButtons: List<View>
+  private lateinit var toolbarText: TextView
+  private lateinit var webView: SR2LimitedWebView
 
   override fun onCreateView(
     inflater: LayoutInflater,
@@ -76,8 +86,6 @@ class SR2ReaderFragment : SR2Fragment() {
 
     this.container =
       view.findViewById(R.id.readerContainer)
-    this.toolbar =
-      view.findViewById(R.id.readerToolbar)
     this.progressContainer =
       view.findViewById(R.id.readerProgressContainer)
     this.webView =
@@ -95,25 +103,85 @@ class SR2ReaderFragment : SR2Fragment() {
     this.titleText =
       view.findViewById(R.id.titleText)
 
-    this.toolbar.inflateMenu(R.menu.sr2_reader_menu)
-    this.menuBookmarkItem = this.toolbar.menu.findItem(R.id.readerMenuAddBookmark)
-    this.toolbar.menu.findItem(R.id.readerMenuSettings)
-      .setOnMenuItemClickListener { this.onReaderMenuSettingsSelected() }
-    this.toolbar.menu.findItem(R.id.readerMenuTOC)
-      .setOnMenuItemClickListener { this.onReaderMenuTOCSelected() }
+    this.toolbar =
+      view.findViewById(R.id.readerToolbar2)
 
-    val addBookmarkOption = this.toolbar.menu.findItem(R.id.readerMenuAddBookmark)
-    addBookmarkOption.setOnMenuItemClickListener { this.onReaderMenuAddBookmarkSelected() }
-    addBookmarkOption.isVisible = !SR2ReaderModel.isPreview
+    this.toolbarText =
+      this.toolbar.findViewById(R.id.readerToolbarText)
 
-    val searchOption = this.toolbar.menu.findItem(R.id.readerMenuSearch)
-    searchOption.setOnMenuItemClickListener {
-      SR2ReaderModel.submitViewCommand(SR2ReaderViewNavigationSearchOpen)
-      true
+    this.buttonBack =
+      this.toolbar.findViewById(R.id.readerToolbarBackTouch)
+    this.buttonBackIcon =
+      this.toolbar.findViewById(R.id.readerToolbarBack)
+
+    this.buttonSearch =
+      this.toolbar.findViewById(R.id.readerToolbarSearchTouch)
+    this.buttonSearchIcon =
+      this.toolbar.findViewById(R.id.readerToolbarSearch)
+
+    this.buttonSettings =
+      this.toolbar.findViewById(R.id.readerToolbarSettingsTouch)
+    this.buttonSettingsIcon =
+      this.toolbar.findViewById(R.id.readerToolbarSettings)
+
+    this.buttonTOC =
+      this.toolbar.findViewById(R.id.readerToolbarTOCTouch)
+    this.buttonTOCIcon =
+      this.toolbar.findViewById(R.id.readerToolbarTOC)
+
+    this.buttonBookmark =
+      this.toolbar.findViewById(R.id.readerToolbarBookmarkTouch)
+    this.buttonBookmarkIcon =
+      this.toolbar.findViewById(R.id.readerToolbarBookmark)
+
+    this.buttonBack.setOnClickListener {
+      this.onToolbarNavigationSelected()
+    }
+    this.buttonBookmark.setOnClickListener {
+      this.onReaderMenuAddBookmarkSelected()
+    }
+    this.buttonSettings.setOnClickListener {
+      this.onReaderMenuSettingsSelected()
+    }
+    this.buttonTOC.setOnClickListener {
+      this.onReaderMenuTOCSelected()
+    }
+    this.buttonSearch.setOnClickListener {
+      this.onReaderMenuSearchSelected()
     }
 
-    this.toolbar.setNavigationOnClickListener { this.onToolbarNavigationSelected() }
-    this.toolbar.setNavigationContentDescription(R.string.settingsAccessibilityBack)
+    this.toolbarButtonIcons =
+      listOf(
+        this.buttonBackIcon,
+        this.buttonBookmarkIcon,
+        this.buttonSearchIcon,
+        this.buttonSettingsIcon,
+        this.buttonTOCIcon,
+      )
+
+    this.toolbarButtons =
+      listOf(
+        this.buttonBack,
+        this.buttonBookmark,
+        this.buttonSearch,
+        this.buttonSettings,
+        this.buttonTOC,
+      )
+
+    this.toolbarButtons.forEach { buttonView ->
+      buttonView.setOnKeyListener { _, keyCode, event ->
+        return@setOnKeyListener if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ESCAPE) {
+          onUserPressedEscapeOnToolbarButton()
+          true
+        } else {
+          false
+        }
+      }
+    }
+
+    this.webView.setKeyboardControlListener { event ->
+      this.onUserPressedKeyOnWebView(event)
+    }
 
     /*
      * We don't show page numbers in continuous scroll mode.
@@ -131,6 +199,32 @@ class SR2ReaderFragment : SR2Fragment() {
 
     this.viewsHandleLoadingState(showLoading = true)
     return view
+  }
+
+  private fun onUserPressedEscapeOnToolbarButton() {
+    this.logger.debug("onUserPressedEscapeOnToolbarButton")
+
+    this.showOrHideReadingUI(uiVisible = false)
+  }
+
+  private fun onUserPressedKeyOnWebView(
+    event: KeyEvent,
+  ) {
+    this.logger.debug("onUserPressedKeyOnWebView: {}", event)
+
+    when (event.keyCode) {
+      KeyEvent.KEYCODE_ESCAPE -> {
+        this.showOrHideReadingUI(uiVisible = true)
+      }
+
+      KeyEvent.KEYCODE_DPAD_RIGHT -> {
+        SR2ReaderModel.submitCommand(SR2Command.OpenPageNext)
+      }
+
+      KeyEvent.KEYCODE_DPAD_LEFT -> {
+        SR2ReaderModel.submitCommand(SR2Command.OpenPagePrevious)
+      }
+    }
   }
 
   private fun onReaderMenuAddBookmarkSelected(): Boolean {
@@ -161,31 +255,70 @@ class SR2ReaderFragment : SR2Fragment() {
     return true
   }
 
+  private fun onReaderMenuSearchSelected(): Boolean {
+    SR2UIThread.checkIsUIThread()
+
+    SR2ReaderModel.submitViewCommand(SR2ReaderViewNavigationSearchOpen)
+    return true
+  }
+
   private fun configureForTheme(theme: SR2Theme) {
     SR2UIThread.checkIsUIThread()
 
     val background = theme.colorScheme.background()
     val foreground = theme.colorScheme.foreground()
 
-    this.toolbar.setBackgroundColor(background)
-    this.toolbar.setTitleTextColor(foreground)
-    this.toolbar.navigationIcon?.setColorFilter(foreground, PorterDuff.Mode.SRC_ATOP)
-    this.toolbar.menu.forEach { item ->
-      item.icon?.setColorFilter(foreground, PorterDuff.Mode.SRC_ATOP)
+    when (theme.colorScheme) {
+      DARK_TEXT_LIGHT_BACKGROUND -> {
+        this.toolbarButtonIcons.forEach { v -> v.colorFilter = null }
+        this.toolbarButtons.forEach { v ->
+          v.foreground = SR2Ripples.createRippleDrawableForLightBackground()
+        }
+      }
+
+      LIGHT_TEXT_DARK_BACKGROUND -> {
+        this.toolbarButtonIcons.forEach { v ->
+          v.colorFilter = SR2ColorFilters.inversionFilter
+        }
+        this.toolbarButtons.forEach { v ->
+          v.foreground = SR2Ripples.createRippleDrawableForDarkBackground()
+        }
+      }
+
+      DARK_TEXT_ON_SEPIA -> {
+        this.toolbarButtonIcons.forEach { v -> v.colorFilter = null }
+        this.toolbarButtons.forEach { v ->
+          v.foreground = SR2Ripples.createRippleDrawableForLightBackground()
+        }
+      }
     }
+
     this.container.setBackgroundColor(background)
-    this.titleText.setTextColor(foreground)
     this.positionPageView.setTextColor(foreground)
-    this.positionTitleView.setTextColor(foreground)
     this.positionPercentView.setTextColor(foreground)
+    this.positionTitleView.setTextColor(foreground)
+    this.titleText.setTextColor(foreground)
+    this.toolbar.setBackgroundColor(background)
+    this.toolbarText.setTextColor(foreground)
   }
 
   private fun openSettings() {
-    val activity = requireActivity()
-    SR2SettingsDialog.create(
-      brightness = SR2BrightnessService(activity),
-      context = activity,
-    )
+    val activity = this.requireActivity()
+
+    if (!SR2SettingsDialog.isOpen()) {
+      SR2SettingsDialog.create(
+        brightness = SR2BrightnessService(activity),
+        context = activity,
+      )
+    }
+  }
+
+  /**
+   * A small focus change listener for debugging.
+   */
+
+  private val onFocusChanged = OnGlobalFocusChangeListener { _, newFocus ->
+    this.logger.debug("Focus changed: {}", newFocus)
   }
 
   override fun onStart() {
@@ -195,6 +328,15 @@ class SR2ReaderFragment : SR2Fragment() {
     this.eventSubscriptions = CompositeDisposable()
     this.eventSubscriptions.add(SR2ReaderModel.viewEvents.subscribe(this::onViewEvent))
     this.eventSubscriptions.add(SR2ReaderModel.controllerEvents.subscribe(this::onControllerEvent))
+
+    try {
+      val activity = this.requireActivity()
+      val rootView = activity.window.decorView
+      val viewTreeObserver = rootView.getViewTreeObserver()
+      viewTreeObserver.addOnGlobalFocusChangeListener(this.onFocusChanged)
+    } catch (e: Throwable) {
+      this.logger.debug("Failed to register focus change listener: ", e)
+    }
   }
 
   private fun onViewEvent(
@@ -208,8 +350,8 @@ class SR2ReaderFragment : SR2Fragment() {
       }
 
       is SR2ControllerBecameAvailable -> {
-        this.toolbar.title = event.controller.bookMetadata.title
         this.titleText.text = event.controller.bookMetadata.title
+        this.toolbarText.text = event.controller.bookMetadata.title
         this.configureForTheme(event.controller.themeNow())
         this.showOrHideReadingUI(true)
         event.controller.viewConnect(this.webView)
@@ -228,6 +370,15 @@ class SR2ReaderFragment : SR2Fragment() {
       this.eventSubscriptions.dispose()
     } catch (e: Throwable) {
       this.logger.error("Error closing subscriptions: ", e)
+    }
+
+    try {
+      val activity = this.requireActivity()
+      val rootView = activity.window.decorView
+      val viewTreeObserver = rootView.getViewTreeObserver()
+      viewTreeObserver.removeOnGlobalFocusChangeListener(this.onFocusChanged)
+    } catch (e: Throwable) {
+      this.logger.error("Failed to remove focus change listener: ", e)
     }
 
     try {
@@ -276,21 +427,15 @@ class SR2ReaderFragment : SR2Fragment() {
   private fun reconfigureBookmarkMenuItem() {
     SR2UIThread.checkIsUIThread()
 
-    val currentColorFilter = this.menuBookmarkItem.icon?.colorFilter
     if (SR2ReaderModel.isBookmarkHere()) {
-      this.menuBookmarkItem.setIcon(R.drawable.sr2_bookmark_active)
-      MenuItemCompat.setContentDescription(
-        this.menuBookmarkItem,
-        this.resources.getString(R.string.readerAccessDeleteBookmark),
-      )
+      this.buttonBookmarkIcon.setImageResource(R.drawable.sr2_bookmark_active)
+      this.buttonBookmark.contentDescription =
+        this.resources.getString(R.string.readerAccessDeleteBookmark)
     } else {
-      this.menuBookmarkItem.setIcon(R.drawable.sr2_bookmark_inactive)
-      MenuItemCompat.setContentDescription(
-        this.menuBookmarkItem,
-        this.resources.getString(R.string.readerAccessAddBookmark),
-      )
+      this.buttonBookmarkIcon.setImageResource(R.drawable.sr2_bookmark_inactive)
+      this.buttonBookmark.contentDescription =
+        this.resources.getString(R.string.readerAccessAddBookmark)
     }
-    this.menuBookmarkItem.icon?.colorFilter = currentColorFilter
   }
 
   private fun onControllerEvent(event: SR2Event) {
@@ -309,9 +454,10 @@ class SR2ReaderFragment : SR2Fragment() {
         this.configureForTheme(event.theme)
       }
 
-      is SR2ChapterNonexistent,
-      is SR2WebViewInaccessible,
-      -> {
+      is SR2ChapterNonexistent -> {
+        // Nothing
+      }
+      is SR2WebViewInaccessible -> {
         // Nothing
       }
 
@@ -319,9 +465,10 @@ class SR2ReaderFragment : SR2Fragment() {
         this.showOrHideReadingUI(event.uiVisible)
       }
 
-      is SR2CommandSearchResults,
-      is SR2CommandExecutionStarted,
-      -> {
+      is SR2CommandSearchResults -> {
+        // Nothing
+      }
+      is SR2CommandExecutionStarted -> {
         // Nothing
       }
 
@@ -329,9 +476,10 @@ class SR2ReaderFragment : SR2Fragment() {
         this.viewsHandleLoadingState(showLoading = true)
       }
 
-      is SR2CommandExecutionSucceeded,
-      is SR2CommandExecutionFailed,
-      -> {
+      is SR2CommandExecutionSucceeded -> {
+        this.viewsHandleLoadingState(showLoading = false)
+      }
+      is SR2CommandExecutionFailed -> {
         this.viewsHandleLoadingState(showLoading = false)
       }
 
@@ -346,10 +494,30 @@ class SR2ReaderFragment : SR2Fragment() {
     }
   }
 
-  private fun showOrHideReadingUI(uiVisible: Boolean) {
+  private fun showOrHideReadingUI(
+    uiVisible: Boolean,
+  ) {
     SR2UIThread.checkIsUIThread()
 
-    this.toolbar.isVisible = uiVisible
+    if (uiVisible) {
+      this.enableReadingUI()
+    } else {
+      this.disableReadingUI()
+    }
+  }
+
+  private fun disableReadingUI() {
+    this.toolbar.visibility = View.INVISIBLE
+
+    this.webView.isFocusable = true
+    this.webView.postDelayed({ this.webView.requestFocus() }, 250L)
+  }
+
+  private fun enableReadingUI() {
+    this.toolbar.visibility = View.VISIBLE
+
+    this.webView.isFocusable = false
+    this.buttonBack.postDelayed({ this.buttonBack.requestFocus() }, 250L)
   }
 
   private fun viewsHandleLoadingState(showLoading: Boolean) {

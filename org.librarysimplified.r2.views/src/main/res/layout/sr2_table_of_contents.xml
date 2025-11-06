@@ -7,16 +7,41 @@
   android:layout_height="match_parent"
   android:orientation="vertical">
 
-  <androidx.appcompat.widget.Toolbar
-    android:id="@+id/tocToolbar"
+  <androidx.constraintlayout.widget.ConstraintLayout
+    android:id="@+id/tocToolbar2"
     android:layout_width="match_parent"
-    android:layout_height="@dimen/PalaceToolbarHeight"
-    android:theme="@style/Palace.Legacy.ToolbarTheme"
-    app:popupTheme="@style/Palace.Legacy.ToolbarPopupTheme"
+    android:layout_height="64dp"
+    android:background="@color/PalaceScreenBackgroundColor"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toTopOf="parent"
-    app:navigationIcon="@drawable/sr2_arrow_back" />
+    app:layout_constraintTop_toTopOf="parent">
+
+    <FrameLayout
+      android:id="@+id/tocToolbarBackTouch"
+      android:layout_width="64dp"
+      android:layout_height="64dp"
+      android:focusable="true"
+      android:clickable="true"
+      app:layout_constraintBottom_toBottomOf="parent"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintTop_toTopOf="parent">
+
+      <ImageView
+        android:id="@+id/tocToolbarBack"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_gravity="center"
+        android:src="@drawable/sr2_arrow_back" />
+    </FrameLayout>
+
+    <View
+      android:layout_width="0dp"
+      android:layout_height="1dp"
+      android:background="?android:attr/listDivider"
+      app:layout_constraintBottom_toBottomOf="parent"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintStart_toStartOf="parent" />
+  </androidx.constraintlayout.widget.ConstraintLayout>
 
   <com.google.android.material.tabs.TabLayout
     android:id="@+id/tocTabs"
@@ -24,7 +49,7 @@
     android:layout_height="64dp"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toBottomOf="@id/tocToolbar"
+    app:layout_constraintTop_toBottomOf="@id/tocToolbar2"
     app:tabGravity="fill"
     app:tabMaxWidth="0dp"
     app:tabMode="fixed">

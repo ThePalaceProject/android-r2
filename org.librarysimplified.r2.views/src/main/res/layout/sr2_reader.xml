@@ -16,19 +16,140 @@
     app:layout_constraintTop_toTopOf="parent"
     tools:text="Placeholder" />
 
-  <androidx.appcompat.widget.Toolbar
-    android:id="@+id/readerToolbar"
+  <androidx.constraintlayout.widget.ConstraintLayout
+    android:id="@+id/readerToolbar2"
     android:layout_width="match_parent"
-    android:layout_height="@dimen/PalaceToolbarHeight"
-    android:theme="@style/Palace.Legacy.ToolbarTheme"
-    app:popupTheme="@style/Palace.Legacy.ToolbarPopupTheme"
+    android:layout_height="64dp"
+    android:background="@color/PalaceScreenBackgroundColor"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toTopOf="parent"
-    app:navigationIcon="@drawable/sr2_arrow_back"
-    tools:title="Placeholder" />
+    app:layout_constraintTop_toTopOf="parent">
 
-  <WebView
+    <FrameLayout
+      android:id="@+id/readerToolbarBackTouch"
+      android:layout_width="64dp"
+      android:layout_height="64dp"
+      android:focusable="true"
+      android:clickable="true"
+      app:layout_constraintBottom_toBottomOf="parent"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintTop_toTopOf="parent">
+
+      <ImageView
+        android:id="@+id/readerToolbarBack"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_gravity="center"
+        android:src="@drawable/sr2_arrow_back" />
+    </FrameLayout>
+
+    <TextView
+      android:id="@+id/readerToolbarText"
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_marginStart="16dp"
+      android:layout_marginEnd="16dp"
+      android:ellipsize="end"
+      android:maxLines="1"
+      android:textSize="18sp"
+      app:layout_constraintBottom_toBottomOf="parent"
+      app:layout_constraintEnd_toStartOf="@id/readerToolbarEndButtons"
+      app:layout_constraintStart_toEndOf="@id/readerToolbarBackTouch"
+      app:layout_constraintTop_toTopOf="parent"
+      tools:text="At The Mountains Of Madness" />
+
+    <LinearLayout
+      android:id="@+id/readerToolbarEndButtons"
+      android:layout_width="wrap_content"
+      android:layout_height="match_parent"
+      android:orientation="horizontal"
+      app:layout_constraintBottom_toBottomOf="parent"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintTop_toTopOf="parent">
+
+      <FrameLayout
+        android:id="@+id/readerToolbarSearchTouch"
+        android:layout_width="48dp"
+        android:layout_height="64dp"
+        android:focusable="true"
+        android:clickable="true"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+          android:id="@+id/readerToolbarSearch"
+          android:layout_width="24dp"
+          android:layout_height="24dp"
+          android:layout_gravity="center"
+          android:src="@drawable/sr2_search" />
+      </FrameLayout>
+
+      <FrameLayout
+        android:id="@+id/readerToolbarTOCTouch"
+        android:layout_width="48dp"
+        android:layout_height="64dp"
+        android:focusable="true"
+        android:clickable="true"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+          android:id="@+id/readerToolbarTOC"
+          android:layout_width="24dp"
+          android:layout_height="24dp"
+          android:layout_gravity="center"
+          android:src="@drawable/sr2_toc" />
+      </FrameLayout>
+
+      <FrameLayout
+        android:id="@+id/readerToolbarSettingsTouch"
+        android:layout_width="48dp"
+        android:layout_height="64dp"
+        android:focusable="true"
+        android:clickable="true"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+          android:id="@+id/readerToolbarSettings"
+          android:layout_width="24dp"
+          android:layout_height="24dp"
+          android:layout_gravity="center"
+          android:src="@drawable/sr2_settings" />
+      </FrameLayout>
+
+      <FrameLayout
+        android:id="@+id/readerToolbarBookmarkTouch"
+        android:layout_width="48dp"
+        android:layout_height="64dp"
+        android:focusable="true"
+        android:clickable="true"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+          android:id="@+id/readerToolbarBookmark"
+          android:layout_width="24dp"
+          android:layout_height="24dp"
+          android:layout_gravity="center"
+          android:src="@drawable/sr2_bookmark_inactive" />
+      </FrameLayout>
+    </LinearLayout>
+
+    <View
+      android:layout_width="0dp"
+      android:layout_height="1dp"
+      android:background="?android:attr/listDivider"
+      app:layout_constraintBottom_toBottomOf="parent"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintStart_toStartOf="parent" />
+  </androidx.constraintlayout.widget.ConstraintLayout>
+
+  <org.librarysimplified.r2.views.internal.SR2LimitedWebView
     android:id="@+id/readerWebView"
     android:layout_width="0dp"
     android:layout_height="0dp"

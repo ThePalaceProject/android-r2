@@ -47,9 +47,6 @@ object SR2ReaderModel {
   private val logger =
     LoggerFactory.getLogger(SR2ReaderModel::class.java)
 
-  var isPreview: Boolean =
-    false
-
   var searchTerm: String =
     ""
 
@@ -116,6 +113,10 @@ object SR2ReaderModel {
   }
 
   private var controllerField: SR2ControllerType? = null
+
+  fun controllerNow(): SR2ControllerType? {
+    return this.controllerField
+  }
 
   fun controllerCreate(
     context: Application,

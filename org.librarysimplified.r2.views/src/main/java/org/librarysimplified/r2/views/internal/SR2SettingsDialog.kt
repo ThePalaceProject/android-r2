@@ -57,6 +57,13 @@ internal class SR2SettingsDialog private constructor() {
   }
 
   companion object {
+
+    private var isOpen = false
+
+    fun isOpen(): Boolean {
+      return this.isOpen
+    }
+
     private fun updateTheme(
       updater: (SR2Theme) -> SR2Theme,
     ) {
@@ -72,10 +79,14 @@ internal class SR2SettingsDialog private constructor() {
       val dialog =
         MaterialAlertDialogBuilder(context)
           .setView(R.layout.sr2_settings)
-          .setOnDismissListener { eventSubscriptions.dispose() }
+          .setOnDismissListener {
+            isOpen = false
+            eventSubscriptions.dispose()
+          }
           .create()
 
       dialog.show()
+      isOpen = true
 
       val inflater = LayoutInflater.from(context)
       val setFontTabs = dialog.findViewById<TabLayout>(R.id.setFontTabs)!!

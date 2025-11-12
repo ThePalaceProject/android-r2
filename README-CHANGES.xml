@@ -212,9 +212,9 @@
         </c:change>
       </c:changes>
     </c:release>
-    <c:release date="2025-11-06T12:15:03+00:00" is-open="true" ticket-system="org.lyrasis.jira" version="6.10.0">
+    <c:release date="2025-11-12T18:25:10+00:00" is-open="false" ticket-system="org.lyrasis.jira" version="6.10.0">
       <c:changes>
-        <c:change date="2025-11-06T12:15:03+00:00" summary="Improve keyboard controls.">
+        <c:change date="2025-11-06T00:00:00+00:00" summary="Improve keyboard controls.">
           <c:tickets>
             <c:ticket id="PP-3174"/>
           </c:tickets>

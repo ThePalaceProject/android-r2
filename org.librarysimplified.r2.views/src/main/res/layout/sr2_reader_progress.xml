@@ -12,12 +12,23 @@
   android:paddingBottom="8dp">
 
   <!-- Reader progress -->
-
-  <ProgressBar
-    android:id="@+id/reader2_progress"
-    style="?android:attr/progressBarStyleHorizontal"
+  <FrameLayout
+    android:id="@+id/reader2_progress_bar_container"
     android:layout_width="match_parent"
-    android:layout_height="2dp" />
+    android:layout_height="4dp">
+
+    <View
+      android:id="@+id/reader2_progress_bar_border"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"
+      android:background="@drawable/sr2_progress_border" />
+
+    <View
+      android:id="@+id/reader2_progress_bar_fill"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"
+      android:background="#000000" />
+  </FrameLayout>
 
   <!-- Reader position -->
 

@@ -1,6 +1,7 @@
 package org.librarysimplified.r2.views
 
 import android.content.Intent
+import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Bundle
 import android.view.KeyEvent
@@ -68,7 +69,9 @@ class SR2ReaderFragment : SR2Fragment() {
   private lateinit var positionPercentView: TextView
   private lateinit var positionTitleView: TextView
   private lateinit var progressContainer: ViewGroup
-  private lateinit var progressView: ProgressBar
+  private lateinit var progressViewContainer: ViewGroup
+  private lateinit var progressViewBorder: View
+  private lateinit var progressViewFill: View
   private lateinit var titleText: TextView
   private lateinit var toolbar: ViewGroup
   private lateinit var toolbarButtonIcons: List<ImageView>
@@ -90,8 +93,12 @@ class SR2ReaderFragment : SR2Fragment() {
       view.findViewById(R.id.readerProgressContainer)
     this.webView =
       view.findViewById(R.id.readerWebView)
-    this.progressView =
-      view.findViewById(R.id.reader2_progress)
+    this.progressViewContainer =
+      view.findViewById<ViewGroup>(R.id.reader2_progress_bar_container)
+    this.progressViewBorder =
+      view.findViewById(R.id.reader2_progress_bar_border)
+    this.progressViewFill =
+      view.findViewById(R.id.reader2_progress_bar_fill)
     this.positionPageView =
       view.findViewById(R.id.reader2_position_page)
     this.positionTitleView =
@@ -300,6 +307,15 @@ class SR2ReaderFragment : SR2Fragment() {
     this.titleText.setTextColor(foreground)
     this.toolbar.setBackgroundColor(background)
     this.toolbarText.setTextColor(foreground)
+    this.setProgressColors(foreground)
+  }
+
+  private fun setProgressColors(
+    foreground: Int,
+  ) {
+    val backgroundView = this.progressViewBorder.background.mutate() as GradientDrawable
+    backgroundView.setStroke(1, foreground)
+    this.progressViewFill.setBackgroundColor(foreground)
   }
 
   private fun openSettings() {
@@ -411,17 +427,22 @@ class SR2ReaderFragment : SR2Fragment() {
     val bookProgressPercent = event.bookProgressPercent
     if (bookProgressPercent == null) {
       this.positionPercentView.visibility = View.GONE
-      this.progressView.visibility = View.GONE
+      this.progressViewContainer.visibility = View.GONE
     } else {
       this.positionPercentView.text = this.getString(R.string.progress_percent, bookProgressPercent)
-      this.progressView.apply {
-        this.max = 100
-        this.progress = bookProgressPercent
-      }
+      this.setProgress(bookProgressPercent / 100.0)
       this.positionPercentView.visibility = View.VISIBLE
-      this.progressView.visibility = View.VISIBLE
+      this.progressViewContainer.visibility = View.VISIBLE
     }
     this.reconfigureBookmarkMenuItem()
+  }
+
+  private fun setProgress(
+    progress: Double,
+  ) {
+    val parentWidth = (this.progressViewFill.parent as View).width
+    this.progressViewFill.layoutParams.width = (parentWidth * progress).toInt()
+    this.progressViewFill.requestLayout()
   }
 
   private fun reconfigureBookmarkMenuItem() {

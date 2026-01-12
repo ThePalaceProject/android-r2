@@ -53,14 +53,14 @@ internal class SR2TOCBookmarkViewHolder(
   ) {
     when (bookmark.type) {
       EXPLICIT -> {
-        this.bookmarkIcon.setImageResource(R.drawable.sr2_bookmark)
+        this.bookmarkIcon.setImageResource(R.drawable.sr2_daynight_bookmark)
         this.bookmarkDelete.visibility = View.VISIBLE
         this.bookmarkDelete.setOnClickListener {
           this.openDeleteDialog(bookmark, onBookmarkDeleteRequested)
         }
       }
       LAST_READ -> {
-        this.bookmarkIcon.setImageResource(R.drawable.sr2_last_read)
+        this.bookmarkIcon.setImageResource(R.drawable.sr2_daynight_last_read)
         this.bookmarkDelete.visibility = View.INVISIBLE
       }
     }

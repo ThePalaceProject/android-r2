@@ -142,8 +142,7 @@ internal class SR2Controller private constructor(
       val publicationOpener =
         PublicationOpener(
           publicationParser = publicationParser,
-          contentProtections =
-          configuration.contentProtections,
+          contentProtections = configuration.contentProtections,
           onCreatePublication = {
           },
         )
@@ -1194,8 +1193,8 @@ internal class SR2Controller private constructor(
    */
 
   private fun waitForWebViewAvailability(): SR2WebViewConnectionType {
-    if (SR2UIThread.isUIThread()) {
-      logger.warn("Waiting for web view on UI thread.")
+    check(!SR2UIThread.isUIThread()) {
+      "Waiting for the web view on the UI thread is not permitted."
     }
 
     while (true) {

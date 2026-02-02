@@ -37,6 +37,7 @@ import org.librarysimplified.r2.api.SR2Locator.SR2LocatorChapterEnd
 import org.librarysimplified.r2.api.SR2Locator.SR2LocatorPercent
 import org.librarysimplified.r2.api.SR2PageNumberingMode
 import org.librarysimplified.r2.api.SR2Theme
+import org.librarysimplified.r2.ui_thread.SR2UIThread
 import org.librarysimplified.r2.vanilla.BuildConfig
 import org.readium.r2.shared.ExperimentalReadiumApi
 import org.readium.r2.shared.publication.Href
@@ -141,8 +142,7 @@ internal class SR2Controller private constructor(
       val publicationOpener =
         PublicationOpener(
           publicationParser = publicationParser,
-          contentProtections =
-          configuration.contentProtections,
+          contentProtections = configuration.contentProtections,
           onCreatePublication = {
           },
         )
@@ -723,7 +723,7 @@ internal class SR2Controller private constructor(
               this.logger.debug("{} Failed to set scroll mode: ", this.name(), exception)
             }
           }.thenCompose {
-            this.executeThemeSet(this.waitForWebViewAvailability(), this.themeNow())
+            this.executeThemeSet(connection, this.themeNow())
           }.handle { _, exception ->
             if (exception != null) {
               this.logger.debug("{} Failed to set theme: ", this.name(), exception)
@@ -1193,6 +1193,10 @@ internal class SR2Controller private constructor(
    */
 
   private fun waitForWebViewAvailability(): SR2WebViewConnectionType {
+    check(!SR2UIThread.isUIThread()) {
+      "Waiting for the web view on the UI thread is not permitted."
+    }
+
     while (true) {
       synchronized(this.webViewConnectionLock) {
         val webView = this.webViewConnection

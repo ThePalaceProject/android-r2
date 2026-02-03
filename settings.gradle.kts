@@ -29,14 +29,6 @@ dependencyResolutionManagement {
         maven {
             url = uri("https://central.sonatype.com/repository/maven-snapshots/")
         }
-
-        /*
-         * Allow access to Jitpack. This is used by, for example, Readium.
-         */
-
-        maven {
-            url = uri("https://jitpack.io")
-        }
     }
 }
 

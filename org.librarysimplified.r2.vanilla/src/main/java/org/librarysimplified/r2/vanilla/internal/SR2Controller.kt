@@ -152,7 +152,7 @@ internal class SR2Controller private constructor(
           publicationOpener.open(
             asset = configuration.bookFile,
             credentials = null,
-            allowUserInteraction = false,
+            allowUserInteraction = true,
           )
         }.getOrElse {
           throw IOException("Failed to open EPUB", ErrorException(it))

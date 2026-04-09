@@ -3,6 +3,7 @@ package org.librarysimplified.r2.views.internal
 import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
+import android.widget.Button
 import android.widget.SeekBar
 import android.widget.TextView
 import androidx.core.content.res.ResourcesCompat
@@ -155,6 +156,12 @@ internal class SR2SettingsDialog private constructor() {
         dialog.findViewById<View>(R.id.setTextLarger)!!
       val setBrightness =
         dialog.findViewById<SeekBar>(R.id.setBrightness)!!
+      val dismiss =
+        dialog.findViewById<Button>(R.id.dismiss)!!
+
+      dismiss.setOnClickListener {
+        dialog.dismiss()
+      }
 
       setTextLarger.setOnClickListener {
         this.updateTheme { it.copy(textSize = SR2Theme.sizeConstrain(it.textSize + 0.1)) }

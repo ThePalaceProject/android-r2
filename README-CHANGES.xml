@@ -235,13 +235,18 @@
         </c:change>
       </c:changes>
     </c:release>
-    <c:release date="2026-04-07T18:44:04+00:00" is-open="false" ticket-system="org.lyrasis.jira" version="6.13.0">
+    <c:release date="2026-04-07T00:00:00+00:00" is-open="false" ticket-system="org.lyrasis.jira" version="6.13.0">
       <c:changes>
         <c:change date="2026-04-07T00:00:00+00:00" summary="Use latest platform, attempt to support LCP manual passphrases.">
           <c:tickets>
             <c:ticket id="PP-993"/>
           </c:tickets>
         </c:change>
+      </c:changes>
+    </c:release>
+    <c:release date="2026-04-09T08:49:39+00:00" is-open="true" ticket-system="org.lyrasis.jira" version="6.14.0">
+      <c:changes>
+        <c:change date="2026-04-09T08:49:39+00:00" summary="Add missing accessibility strings."/>
       </c:changes>
     </c:release>
   </c:releases>

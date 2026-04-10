@@ -37,10 +37,12 @@
   <string name="emptyBookmarksMessage">There are no bookmarks for this book</string>
   <string name="dismiss">Dismiss</string>
 
+  <string name="settingsAccessibilitySearchClose">Close the search dialog and return to the book.</string>
   <string name="settingsAccessibilitySearch">Open the search dialog.</string>
   <string name="settingsAccessibilityTOC">Open the table of contents and bookmarks screen.</string>
+  <string name="settingsAccessibilityTOCClose">Close the table of contents and bookmarks screen, and return to the book.</string>
   <string name="settingsAccessibilitySettings">Open the settings dialog.</string>
-  <string name="settingsAccessibilityBack">Back</string>
+  <string name="settingsAccessibilityCloseBook">Close the book.</string>
   <string name="settingsAccessibilitySetPublisher">Show the publisher-specified fonts and layout choices.</string>
   <string name="settingsAccessibilitySetSans">Set book font to sans-serif.</string>
   <string name="settingsAccessibilitySetSerif">Set book font to serif.</string>

@@ -20,8 +20,9 @@
       android:id="@+id/tocToolbarBackTouch"
       android:layout_width="64dp"
       android:layout_height="64dp"
-      android:focusable="true"
       android:clickable="true"
+      android:contentDescription="@string/settingsAccessibilityTOCClose"
+      android:focusable="true"
       app:layout_constraintBottom_toBottomOf="parent"
       app:layout_constraintStart_toStartOf="parent"
       app:layout_constraintTop_toTopOf="parent">
@@ -31,6 +32,9 @@
         android:layout_width="24dp"
         android:layout_height="24dp"
         android:layout_gravity="center"
+        android:clickable="false"
+        android:focusable="false"
+        android:importantForAccessibility="no"
         android:src="@drawable/sr2_daynight_arrow_back" />
     </FrameLayout>
 

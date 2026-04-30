@@ -1,3 +1,7 @@
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.ZoneOffset
+
 dependencies {
     coreLibraryDesugaring(libs.android.desugaring)
 
@@ -77,4 +81,27 @@ dependencies {
     implementation(libs.rxjava2)
     implementation(libs.rxjava2.extensions)
     implementation(libs.slf4j)
+}
+
+fun calculateVersionCode(): Int {
+    val now = LocalDateTime.now(ZoneId.of("UTC"))
+    val nowSeconds = now.toEpochSecond(ZoneOffset.UTC)
+    // Seconds since 2021-03-15 09:20:00 UTC
+    return (nowSeconds - 1615800000).toInt()
+}
+
+val versionCodeCalculated =
+    calculateVersionCode()
+
+android {
+    defaultConfig {
+        versionName = "0.0.0"
+        versionCode = versionCodeCalculated
+        resourceConfigurations.add("en")
+        resourceConfigurations.add("de")
+        resourceConfigurations.add("es")
+        resourceConfigurations.add("fr")
+        resourceConfigurations.add("it")
+        setProperty("archivesBaseName", "palace")
+    }
 }

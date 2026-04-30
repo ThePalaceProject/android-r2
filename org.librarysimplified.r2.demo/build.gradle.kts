@@ -102,6 +102,6 @@ android {
         resourceConfigurations.add("es")
         resourceConfigurations.add("fr")
         resourceConfigurations.add("it")
-        setProperty("archivesBaseName", "palace")
+        setProperty("archivesBaseName", "r2demo")
     }
 }

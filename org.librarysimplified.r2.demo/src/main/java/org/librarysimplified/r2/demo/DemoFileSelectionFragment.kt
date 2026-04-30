@@ -15,6 +15,7 @@ import org.librarysimplified.r2.views.SR2ReaderModel
 
 class DemoFileSelectionFragment : Fragment(R.layout.demo_file_selection) {
 
+  private lateinit var demoLoaderDownloadButton: Button
   private lateinit var demoLoaderBrowseButton: Button
   private lateinit var demoLoaderPerChapterPageNumbering: CheckBox
   private lateinit var demoLoaderScrollMode: CheckBox
@@ -33,9 +34,15 @@ class DemoFileSelectionFragment : Fragment(R.layout.demo_file_selection) {
       layout.findViewById(R.id.demoScrollMode)
     this.demoLoaderPerChapterPageNumbering =
       layout.findViewById(R.id.demoPerChapterPageNumbering)
+    this.demoLoaderDownloadButton =
+      layout.findViewById(R.id.demoDownloadSampleEpub)
 
     this.demoLoaderBrowseButton.setOnClickListener {
       this.startDocumentPickerForResult()
+    }
+
+    this.demoLoaderDownloadButton.setOnClickListener {
+      DemoModel.downloadEpub()
     }
 
     this.demoLoaderScrollMode.setOnCheckedChangeListener { _, isChecked ->

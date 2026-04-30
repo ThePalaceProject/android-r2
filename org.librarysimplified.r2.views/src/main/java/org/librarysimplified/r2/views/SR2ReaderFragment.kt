@@ -209,7 +209,7 @@ class SR2ReaderFragment : SR2Fragment() {
         this.buttonSearchIcon,
         this.buttonSettingsIcon,
         this.buttonTOCIcon,
-        this.buttonHideUIIcon
+        this.buttonHideUIIcon,
       )
 
     this.toolbarButtons =
@@ -219,7 +219,7 @@ class SR2ReaderFragment : SR2Fragment() {
         this.buttonSearch,
         this.buttonSettings,
         this.buttonTOC,
-        this.buttonHideUI
+        this.buttonHideUI,
       )
 
     this.toolbarButtons.forEach { buttonView ->

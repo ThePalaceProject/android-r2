@@ -16,6 +16,27 @@
     app:layout_constraintTop_toTopOf="parent"
     tools:text="Placeholder" />
 
+  <FrameLayout
+    android:id="@+id/readerShowTouch"
+    android:layout_width="48dp"
+    android:layout_height="64dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintTop_toTopOf="parent">
+
+    <ImageView
+      android:id="@+id/readerShow"
+      android:layout_width="24dp"
+      android:layout_height="24dp"
+      android:layout_gravity="center"
+      android:clickable="false"
+      android:focusable="false"
+      android:importantForAccessibility="no"
+      android:src="@drawable/sr2_angle_down" />
+  </FrameLayout>
+
   <androidx.constraintlayout.widget.ConstraintLayout
     android:id="@+id/readerToolbar2"
     android:layout_width="match_parent"
@@ -23,7 +44,8 @@
     android:background="@color/PalaceScreenBackgroundColor"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toTopOf="parent">
+    app:layout_constraintTop_toTopOf="parent"
+    tools:visibility="gone">
 
     <FrameLayout
       android:id="@+id/readerToolbarBackTouch"
@@ -158,6 +180,28 @@
           android:importantForAccessibility="no"
           android:src="@drawable/sr2_bookmark_inactive" />
       </FrameLayout>
+
+      <FrameLayout
+        android:id="@+id/readerToolbarHideTouch"
+        android:layout_width="48dp"
+        android:layout_height="64dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:foreground="?attr/selectableItemBackground"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+          android:id="@+id/readerToolbarHide"
+          android:layout_width="24dp"
+          android:layout_height="24dp"
+          android:layout_gravity="center"
+          android:clickable="false"
+          android:focusable="false"
+          android:importantForAccessibility="no"
+          android:src="@drawable/sr2_angle_up" />
+      </FrameLayout>
     </LinearLayout>
 
     <View
@@ -175,10 +219,62 @@
     android:layout_height="0dp"
     android:layout_marginTop="8dp"
     android:layout_marginBottom="8dp"
+    android:layout_marginStart="16dp"
+    android:layout_marginEnd="16dp"
     app:layout_constraintBottom_toTopOf="@id/readerProgressContainer"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintTop_toBottomOf="@id/titleText" />
+
+  <FrameLayout
+    android:id="@+id/readerPageNextTouch"
+    android:layout_width="32dp"
+    android:layout_height="0dp"
+    android:layout_marginTop="128dp"
+    android:layout_marginBottom="128dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintTop_toTopOf="parent">
+
+    <ImageView
+      android:id="@+id/readerPageNext"
+      android:layout_width="24dp"
+      android:layout_height="24dp"
+      android:layout_gravity="center"
+      android:clickable="false"
+      android:focusable="false"
+      android:alpha="0.75"
+      android:importantForAccessibility="no"
+      android:src="@drawable/sr2_angle_right" />
+  </FrameLayout>
+
+  <FrameLayout
+    android:id="@+id/readerPagePreviousTouch"
+    android:layout_width="32dp"
+    android:layout_height="0dp"
+    android:layout_marginTop="128dp"
+    android:layout_marginBottom="128dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toTopOf="parent">
+
+    <ImageView
+      android:id="@+id/readerPagePrevious"
+      android:layout_width="24dp"
+      android:layout_height="24dp"
+      android:layout_gravity="center"
+      android:alpha="0.75"
+      android:clickable="false"
+      android:focusable="false"
+      android:importantForAccessibility="no"
+      android:src="@drawable/sr2_angle_left" />
+  </FrameLayout>
 
   <include
     android:id="@+id/readerProgressContainer"

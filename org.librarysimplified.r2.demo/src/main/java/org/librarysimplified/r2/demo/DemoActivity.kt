@@ -71,8 +71,6 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
 
-    val toolbar = this.findViewById(R.id.mainToolbar) as Toolbar
-    this.setSupportActionBar(toolbar)
     this.fragmentNow = null
     this.subscriptions = CompositeDisposable()
   }

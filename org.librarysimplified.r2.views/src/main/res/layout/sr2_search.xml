@@ -22,7 +22,7 @@
       android:layout_width="64dp"
       android:layout_height="64dp"
       android:clickable="true"
-      android:contentDescription="@string/settingsAccessibilitySearchClose"
+      android:contentDescription="@string/accessibilitySearchClose"
       android:focusable="true"
       app:layout_constraintBottom_toBottomOf="parent"
       app:layout_constraintStart_toStartOf="parent"

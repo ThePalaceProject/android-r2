@@ -126,6 +126,7 @@ object SR2ReaderModel {
     theme: SR2Theme,
     controllers: SR2ControllerProviderType,
     bookmarks: List<SR2Bookmark>,
+    allowCopyPaste: Boolean,
   ): CompletableFuture<SR2ControllerType> {
     val existingController = this.controllerField
     this.closeAndPublishUnavailability(existingController)
@@ -147,6 +148,7 @@ object SR2ReaderModel {
               scrollingMode = this.scrollMode,
               pageNumberingMode = this.perChapterNumbering,
               initialBookmarks = bookmarks,
+              allowCopyPaste = allowCopyPaste,
             ),
           ),
         )

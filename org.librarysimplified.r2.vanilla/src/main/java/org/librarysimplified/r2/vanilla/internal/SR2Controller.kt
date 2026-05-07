@@ -83,7 +83,7 @@ import kotlin.math.round
  */
 
 internal class SR2Controller private constructor(
-  private val configuration: SR2ControllerConfiguration,
+  override val configuration: SR2ControllerConfiguration,
   private val publication: Publication,
   private val assetRetriever: AssetRetriever,
 

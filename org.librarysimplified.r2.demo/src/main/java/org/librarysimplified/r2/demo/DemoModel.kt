@@ -10,6 +10,9 @@ import java.io.File
 
 object DemoModel {
 
+  @Volatile
+  var allowCopyPaste: Boolean = true
+
   private val logger =
     LoggerFactory.getLogger(DemoModel::class.java)
 

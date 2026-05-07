@@ -30,25 +30,25 @@
       <com.google.android.material.tabs.TabItem
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:contentDescription="@string/settingsAccessibilitySetSans"
+        android:contentDescription="@string/accessibilitySetSans"
         android:text="@string/settingsABC" />
 
       <com.google.android.material.tabs.TabItem
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:contentDescription="@string/settingsAccessibilitySetSerif"
+        android:contentDescription="@string/accessibilitySetSerif"
         android:text="@string/settingsABC" />
 
       <com.google.android.material.tabs.TabItem
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:contentDescription="@string/settingsAccessibilitySetDyslexic"
+        android:contentDescription="@string/accessibilitySetDyslexic"
         android:text="@string/settingsABC" />
 
       <com.google.android.material.tabs.TabItem
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:contentDescription="@string/settingsAccessibilitySetPublisher"
+        android:contentDescription="@string/accessibilitySetPublisher"
         android:text="@string/settingsPub" />
 
     </com.google.android.material.tabs.TabLayout>
@@ -89,7 +89,7 @@
         android:layout_weight="1"
         android:background="@drawable/sr2_white"
         android:clickable="true"
-        android:contentDescription="@string/settingsAccessibilitySetBlackTextOnWhite"
+        android:contentDescription="@string/accessibilitySetBlackTextOnWhite"
         android:focusable="true">
 
         <TextView
@@ -117,7 +117,7 @@
         android:layout_weight="1"
         android:background="@drawable/sr2_black"
         android:clickable="true"
-        android:contentDescription="@string/settingsAccessibilitySetWhiteTextOnBlack"
+        android:contentDescription="@string/accessibilitySetWhiteTextOnBlack"
         android:focusable="true">
 
         <TextView
@@ -145,7 +145,7 @@
         android:layout_weight="1"
         android:background="@drawable/sr2_beige"
         android:clickable="true"
-        android:contentDescription="@string/settingsAccessibilitySetBlackTextOnSepia"
+        android:contentDescription="@string/accessibilitySetBlackTextOnSepia"
         android:focusable="true">
 
         <TextView
@@ -179,7 +179,7 @@
         android:layout_weight="1"
         android:background="?attr/selectableItemBackground"
         android:clickable="true"
-        android:contentDescription="@string/settingsAccessibilitySetSizeSmaller"
+        android:contentDescription="@string/accessibilitySetSizeSmaller"
         android:focusable="true">
 
         <TextView
@@ -207,7 +207,7 @@
         android:layout_weight="1"
         android:background="?attr/selectableItemBackground"
         android:clickable="true"
-        android:contentDescription="@string/settingsAccessibilitySetSizeReset"
+        android:contentDescription="@string/accessibilitySetSizeReset"
         android:focusable="true">
 
         <TextView
@@ -234,7 +234,7 @@
         android:layout_weight="1"
         android:background="?attr/selectableItemBackground"
         android:clickable="true"
-        android:contentDescription="@string/settingsAccessibilitySetSizeLarger"
+        android:contentDescription="@string/accessibilitySetSizeLarger"
         android:focusable="true">
 
         <TextView
@@ -279,7 +279,7 @@
         android:layout_marginTop="16dp"
         android:layout_marginEnd="56dp"
         android:layout_marginBottom="16dp"
-        android:contentDescription="@string/settingsAccessibilityBrightnessSlider"
+        android:contentDescription="@string/accessibilityBrightnessSlider"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

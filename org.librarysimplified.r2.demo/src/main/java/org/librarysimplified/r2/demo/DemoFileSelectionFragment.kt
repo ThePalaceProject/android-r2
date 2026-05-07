@@ -15,6 +15,7 @@ import org.librarysimplified.r2.views.SR2ReaderModel
 
 class DemoFileSelectionFragment : Fragment(R.layout.demo_file_selection) {
 
+  private lateinit var demoLoaderAllowCopyPaste: CheckBox
   private lateinit var demoLoaderDownloadButton: Button
   private lateinit var demoLoaderBrowseButton: Button
   private lateinit var demoLoaderPerChapterPageNumbering: CheckBox
@@ -36,6 +37,8 @@ class DemoFileSelectionFragment : Fragment(R.layout.demo_file_selection) {
       layout.findViewById(R.id.demoPerChapterPageNumbering)
     this.demoLoaderDownloadButton =
       layout.findViewById(R.id.demoDownloadSampleEpub)
+    this.demoLoaderAllowCopyPaste =
+      layout.findViewById(R.id.demoAllowCopyPaste)
 
     this.demoLoaderBrowseButton.setOnClickListener {
       this.startDocumentPickerForResult()
@@ -57,6 +60,10 @@ class DemoFileSelectionFragment : Fragment(R.layout.demo_file_selection) {
         true -> SR2PageNumberingMode.PER_CHAPTER
         false -> SR2PageNumberingMode.WHOLE_BOOK
       }
+    }
+
+    this.demoLoaderAllowCopyPaste.setOnCheckedChangeListener { _, isChecked ->
+      DemoModel.allowCopyPaste = isChecked
     }
 
     SR2ReaderModel.perChapterNumbering = SR2PageNumberingMode.WHOLE_BOOK

@@ -64,4 +64,10 @@ data class SR2ControllerConfiguration(
    */
 
   val initialBookmarks: List<SR2Bookmark>,
+
+  /**
+   * Whether to allow copying and pasting from the web view.
+   */
+
+  val allowCopyPaste: Boolean,
 )

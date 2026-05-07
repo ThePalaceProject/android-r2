@@ -152,6 +152,7 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
       context = DemoApplication.application,
       controllers = SR2Controllers(),
       bookmarks = DemoModel.database.bookmarksFor(id),
+      allowCopyPaste = DemoModel.allowCopyPaste,
     )
   }
 

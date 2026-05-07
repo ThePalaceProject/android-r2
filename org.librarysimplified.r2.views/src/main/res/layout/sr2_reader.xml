@@ -12,6 +12,8 @@
     android:layout_width="match_parent"
     android:layout_height="@dimen/PalaceToolbarHeight"
     android:gravity="center"
+    android:clickable="false"
+    android:focusable="false"
     android:textAppearance="?android:textAppearanceMedium"
     app:layout_constraintTop_toTopOf="parent"
     tools:text="Placeholder" />
@@ -44,6 +46,8 @@
     android:id="@+id/readerToolbar2"
     android:layout_width="match_parent"
     android:layout_height="64dp"
+    android:clickable="false"
+    android:focusable="false"
     android:background="@color/PalaceScreenBackgroundColor"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintStart_toStartOf="parent"

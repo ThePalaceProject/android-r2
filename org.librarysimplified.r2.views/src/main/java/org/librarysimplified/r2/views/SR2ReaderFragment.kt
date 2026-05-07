@@ -631,7 +631,7 @@ class SR2ReaderFragment : SR2Fragment() {
     this.uiShow.isClickable = true
     this.buttonHideUI.visibility = View.INVISIBLE
     this.titleTouch.isFocusable = false
-    this.titleTouch.isClickable = false
+    this.titleTouch.isClickable = true
 
     this.webView.isFocusable = true
     this.webView.postDelayed({ this.webView.requestFocus() }, 250L)

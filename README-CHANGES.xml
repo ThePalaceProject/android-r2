@@ -249,16 +249,21 @@
         <c:change date="2026-04-09T00:00:00+00:00" summary="Add missing accessibility strings."/>
       </c:changes>
     </c:release>
-    <c:release date="2026-05-07T13:36:14+00:00" is-open="true" ticket-system="org.lyrasis.jira" version="6.15.0">
+    <c:release date="2026-05-14T16:02:40+00:00" is-open="true" ticket-system="org.lyrasis.jira" version="6.15.0">
       <c:changes>
         <c:change date="2026-05-07T00:00:00+00:00" summary="Implement a new reader toolbar.">
           <c:tickets>
             <c:ticket id="PP-4211"/>
           </c:tickets>
         </c:change>
-        <c:change date="2026-05-07T13:36:14+00:00" summary="Enable/disable copy/paste.">
+        <c:change date="2026-05-07T00:00:00+00:00" summary="Enable/disable copy/paste.">
           <c:tickets>
             <c:ticket id="PP-4298"/>
+          </c:tickets>
+        </c:change>
+        <c:change date="2026-05-14T16:02:40+00:00" summary="Fix page turning.">
+          <c:tickets>
+            <c:ticket id="PP-4325"/>
           </c:tickets>
         </c:change>
       </c:changes>

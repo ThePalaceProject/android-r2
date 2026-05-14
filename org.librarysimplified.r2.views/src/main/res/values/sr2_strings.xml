@@ -41,7 +41,7 @@
   <string name="accessibilityGoToNextPage">Go To Next Page.</string>
   <string name="accessibilityShowUIButton">Show reading UI button.</string>
   <string name="accessibilityHideUIButton">Hide reading UI button.</string>
-  <string name="accessibilityPressESCToShow">The reading UI is now hidden. Press the ESCAPE key to show the UI again.</string>
+  <string name="accessibilityPressESCToShow">The reading UI is now hidden. Press the ESCAPE or SPACE key to show the UI again.</string>
   <string name="accessibilitySearchClose">Close the search dialog and return to the book.</string>
   <string name="accessibilitySearch">Open the search dialog.</string>
   <string name="accessibilityTOC">Open the table of contents and bookmarks screen.</string>

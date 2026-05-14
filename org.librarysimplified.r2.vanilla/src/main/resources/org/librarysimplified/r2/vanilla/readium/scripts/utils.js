@@ -32,7 +32,7 @@ var readium = (function() {
 
         var scrollX       = window.scrollX;
         var documentWidth = document.scrollingElement.scrollWidth;
-        var pageCountRaw  = Math.round(documentWidth / pageWidth);
+        var pageCountRaw  = Math.ceil(documentWidth / pageWidth);
         return Math.max(1, pageCountRaw);
     }
 
@@ -43,7 +43,6 @@ var readium = (function() {
 
       var bodyText = document.body.innerHTML;
       document.body.innerHTML = doHighlight(bodyText, searchingTerms, clearHighlight);
-
       return true;
     }
 
@@ -106,7 +105,7 @@ var readium = (function() {
         }
 
         var scrollX       = window.scrollX;
-        var pageIndexRaw  = Math.round(scrollX / pageWidth);
+        var pageIndexRaw  = Math.floor(scrollX / pageWidth);
         var pageIndex1    = pageIndexRaw + 1;
         return Math.max(1, pageIndex1);
     }
@@ -306,12 +305,17 @@ var readium = (function() {
             throw "Called scrollToOffset() with scroll mode enabled. This can only be used in paginated mode.";
         }
 
+        var documentWidth = document.scrollingElement.scrollWidth;
+        var maxOffset = Math.max(0, documentWidth - pageWidth);
+
         var offsetThen = window.scrollX;
         var offsetNow = snapOffset(offset);
-        document.scrollingElement.scrollLeft = offsetNow;
 
-        var difference = Math.abs(offsetNow - offsetThen)
-        return difference > 0;
+        offsetNow = Math.min(offsetNow, maxOffset);
+        offsetNow = Math.max(offsetNow, 0);
+
+        document.scrollingElement.scrollLeft = offsetNow;
+        return Math.abs(window.scrollX - offsetThen) > 0;
     }
 
     // Snap the offset to the nearest multiple of the page width.

@@ -8,7 +8,6 @@ import android.widget.Toast
 import androidx.annotation.UiThread
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.runBlocking
@@ -71,8 +70,6 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
 
-    val toolbar = this.findViewById(R.id.mainToolbar) as Toolbar
-    this.setSupportActionBar(toolbar)
     this.fragmentNow = null
     this.subscriptions = CompositeDisposable()
   }
@@ -155,6 +152,7 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
       context = DemoApplication.application,
       controllers = SR2Controllers(),
       bookmarks = DemoModel.database.bookmarksFor(id),
+      allowCopyPaste = DemoModel.allowCopyPaste,
     )
   }
 

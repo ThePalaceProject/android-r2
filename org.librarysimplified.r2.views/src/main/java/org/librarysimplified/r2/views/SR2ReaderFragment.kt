@@ -265,7 +265,10 @@ class SR2ReaderFragment : SR2Fragment() {
     this.logger.debug("onUserPressedKeyOnWebView: {}", event)
 
     when (event.keyCode) {
-      KeyEvent.KEYCODE_SPACE,
+      KeyEvent.KEYCODE_SPACE -> {
+        this.showOrHideReadingUI(uiVisible = true)
+      }
+
       KeyEvent.KEYCODE_ESCAPE -> {
         this.showOrHideReadingUI(uiVisible = true)
       }

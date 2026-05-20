@@ -253,6 +253,18 @@
       android:src="@drawable/sr2_angle_left" />
   </FrameLayout>
 
+  <View
+    android:id="@+id/readerCenterTouch"
+    android:layout_width="128dp"
+    android:layout_height="128dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:background="@drawable/sr2_center_tap"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintTop_toTopOf="parent"/>
+
   <include
     android:id="@+id/readerProgressContainer"
     layout="@layout/sr2_reader_progress"

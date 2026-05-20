@@ -42,6 +42,7 @@ sealed class SR2Event {
    * center tap.
    */
 
+  @Deprecated("No longer published by the reader.")
   class SR2OnCenterTapped(
     val uiVisible: Boolean,
   ) : SR2Event()

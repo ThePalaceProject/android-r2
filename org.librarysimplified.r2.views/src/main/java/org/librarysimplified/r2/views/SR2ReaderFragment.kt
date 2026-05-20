@@ -51,6 +51,7 @@ import org.slf4j.LoggerFactory
 
 class SR2ReaderFragment : SR2Fragment() {
 
+  private lateinit var centerTouch: View
   private lateinit var pageNext: View
   private lateinit var pagePrevious: View
   private lateinit var pageNextIcon: ImageView
@@ -88,6 +89,8 @@ class SR2ReaderFragment : SR2Fragment() {
   private lateinit var toolbarButtonIcons: List<ImageView>
   private lateinit var toolbarButtons: List<View>
   private lateinit var webView: SR2LimitedWebView
+
+  private var uiIsVisible = true
 
   override fun onCreateView(
     inflater: LayoutInflater,
@@ -130,7 +133,7 @@ class SR2ReaderFragment : SR2Fragment() {
 
     this.uiShow.setOnClickListener {
       this.uiShow.postDelayed({
-        this.showOrHideReadingUI(uiVisible = true)
+        this.showOrHideReadingUI(uiVisibleIntent = true)
       }, 250L)
     }
 
@@ -182,10 +185,12 @@ class SR2ReaderFragment : SR2Fragment() {
     }
     this.buttonHideUI.setOnClickListener {
       this.buttonHideUI.postDelayed({
-        this.showOrHideReadingUI(uiVisible = false)
+        this.showOrHideReadingUI(uiVisibleIntent = false)
       }, 250L)
     }
 
+    this.centerTouch =
+      view.findViewById(R.id.readerCenterTouch)
     this.pagePrevious =
       view.findViewById(R.id.readerPagePreviousTouch)
     this.pageNext =
@@ -200,6 +205,12 @@ class SR2ReaderFragment : SR2Fragment() {
     }
     this.pageNext.setOnClickListener {
       SR2ReaderModel.submitCommand(SR2Command.OpenPageNext)
+    }
+
+    this.centerTouch.setOnClickListener {
+      this.centerTouch.postDelayed({
+        this.showOrHideReadingUI(uiVisibleIntent = !this.uiIsVisible)
+      }, 250L)
     }
 
     this.toolbarButtonIcons =
@@ -256,7 +267,7 @@ class SR2ReaderFragment : SR2Fragment() {
   private fun onUserPressedEscapeOnToolbarButton() {
     this.logger.debug("onUserPressedEscapeOnToolbarButton")
 
-    this.showOrHideReadingUI(uiVisible = false)
+    this.showOrHideReadingUI(uiVisibleIntent = false)
   }
 
   private fun onUserPressedKeyOnWebView(
@@ -266,11 +277,11 @@ class SR2ReaderFragment : SR2Fragment() {
 
     when (event.keyCode) {
       KeyEvent.KEYCODE_SPACE -> {
-        this.showOrHideReadingUI(uiVisible = true)
+        this.showOrHideReadingUI(uiVisibleIntent = true)
       }
 
       KeyEvent.KEYCODE_ESCAPE -> {
-        this.showOrHideReadingUI(uiVisible = true)
+        this.showOrHideReadingUI(uiVisibleIntent = true)
       }
 
       KeyEvent.KEYCODE_DPAD_RIGHT -> {
@@ -605,11 +616,11 @@ class SR2ReaderFragment : SR2Fragment() {
   }
 
   private fun showOrHideReadingUI(
-    uiVisible: Boolean,
+    uiVisibleIntent: Boolean,
   ) {
     SR2UIThread.checkIsUIThread()
 
-    if (uiVisible) {
+    if (uiVisibleIntent) {
       this.enableReadingUI()
     } else {
       this.disableReadingUI()
@@ -620,6 +631,7 @@ class SR2ReaderFragment : SR2Fragment() {
     this.toolbar.visibility = View.INVISIBLE
     this.pageNextIcon.visibility = View.INVISIBLE
     this.pagePreviousIcon.visibility = View.INVISIBLE
+    this.centerTouch.contentDescription = getString(R.string.accessibilityShowUIButton)
 
     /*
      * When the reading UI is disabled, we change the behavior of the remaining buttons such
@@ -649,6 +661,8 @@ class SR2ReaderFragment : SR2Fragment() {
         )
       toast.show()
     }
+
+    this.uiIsVisible = false
   }
 
   private fun isUsingKeyboard(): Boolean {
@@ -666,6 +680,7 @@ class SR2ReaderFragment : SR2Fragment() {
     this.toolbar.visibility = View.VISIBLE
     this.pageNextIcon.visibility = View.VISIBLE
     this.pagePreviousIcon.visibility = View.VISIBLE
+    this.centerTouch.contentDescription = getString(R.string.accessibilityHideUIButton)
 
     /*
      * When the reading UI is enabled, we configure all views to give the standard Android
@@ -686,6 +701,8 @@ class SR2ReaderFragment : SR2Fragment() {
 
     this.webView.isFocusable = false
     this.buttonBack.postDelayed({ this.buttonBack.requestFocus() }, 250L)
+
+    this.uiIsVisible = true
   }
 
   private fun viewsHandleLoadingState(showLoading: Boolean) {

@@ -259,6 +259,8 @@
     android:layout_height="128dp"
     android:clickable="true"
     android:focusable="false"
+    android:focusableInTouchMode="false"
+    android:importantForAccessibility="no"
     android:background="@drawable/sr2_center_tap"
     app:layout_constraintBottom_toBottomOf="parent"
     app:layout_constraintStart_toStartOf="parent"

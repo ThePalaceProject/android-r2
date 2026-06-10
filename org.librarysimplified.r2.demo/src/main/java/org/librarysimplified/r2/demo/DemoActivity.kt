@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.annotation.UiThread
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -60,6 +61,13 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
   private val logger =
     LoggerFactory.getLogger(DemoActivity::class.java)
 
+  private val backCallback =
+    object : OnBackPressedCallback(true) {
+      override fun handleOnBackPressed() {
+        handleBack()
+      }
+    }
+
   companion object {
     const val PICK_DOCUMENT = 1001
   }
@@ -100,6 +108,11 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
     } else {
       this.switchFragment(SR2ReaderFragment())
     }
+
+    this.onBackPressedDispatcher.addCallback(
+      this,
+      this.backCallback,
+    )
   }
 
   override fun onStop() {
@@ -179,8 +192,7 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
     }
   }
 
-  @Deprecated("Deprecated in Java")
-  override fun onBackPressed() {
+  private fun handleBack() {
     return when (val f = this.fragmentNow) {
       is DemoFileSelectionFragment -> {
         DemoModel.clearEpubAndId()
@@ -228,16 +240,20 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
       SR2ReaderViewNavigationSearchOpen -> {
         this.switchFragment(SR2SearchFragment())
       }
+
       SR2ReaderViewNavigationTOCOpen -> {
         this.switchFragment(SR2TOCFragment())
       }
+
       SR2ReaderViewNavigationReaderClose -> {
         DemoModel.clearEpubAndId()
         this.switchFragment(DemoFileSelectionFragment())
       }
+
       SR2ReaderViewNavigationSearchClose -> {
         this.switchFragment(SR2ReaderFragment())
       }
+
       SR2ReaderViewNavigationTOCClose -> {
         this.switchFragment(SR2ReaderFragment())
       }

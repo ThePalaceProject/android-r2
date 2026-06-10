@@ -27,6 +27,7 @@ sealed class SR2Locator : Comparable<SR2Locator> {
 
   abstract val chapterHref: Href
 
+  @ExposedCopyVisibility
   data class SR2LocatorPercent private constructor(
     override val chapterHref: Href,
     val chapterProgress: Double,
@@ -77,6 +78,7 @@ sealed class SR2Locator : Comparable<SR2Locator> {
     }
   }
 
+  @ExposedCopyVisibility
   data class SR2LocatorChapterEnd private constructor(
     override val chapterHref: Href,
   ) : SR2Locator() {

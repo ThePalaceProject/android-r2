@@ -34,6 +34,8 @@ dependencyResolutionManagement {
 
 rootProject.name = "org.librarysimplified.r2"
 
+includeBuild("palace-build-conventions")
+
 include(":org.librarysimplified.r2.api")
 include(":org.librarysimplified.r2.demo")
 include(":org.librarysimplified.r2.tests")

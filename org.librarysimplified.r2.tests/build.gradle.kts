@@ -1,3 +1,7 @@
+plugins {
+    id("org.thepalaceproject.build.aar")
+}
+
 dependencies {
     coreLibraryDesugaring(libs.android.desugaring)
 
@@ -9,10 +13,11 @@ dependencies {
         libs.bytebuddy.agent,
         libs.junit,
         libs.junit.jupiter.api,
-        libs.junit.jupiter.api,
-        libs.junit.jupiter.engine,
         libs.junit.jupiter.engine,
         libs.junit.jupiter.vintage,
+        libs.junit.platform.commons,
+        libs.junit.platform.engine,
+        libs.junit.platform.launcher,
         libs.junit.platform.commons,
         libs.junit.platform.engine,
         libs.kotlin.reflect,
@@ -43,6 +48,6 @@ dependencies {
 }
 
 afterEvaluate {
-    tasks.matching { task -> task.name.contains("UnitTest") }
+    tasks.matching { task -> task.name.contains("Test") }
         .forEach { task -> task.enabled = true }
 }

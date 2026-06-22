@@ -441,6 +441,7 @@ class SR2ReaderFragment : SR2Fragment() {
       }
 
     this.eventSubscriptions.add(Disposables.fromAction { uiVisibleSubscription.close() })
+    SR2ReaderModel.wakeLockAcquire(this.requireActivity())
   }
 
   private fun onViewEvent(event: SR2ReaderViewEvent) {
@@ -498,6 +499,7 @@ class SR2ReaderFragment : SR2Fragment() {
       // Nothing we can do about this.
     }
 
+    SR2ReaderModel.wakeLockRelease()
     super.onStop()
   }
 

@@ -1,6 +1,9 @@
 package org.librarysimplified.r2.views
 
 import android.app.Application
+import android.content.Context
+import android.content.Context.POWER_SERVICE
+import android.os.PowerManager
 import androidx.annotation.UiThread
 import androidx.paging.InvalidatingPagingSourceFactory
 import androidx.paging.Pager
@@ -43,6 +46,7 @@ import org.readium.r2.shared.util.Try
 import org.readium.r2.shared.util.asset.Asset
 import org.slf4j.LoggerFactory
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 object SR2ReaderModel {
@@ -98,6 +102,9 @@ object SR2ReaderModel {
     PublishSubject
       .create<SR2Event>()
       .toSerialized()
+
+  private var wakeLock: PowerManager.WakeLock? = null
+  private val wakeLockLock: Any = Any()
 
   val viewCommands: Observable<SR2ReaderViewCommand> =
     this.viewCommandSource.observeOn(AndroidSchedulers.mainThread())
@@ -239,4 +246,35 @@ object SR2ReaderModel {
   fun theme(): SR2Theme = this.controllerField?.themeNow() ?: SR2Theme()
 
   fun bookmarks(): List<SR2Bookmark> = this.controllerField?.bookmarksNow() ?: listOf()
+
+  fun wakeLockAcquire(context: Context) {
+    synchronized(this.wakeLockLock) {
+      if (this.wakeLock == null) {
+        this.logger.debug("wakeLockAcquire: Creating WakeLock")
+        val power =
+          context.getSystemService(POWER_SERVICE) as PowerManager
+        this.wakeLock = power.newWakeLock(
+          PowerManager.PARTIAL_WAKE_LOCK,
+          SR2ReaderModel::class.java.canonicalName
+        )
+      }
+
+      this.logger.debug("wakeLockAcquire: Acquiring WakeLock")
+      this.wakeLock!!.acquire(TimeUnit.MILLISECONDS.convert(24L, TimeUnit.HOURS))
+      this.logger.debug("wakeLockAcquire: Acquired WakeLock")
+    }
+  }
+
+  fun wakeLockRelease() {
+    synchronized(this.wakeLockLock) {
+      val wake = this.wakeLock
+      if (wake != null) {
+        this.logger.debug("wakeLockRelease: Releasing WakeLock")
+        wake.release()
+        this.logger.debug("wakeLockRelease: Released WakeLock")
+      } else {
+        this.logger.warn("wakeLockRelease: WakeLock does not exist!")
+      }
+    }
+  }
 }

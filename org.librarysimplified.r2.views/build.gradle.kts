@@ -47,6 +47,7 @@ dependencies {
     implementation(libs.androidx.viewpager)
     implementation(libs.androidx.viewpager2)
     implementation(libs.google.material)
+    implementation(libs.io7m.jattribute.core)
     implementation(libs.joda.time)
     implementation(libs.kotlin.stdlib)
     implementation(libs.kotlinx.coroutines.core.jvm)

@@ -6,6 +6,9 @@ import androidx.paging.InvalidatingPagingSourceFactory
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
+import com.io7m.jattribute.core.AttributeReadableType
+import com.io7m.jattribute.core.AttributeType
+import com.io7m.jattribute.core.Attributes
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.subjects.BehaviorSubject
@@ -48,6 +51,27 @@ object SR2ReaderModel {
 
   var searchTerm: String =
     ""
+
+  private val attributes =
+    Attributes.create { ex -> this.logger.debug("Attribute error: ", ex) }
+
+  const val UI_VISIBILITY_DEFAULT = false
+
+  private val uiIsVisibleSource: AttributeType<Boolean> =
+    this.attributes.withValue(UI_VISIBILITY_DEFAULT)
+
+  val uiIsVisible: AttributeReadableType<Boolean> =
+    this.uiIsVisibleSource
+
+  fun uiSetVisible(v: Boolean) {
+    SR2UIThread.runOnUIThread {
+      this.uiIsVisibleSource.set(v)
+    }
+  }
+
+  fun uiToggle() {
+    this.uiSetVisible(!this.uiIsVisibleSource.get())
+  }
 
   @Volatile
   var scrollMode: SR2ScrollingMode =
@@ -134,6 +158,7 @@ object SR2ReaderModel {
     val existingController = this.controllerField
     this.closeAndPublishUnavailability(existingController)
     this.controllerField = null
+    this.uiSetVisible(UI_VISIBILITY_DEFAULT)
 
     val future = CompletableFuture<SR2ControllerType>()
     SR2Executors.ioExecutor.execute {

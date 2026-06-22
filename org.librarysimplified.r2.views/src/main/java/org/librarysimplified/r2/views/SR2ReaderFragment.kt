@@ -15,6 +15,7 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.disposables.Disposables
 import org.librarysimplified.r2.api.SR2ColorScheme.DARK_TEXT_LIGHT_BACKGROUND
 import org.librarysimplified.r2.api.SR2ColorScheme.DARK_TEXT_ON_SEPIA
 import org.librarysimplified.r2.api.SR2ColorScheme.LIGHT_TEXT_DARK_BACKGROUND
@@ -89,8 +90,6 @@ class SR2ReaderFragment : SR2Fragment() {
   private lateinit var toolbarButtons: List<View>
   private lateinit var webView: SR2LimitedWebView
 
-  private var uiIsVisible = true
-
   override fun onCreateView(
     inflater: LayoutInflater,
     container: ViewGroup?,
@@ -131,9 +130,7 @@ class SR2ReaderFragment : SR2Fragment() {
       view.findViewById(R.id.readerShow)
 
     this.uiShow.setOnClickListener {
-      this.uiShow.postDelayed({
-        this.showOrHideReadingUI(uiVisibleIntent = true)
-      }, 250L)
+      this.uiShow.postDelayed({ SR2ReaderModel.uiToggle() }, 250L)
     }
 
     this.titleTouch.setOnClickListener {
@@ -184,7 +181,7 @@ class SR2ReaderFragment : SR2Fragment() {
     }
     this.buttonHideUI.setOnClickListener {
       this.buttonHideUI.postDelayed({
-        this.showOrHideReadingUI(uiVisibleIntent = false)
+        this.uiShow.postDelayed({ SR2ReaderModel.uiToggle() }, 250L)
       }, 250L)
     }
 
@@ -207,9 +204,7 @@ class SR2ReaderFragment : SR2Fragment() {
     }
 
     this.centerTouch.setOnClickListener {
-      this.centerTouch.postDelayed({
-        this.showOrHideReadingUI(uiVisibleIntent = !this.uiIsVisible)
-      }, 250L)
+      this.centerTouch.postDelayed({ SR2ReaderModel.uiToggle() }, 250L)
     }
 
     this.toolbarButtonIcons =
@@ -266,7 +261,7 @@ class SR2ReaderFragment : SR2Fragment() {
   private fun onUserPressedEscapeOnToolbarButton() {
     this.logger.debug("onUserPressedEscapeOnToolbarButton")
 
-    this.showOrHideReadingUI(uiVisibleIntent = false)
+    SR2ReaderModel.uiSetVisible(false)
   }
 
   private fun onUserPressedKeyOnWebView(event: KeyEvent) {
@@ -274,11 +269,11 @@ class SR2ReaderFragment : SR2Fragment() {
 
     when (event.keyCode) {
       KeyEvent.KEYCODE_SPACE -> {
-        this.showOrHideReadingUI(uiVisibleIntent = true)
+        SR2ReaderModel.uiSetVisible(true)
       }
 
       KeyEvent.KEYCODE_ESCAPE -> {
-        this.showOrHideReadingUI(uiVisibleIntent = true)
+        SR2ReaderModel.uiSetVisible(true)
       }
 
       KeyEvent.KEYCODE_DPAD_RIGHT -> {
@@ -435,6 +430,17 @@ class SR2ReaderFragment : SR2Fragment() {
     } catch (e: Throwable) {
       this.logger.debug("Failed to register focus change listener: ", e)
     }
+
+    val uiVisibleSubscription =
+      SR2ReaderModel.uiIsVisible.subscribe { _, isVisible ->
+        if (isVisible) {
+          this.enableReadingUI()
+        } else {
+          this.disableReadingUI()
+        }
+      }
+
+    this.eventSubscriptions.add(Disposables.fromAction { uiVisibleSubscription.close() })
   }
 
   private fun onViewEvent(event: SR2ReaderViewEvent) {
@@ -448,7 +454,6 @@ class SR2ReaderFragment : SR2Fragment() {
       is SR2ControllerBecameAvailable -> {
         this.titleText.text = event.controller.bookMetadata.title
         this.configureForTheme(event.controller.themeNow())
-        this.showOrHideReadingUI(true)
         event.controller.viewConnect(this.webView)
 
         if (event.controller.configuration.allowCopyPaste) {
@@ -573,7 +578,7 @@ class SR2ReaderFragment : SR2Fragment() {
       }
 
       is SR2OnCenterTapped -> {
-        this.showOrHideReadingUI(event.uiVisible)
+        // Nothing
       }
 
       is SR2CommandSearchResults -> {
@@ -604,16 +609,6 @@ class SR2ReaderFragment : SR2Fragment() {
       is SR2BookmarkDeleted -> {
         this.reconfigureBookmarkMenuItem()
       }
-    }
-  }
-
-  private fun showOrHideReadingUI(uiVisibleIntent: Boolean) {
-    SR2UIThread.checkIsUIThread()
-
-    if (uiVisibleIntent) {
-      this.enableReadingUI()
-    } else {
-      this.disableReadingUI()
     }
   }
 
@@ -651,8 +646,6 @@ class SR2ReaderFragment : SR2Fragment() {
         )
       toast.show()
     }
-
-    this.uiIsVisible = false
   }
 
   private fun isUsingKeyboard(): Boolean {
@@ -691,8 +684,6 @@ class SR2ReaderFragment : SR2Fragment() {
 
     this.webView.isFocusable = false
     this.buttonBack.postDelayed({ this.buttonBack.requestFocus() }, 250L)
-
-    this.uiIsVisible = true
   }
 
   private fun viewsHandleLoadingState(showLoading: Boolean) {

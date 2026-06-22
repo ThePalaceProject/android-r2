@@ -68,6 +68,7 @@ dependencies {
     this.implementation(libs.androidx.viewpager2)
     this.implementation(libs.google.guava)
     this.implementation(libs.google.material)
+    this.implementation(libs.io7m.jattribute.core)
     this.implementation(libs.joda.time)
     this.implementation(libs.jsoup)
     this.implementation(libs.kotlin.stdlib)

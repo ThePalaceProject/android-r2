@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory
 import java.io.File
 
 object DemoModel {
-
   @Volatile
   var allowCopyPaste: Boolean = true
 
@@ -60,14 +59,16 @@ object DemoModel {
     val context =
       DemoApplication.application
 
-    val request = DownloadManager.Request(epubURL.toUri())
-      .setTitle("Downloading 'You can't Win'")
-      .setDescription("In progress...")
-      .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-      .setDestinationInExternalPublicDir(
-        Environment.DIRECTORY_DOCUMENTS,
-        "jack-black_you-cant-win.epub",
-      )
+    val request =
+      DownloadManager
+        .Request(epubURL.toUri())
+        .setTitle("Downloading 'You can't Win'")
+        .setDescription("In progress...")
+        .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+        .setDestinationInExternalPublicDir(
+          Environment.DIRECTORY_DOCUMENTS,
+          "jack-black_you-cant-win.epub",
+        )
 
     val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
     dm.enqueue(request)

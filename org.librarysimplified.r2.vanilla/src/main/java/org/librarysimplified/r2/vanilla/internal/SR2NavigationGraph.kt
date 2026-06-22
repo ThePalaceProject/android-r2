@@ -10,13 +10,11 @@ import org.readium.r2.shared.publication.Href
  */
 
 data class SR2NavigationGraph(
-
   /**
    * The book reading order.
    */
 
   val readingOrder: List<SR2NavigationReadingOrderNode>,
-
   /**
    * The book's list of extra resources.
    */
@@ -36,12 +34,11 @@ data class SR2NavigationGraph(
    * The node pointing at the start of the book.
    */
 
-  fun start(): SR2NavigationTarget {
-    return SR2NavigationTarget(
+  fun start(): SR2NavigationTarget =
+    SR2NavigationTarget(
       node = this.readingOrder.first(),
       extraFragment = null,
     )
-  }
 
   /**
    * Try to find a relevant navigation node for the given locator, but do not check outside
@@ -97,17 +94,19 @@ data class SR2NavigationGraph(
     return if (fragment.isNotBlank()) {
       val withoutFragment =
         when (locator) {
-          is SR2Locator.SR2LocatorChapterEnd ->
+          is SR2Locator.SR2LocatorChapterEnd -> {
             locator.copy(chapterHref = Href(locationText.substringBefore('#'))!!)
-          is SR2Locator.SR2LocatorPercent ->
+          }
+
+          is SR2Locator.SR2LocatorPercent -> {
             locator.copy(chapterHref = Href(locationText.substringBefore('#'))!!)
+          }
         }
 
       (
         this.findNavigationReadingOrderNodeExact(withoutFragment)
           ?: findResourcesNodeExact(withoutFragment)
-        )
-        ?.let { node -> SR2NavigationTarget(node, fragment) }
+      )?.let { node -> SR2NavigationTarget(node, fragment) }
     } else {
       null
     }
@@ -118,8 +117,8 @@ data class SR2NavigationGraph(
    * a "previous" node for items that are not in the reading order.
    */
 
-  fun findPreviousNode(currentNode: SR2NavigationNode): SR2NavigationNode? {
-    return when (currentNode) {
+  fun findPreviousNode(currentNode: SR2NavigationNode): SR2NavigationNode? =
+    when (currentNode) {
       is SR2NavigationReadingOrderNode -> {
         if (currentNode.index == 0) {
           null
@@ -128,18 +127,18 @@ data class SR2NavigationGraph(
         }
       }
 
-      is SR2NavigationResourceNode ->
+      is SR2NavigationResourceNode -> {
         null
+      }
     }
-  }
 
   /**
    * Find the "next" node for the given node. There may not be any such thing as
    * a "next" node for items that are not in the reading order.
    */
 
-  fun findNextNode(currentNode: SR2NavigationNode): SR2NavigationNode? {
-    return when (currentNode) {
+  fun findNextNode(currentNode: SR2NavigationNode): SR2NavigationNode? =
+    when (currentNode) {
       is SR2NavigationReadingOrderNode -> {
         if (currentNode.index == this.readingOrder.size - 1) {
           null
@@ -148,8 +147,8 @@ data class SR2NavigationGraph(
         }
       }
 
-      is SR2NavigationResourceNode ->
+      is SR2NavigationResourceNode -> {
         null
+      }
     }
-  }
 }

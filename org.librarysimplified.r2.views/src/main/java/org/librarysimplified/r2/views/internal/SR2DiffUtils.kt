@@ -5,20 +5,17 @@ import org.librarysimplified.r2.api.SR2Bookmark
 import org.librarysimplified.r2.api.SR2TOCEntry
 
 internal object SR2DiffUtils {
-
   val bookmarkDiffCallback: DiffUtil.ItemCallback<SR2Bookmark> =
     object : DiffUtil.ItemCallback<SR2Bookmark>() {
       override fun areItemsTheSame(
         oldItem: SR2Bookmark,
         newItem: SR2Bookmark,
-      ): Boolean =
-        oldItem == newItem
+      ): Boolean = oldItem == newItem
 
       override fun areContentsTheSame(
         oldItem: SR2Bookmark,
         newItem: SR2Bookmark,
-      ): Boolean =
-        oldItem == newItem
+      ): Boolean = oldItem == newItem
     }
 
   val tocEntryCallback: DiffUtil.ItemCallback<SR2TOCEntry> =
@@ -26,13 +23,11 @@ internal object SR2DiffUtils {
       override fun areItemsTheSame(
         oldItem: SR2TOCEntry,
         newItem: SR2TOCEntry,
-      ): Boolean =
-        oldItem == newItem
+      ): Boolean = oldItem == newItem
 
       override fun areContentsTheSame(
         oldItem: SR2TOCEntry,
         newItem: SR2TOCEntry,
-      ): Boolean =
-        oldItem == newItem
+      ): Boolean = oldItem == newItem
     }
 }

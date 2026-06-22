@@ -9,7 +9,6 @@ import android.app.Activity
 class SR2BrightnessService(
   private val activity: Activity,
 ) : SR2BrightnessServiceType {
-
   override fun brightness(): Double {
     val layoutParams = this.activity.window.attributes
     val currentBrightness = layoutParams.screenBrightness.toDouble()
@@ -20,9 +19,7 @@ class SR2BrightnessService(
     }
   }
 
-  override fun setBrightness(
-    brightness: Double,
-  ) {
+  override fun setBrightness(brightness: Double) {
     val layoutParams = this.activity.window.attributes
     layoutParams.screenBrightness = brightness.toFloat()
     this.activity.window.attributes = layoutParams

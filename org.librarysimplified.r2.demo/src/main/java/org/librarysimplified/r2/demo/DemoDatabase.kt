@@ -25,8 +25,9 @@ import java.util.concurrent.Executors
  * This object provides an excessively simple persistent database.
  */
 
-class DemoDatabase(private val baseDirectory: File) {
-
+class DemoDatabase(
+  private val baseDirectory: File,
+) {
   private val logger =
     LoggerFactory.getLogger(DemoDatabase::class.java)
 
@@ -54,33 +55,30 @@ class DemoDatabase(private val baseDirectory: File) {
     val uri: URI?,
   ) : Serializable
 
-  private fun countBookmarks(map: Map<String, List<SerializableBookmark>>): Int {
-    return map.entries.fold(0, { acc: Int, entry -> acc + entry.value.size })
-  }
+  private fun countBookmarks(map: Map<String, List<SerializableBookmark>>): Int =
+    map.entries.fold(0, { acc: Int, entry -> acc + entry.value.size })
 
-  fun bookmarkFindLastReadLocation(
-    bookId: String,
-  ): SR2Bookmark? {
+  fun bookmarkFindLastReadLocation(bookId: String): SR2Bookmark? {
     val bookmarks = this.bookmarksFor(bookId)
     return bookmarks.find { bookmark -> bookmark.type == LAST_READ }
   }
 
-  fun bookmarksFor(bookId: String): List<SR2Bookmark> {
-    return (this.bookmarks[bookId] ?: listOf())
+  fun bookmarksFor(bookId: String): List<SR2Bookmark> =
+    (this.bookmarks[bookId] ?: listOf())
       .map { bookmark ->
         SR2Bookmark(
           date = bookmark.time,
           type = bookmark.type,
           title = bookmark.title,
-          locator = SR2LocatorPercent.create(
-            chapterHref = Href(bookmark.chapterHref)!!,
-            chapterProgress = bookmark.chapterProgress,
-          ),
+          locator =
+            SR2LocatorPercent.create(
+              chapterHref = Href(bookmark.chapterHref)!!,
+              chapterProgress = bookmark.chapterProgress,
+            ),
           bookProgress = bookmark.bookProgress,
           uri = bookmark.uri,
         )
       }
-  }
 
   fun bookmarkDelete(
     bookId: String,
@@ -109,6 +107,7 @@ class DemoDatabase(private val baseDirectory: File) {
       EXPLICIT -> {
         // Nothing
       }
+
       LAST_READ -> {
         existing.removeAll { it.type == LAST_READ }
       }
@@ -121,10 +120,8 @@ class DemoDatabase(private val baseDirectory: File) {
     this.ioExecutor.execute { this.saveMap() }
   }
 
-  private fun toSerializable(
-    bookmark: SR2Bookmark,
-  ): SerializableBookmark {
-    return when (val locator = bookmark.locator) {
+  private fun toSerializable(bookmark: SR2Bookmark): SerializableBookmark =
+    when (val locator = bookmark.locator) {
       is SR2LocatorPercent -> {
         SerializableBookmark(
           time = bookmark.date,
@@ -135,6 +132,7 @@ class DemoDatabase(private val baseDirectory: File) {
           uri = bookmark.uri,
         )
       }
+
       is SR2LocatorChapterEnd -> {
         SerializableBookmark(
           time = bookmark.date,
@@ -146,10 +144,9 @@ class DemoDatabase(private val baseDirectory: File) {
         )
       }
     }
-  }
 
-  private fun loadMap(): ConcurrentHashMap<String, List<SerializableBookmark>> {
-    return try {
+  private fun loadMap(): ConcurrentHashMap<String, List<SerializableBookmark>> =
+    try {
       this.logger.debug("loading bookmarks")
 
       val file = File(this.baseDirectory, "bookmarks.dat")
@@ -165,7 +162,6 @@ class DemoDatabase(private val baseDirectory: File) {
       this.logger.error("could not open bookmarks database: ", e)
       ConcurrentHashMap()
     }
-  }
 
   private fun logBookmarks(map: ConcurrentHashMap<String, List<SerializableBookmark>>) {
     for (entry in map.entries) {
@@ -237,9 +233,7 @@ class DemoDatabase(private val baseDirectory: File) {
     }
   }
 
-  fun theme(): SR2Theme {
-    return this.theme
-  }
+  fun theme(): SR2Theme = this.theme
 
   fun themeSet(theme: SR2Theme) {
     this.theme = theme

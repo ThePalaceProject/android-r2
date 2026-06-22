@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory
  */
 
 internal class SR2WebChromeClient : WebChromeClient() {
-
   private val logger =
     LoggerFactory.getLogger(SR2WebChromeClient::class.java)
 

@@ -36,9 +36,7 @@ data class SR2Theme(
      * Constrain the given size parameter to the allowed range [TEXT_SIZE_MINIMUM_INCLUSIVE, TEXT_SIZE_MAXIMUM_EXCLUSIVE).
      */
 
-    fun sizeConstrain(size: Double): Double {
-      return Math.max(TEXT_SIZE_MINIMUM_INCLUSIVE, Math.min(size, TEXT_SIZE_MAXIMUM_EXCLUSIVE - EPSILON))
-    }
+    fun sizeConstrain(size: Double): Double = Math.max(TEXT_SIZE_MINIMUM_INCLUSIVE, Math.min(size, TEXT_SIZE_MAXIMUM_EXCLUSIVE - EPSILON))
   }
 
   val isTextSizeMaximized: Boolean

@@ -17,7 +17,6 @@ internal class SR2TOCChapterAdapter(
   private val resources: Resources,
   private val onTOCEntrySelected: (SR2TOCEntry) -> Unit,
 ) : ListAdapter<SR2TOCEntry, SR2TOCEntryViewHolder>(tocEntryCallback) {
-
   class SR2TOCEntryViewHolder(
     val rootView: View,
   ) : RecyclerView.ViewHolder(rootView) {
@@ -58,9 +57,7 @@ internal class SR2TOCChapterAdapter(
     holder.chapterTitleText.text = chapter.title
   }
 
-  private fun dpToPixels(dp: Float): Int {
-    return Math.round(dp * (this.resources.displayMetrics.densityDpi / 160f))
-  }
+  private fun dpToPixels(dp: Float): Int = Math.round(dp * (this.resources.displayMetrics.densityDpi / 160f))
 
   fun setTableOfContentsEntries(entriesNow: List<SR2TOCEntry>) {
     this.submitList(entriesNow)

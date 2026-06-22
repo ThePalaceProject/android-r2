@@ -11,11 +11,8 @@ import org.librarysimplified.r2.vanilla.internal.SR2Controller
  */
 
 class SR2Controllers : SR2ControllerProviderType {
-
   override fun create(
     context: Application,
     configuration: SR2ControllerConfiguration,
-  ): SR2ControllerType {
-    return SR2Controller.create(context, configuration)
-  }
+  ): SR2ControllerType = SR2Controller.create(context, configuration)
 }

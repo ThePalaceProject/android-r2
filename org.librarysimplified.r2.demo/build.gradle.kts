@@ -52,7 +52,6 @@ dependencies {
     this.implementation(libs.androidx.lifecycle.viewmodel.ktx)
     this.implementation(libs.androidx.lifecycle.viewmodel.savedstate)
     this.implementation(libs.androidx.loader)
-    this.implementation(libs.androidx.multidex)
     this.implementation(libs.androidx.paging.common)
     this.implementation(libs.androidx.paging.common.ktx)
     this.implementation(libs.androidx.paging.runtime)

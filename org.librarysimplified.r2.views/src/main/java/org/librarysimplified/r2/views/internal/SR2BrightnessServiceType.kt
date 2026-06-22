@@ -5,7 +5,6 @@ package org.librarysimplified.r2.views.internal
  */
 
 interface SR2BrightnessServiceType {
-
   /**
    * @return The current device brightness in the range [0, 1]
    */

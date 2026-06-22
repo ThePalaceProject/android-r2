@@ -10,19 +10,16 @@ import java.util.UUID
  */
 
 data class SR2CommandSubmission(
-
   /**
    * The unique ID of the command.
    */
 
   val id: UUID = UUID.randomUUID(),
-
   /**
    * The time the command was submitted.
    */
 
   val submitted: DateTime = DateTime.now(),
-
   /**
    * A command that executes an API command.
    *

@@ -43,7 +43,6 @@ import org.readium.r2.shared.publication.Href
 import org.slf4j.LoggerFactory
 
 class SR2SearchFragment : SR2Fragment() {
-
   private val logger =
     LoggerFactory.getLogger(SR2SearchFragment::class.java)
 
@@ -61,9 +60,7 @@ class SR2SearchFragment : SR2Fragment() {
     inflater: LayoutInflater,
     container: ViewGroup?,
     savedInstanceState: Bundle?,
-  ): View? {
-    return inflater.inflate(R.layout.sr2_search, container, false)
-  }
+  ): View? = inflater.inflate(R.layout.sr2_search, container, false)
 
   override fun onViewCreated(
     view: View,
@@ -94,34 +91,36 @@ class SR2SearchFragment : SR2Fragment() {
       v.foreground = SR2Ripples.createRippleDrawableForLightBackground()
     }
 
-    this.searchAdapter = SR2SearchResultAdapter(
-      onItemClicked = { locator ->
-        SR2ReaderModel.submitCommand(
-          SR2Command.HighlightTerms(
-            searchingTerms = this.searchEditText.text.toString(),
-            clearHighlight = false,
-          ),
-        )
-
-        SR2ReaderModel.submitCommand(
-          SR2Command.OpenChapter(
-            SR2Locator.SR2LocatorPercent.create(
-              chapterHref = Href(locator.href),
-              chapterProgress = locator.locations.progression ?: 0.0,
+    this.searchAdapter =
+      SR2SearchResultAdapter(
+        onItemClicked = { locator ->
+          SR2ReaderModel.submitCommand(
+            SR2Command.HighlightTerms(
+              searchingTerms = this.searchEditText.text.toString(),
+              clearHighlight = false,
             ),
-          ),
-        )
-        this.close()
-      },
-    )
+          )
+
+          SR2ReaderModel.submitCommand(
+            SR2Command.OpenChapter(
+              SR2Locator.SR2LocatorPercent.create(
+                chapterHref = Href(locator.href),
+                chapterProgress = locator.locations.progression ?: 0.0,
+              ),
+            ),
+          )
+          this.close()
+        },
+      )
 
     this.searchResultsList.apply {
       this.adapter = this@SR2SearchFragment.searchAdapter
-      this.layoutManager = LinearLayoutManager(
-        this@SR2SearchFragment.requireContext(),
-        LinearLayoutManager.VERTICAL,
-        false,
-      )
+      this.layoutManager =
+        LinearLayoutManager(
+          this@SR2SearchFragment.requireContext(),
+          LinearLayoutManager.VERTICAL,
+          false,
+        )
       this.addItemDecoration(
         SR2SearchResultSectionItemDecoration(
           this.context,
@@ -143,9 +142,11 @@ class SR2SearchFragment : SR2Fragment() {
                 }
               }
 
-            override fun sectionTitle(index: Int): String {
-              return SR2ReaderModel.searchLocators.value.getOrNull(index)?.title.orEmpty()
-            }
+            override fun sectionTitle(index: Int): String =
+              SR2ReaderModel.searchLocators.value
+                .getOrNull(index)
+                ?.title
+                .orEmpty()
           },
         ),
       )

@@ -10,7 +10,6 @@ import java.util.concurrent.CompletableFuture
  */
 
 internal interface SR2JavascriptAPIType {
-
   /**
    * Highlight or clear the highlight for the given searching terms.
    */

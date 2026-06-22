@@ -6,7 +6,6 @@ import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.RippleDrawable
 
 object SR2Ripples {
-
   fun createRippleDrawableForLightBackground(): RippleDrawable {
     val rippleColorDark =
       Color.parseColor("#33000000")

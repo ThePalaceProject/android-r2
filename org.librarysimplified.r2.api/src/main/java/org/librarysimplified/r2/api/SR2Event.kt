@@ -8,13 +8,11 @@ import org.readium.r2.shared.publication.services.search.SearchIterator
  */
 
 sealed class SR2Event {
-
   /**
    * The subset of events that correspond to errors.
    */
 
   sealed class SR2Error : SR2Event() {
-
     /**
      * An attempt was made to open a chapter in a book that does not exist.
      */
@@ -59,7 +57,6 @@ sealed class SR2Event {
     val pageCount: Int?,
     val bookProgress: Double?,
   ) : SR2Event() {
-
     init {
       require(this.chapterProgress in 0.0..1.0) {
         "Chapter progress ${this.chapterProgress} must be in the range [0, 1]"
@@ -81,7 +78,6 @@ sealed class SR2Event {
    */
 
   sealed class SR2BookmarkEvent : SR2Event() {
-
     /**
      * A bookmark was created in the reader. The observer of this event should save the bookmark
      * into persistent storage.
@@ -120,7 +116,6 @@ sealed class SR2Event {
    */
 
   sealed class SR2CommandEvent : SR2Event() {
-
     /**
      * The command to which the event refers.
      */
@@ -158,7 +153,6 @@ sealed class SR2Event {
      */
 
     sealed class SR2CommandEventCompleted : SR2CommandEvent() {
-
       /**
        * The execution of a command succeeded.
        */

@@ -50,7 +50,6 @@ import org.librarysimplified.r2.views.internal.SR2SettingsDialog
 import org.slf4j.LoggerFactory
 
 class SR2ReaderFragment : SR2Fragment() {
-
   private lateinit var centerTouch: View
   private lateinit var pageNext: View
   private lateinit var pagePrevious: View
@@ -270,9 +269,7 @@ class SR2ReaderFragment : SR2Fragment() {
     this.showOrHideReadingUI(uiVisibleIntent = false)
   }
 
-  private fun onUserPressedKeyOnWebView(
-    event: KeyEvent,
-  ) {
+  private fun onUserPressedKeyOnWebView(event: KeyEvent) {
     this.logger.debug("onUserPressedKeyOnWebView: {}", event)
 
     when (event.keyCode) {
@@ -396,9 +393,7 @@ class SR2ReaderFragment : SR2Fragment() {
     this.setProgressColors(foreground)
   }
 
-  private fun setProgressColors(
-    foreground: Int,
-  ) {
+  private fun setProgressColors(foreground: Int) {
     val backgroundView = this.progressViewBorder.background.mutate() as GradientDrawable
     backgroundView.setStroke(1, foreground)
     this.progressViewFill.setBackgroundColor(foreground)
@@ -419,9 +414,10 @@ class SR2ReaderFragment : SR2Fragment() {
    * A small focus change listener for debugging.
    */
 
-  private val onFocusChanged = OnGlobalFocusChangeListener { _, newFocus ->
-    this.logger.debug("Focus changed: {}", newFocus)
-  }
+  private val onFocusChanged =
+    OnGlobalFocusChangeListener { _, newFocus ->
+      this.logger.debug("Focus changed: {}", newFocus)
+    }
 
   override fun onStart() {
     this.logger.debug("onStart")
@@ -441,9 +437,7 @@ class SR2ReaderFragment : SR2Fragment() {
     }
   }
 
-  private fun onViewEvent(
-    event: SR2ReaderViewEvent,
-  ) {
+  private fun onViewEvent(event: SR2ReaderViewEvent) {
     this.logger.debug("onViewEvent: {}", event)
 
     when (event) {
@@ -534,9 +528,7 @@ class SR2ReaderFragment : SR2Fragment() {
     this.reconfigureBookmarkMenuItem()
   }
 
-  private fun setProgress(
-    progress: Double,
-  ) {
+  private fun setProgress(progress: Double) {
     val parentWidth = (this.progressViewFill.parent as View).width
     this.progressViewFill.layoutParams.width = (parentWidth * progress).toInt()
     this.progressViewFill.requestLayout()
@@ -615,9 +607,7 @@ class SR2ReaderFragment : SR2Fragment() {
     }
   }
 
-  private fun showOrHideReadingUI(
-    uiVisibleIntent: Boolean,
-  ) {
+  private fun showOrHideReadingUI(uiVisibleIntent: Boolean) {
     SR2UIThread.checkIsUIThread()
 
     if (uiVisibleIntent) {
@@ -708,11 +698,12 @@ class SR2ReaderFragment : SR2Fragment() {
   private fun viewsHandleLoadingState(showLoading: Boolean) {
     SR2UIThread.checkIsUIThread()
 
-    val (webViewVisibility, loadingVisibility) = if (showLoading) {
-      View.INVISIBLE to View.VISIBLE
-    } else {
-      View.VISIBLE to View.INVISIBLE
-    }
+    val (webViewVisibility, loadingVisibility) =
+      if (showLoading) {
+        View.INVISIBLE to View.VISIBLE
+      } else {
+        View.VISIBLE to View.INVISIBLE
+      }
 
     if (this.webView.visibility != webViewVisibility) {
       this.webView.visibility = webViewVisibility

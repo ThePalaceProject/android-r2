@@ -5,7 +5,6 @@ import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 
 object SR2Executors {
-
   private val logger =
     LoggerFactory.getLogger(SR2Executors::class.java)
 

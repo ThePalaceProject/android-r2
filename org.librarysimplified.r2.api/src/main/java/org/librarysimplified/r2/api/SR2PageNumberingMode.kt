@@ -5,7 +5,6 @@ package org.librarysimplified.r2.api
  */
 
 enum class SR2PageNumberingMode {
-
   /**
    * Per chapter page numbering.
    */

@@ -1,21 +1,20 @@
 package org.librarysimplified.r2.demo
 
+import android.app.Application
 import android.webkit.WebView
-import androidx.multidex.MultiDexApplication
 import ch.qos.logback.classic.LoggerContext
 import ch.qos.logback.core.rolling.RollingFileAppender
 import org.librarysimplified.r2.vanilla.BuildConfig
 import org.slf4j.LoggerFactory
 import java.io.File
 
-class DemoApplication : MultiDexApplication() {
-
+class DemoApplication : Application() {
   companion object {
-    private lateinit var INSTANCE: DemoApplication
+    private lateinit var instance: DemoApplication
 
     @JvmStatic
     val application: DemoApplication
-      get() = this.INSTANCE
+      get() = this.instance
   }
 
   private val logger = LoggerFactory.getLogger(DemoApplication::class.java)
@@ -27,7 +26,7 @@ class DemoApplication : MultiDexApplication() {
     DemoModel.initialize(this)
 
     this.logger.debug("starting app: pid {}", android.os.Process.myPid())
-    INSTANCE = this
+    instance = this
 
     // Enable remote debugging of the web view.
     WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG)

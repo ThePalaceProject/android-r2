@@ -14,7 +14,6 @@ import org.librarysimplified.r2.api.SR2ScrollingMode
 import org.librarysimplified.r2.views.SR2ReaderModel
 
 class DemoFileSelectionFragment : Fragment(R.layout.demo_file_selection) {
-
   private lateinit var demoLoaderAllowCopyPaste: CheckBox
   private lateinit var demoLoaderDownloadButton: Button
   private lateinit var demoLoaderBrowseButton: Button
@@ -49,17 +48,19 @@ class DemoFileSelectionFragment : Fragment(R.layout.demo_file_selection) {
     }
 
     this.demoLoaderScrollMode.setOnCheckedChangeListener { _, isChecked ->
-      DemoModel.scrollMode = when (isChecked) {
-        true -> SR2ScrollingMode.SCROLLING_MODE_CONTINUOUS
-        false -> SR2ScrollingMode.SCROLLING_MODE_PAGINATED
-      }
+      DemoModel.scrollMode =
+        when (isChecked) {
+          true -> SR2ScrollingMode.SCROLLING_MODE_CONTINUOUS
+          false -> SR2ScrollingMode.SCROLLING_MODE_PAGINATED
+        }
     }
 
     this.demoLoaderPerChapterPageNumbering.setOnCheckedChangeListener { _, isChecked ->
-      SR2ReaderModel.perChapterNumbering = when (isChecked) {
-        true -> SR2PageNumberingMode.PER_CHAPTER
-        false -> SR2PageNumberingMode.WHOLE_BOOK
-      }
+      SR2ReaderModel.perChapterNumbering =
+        when (isChecked) {
+          true -> SR2PageNumberingMode.PER_CHAPTER
+          false -> SR2PageNumberingMode.WHOLE_BOOK
+        }
     }
 
     this.demoLoaderAllowCopyPaste.setOnCheckedChangeListener { _, isChecked ->
@@ -75,19 +76,20 @@ class DemoFileSelectionFragment : Fragment(R.layout.demo_file_selection) {
    */
 
   private fun startDocumentPickerForResult() {
-    val pickIntent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-      this.type = "*/*"
-      this.addCategory(Intent.CATEGORY_OPENABLE)
+    val pickIntent =
+      Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+        this.type = "*/*"
+        this.addCategory(Intent.CATEGORY_OPENABLE)
 
-      // Filter by MIME type; Android versions prior to Marshmallow don't seem
-      // to understand the 'application/epub+zip' MIME type.
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-        this.putExtra(
-          Intent.EXTRA_MIME_TYPES,
-          arrayOf("application/epub+zip"),
-        )
+        // Filter by MIME type; Android versions prior to Marshmallow don't seem
+        // to understand the 'application/epub+zip' MIME type.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+          this.putExtra(
+            Intent.EXTRA_MIME_TYPES,
+            arrayOf("application/epub+zip"),
+          )
+        }
       }
-    }
 
     this.requireActivity().startActivityForResult(pickIntent, DemoActivity.PICK_DOCUMENT)
   }

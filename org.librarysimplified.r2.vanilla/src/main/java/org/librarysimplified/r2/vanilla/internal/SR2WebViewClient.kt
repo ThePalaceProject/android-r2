@@ -25,10 +25,10 @@ internal class SR2WebViewClient(
   private val future: CompletableFuture<Any>,
   private val commandQueue: SR2Controller,
 ) : WebViewClient() {
-
   companion object {
     private val faviconData: ByteArray =
-      SR2WebViewClient::class.java.getResourceAsStream("/org/librarysimplified/r2/vanilla/favicon.ico")
+      SR2WebViewClient::class.java
+        .getResourceAsStream("/org/librarysimplified/r2/vanilla/favicon.ico")
         ?.readBytes()
         ?: throw IllegalStateException("Missing favicon resource")
   }
@@ -96,10 +96,11 @@ internal class SR2WebViewClient(
       if (request != null) {
         attributes["URL"] = request.url.toString()
       }
-      return SR2CustomErrorPage.create(
-        attributes.toMap(),
-        e.message ?: e.javaClass.name,
-      ).toResourceResponse()
+      return SR2CustomErrorPage
+        .create(
+          attributes.toMap(),
+          e.message ?: e.javaClass.name,
+        ).toResourceResponse()
     }
   }
 

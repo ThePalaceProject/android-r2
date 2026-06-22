@@ -23,7 +23,6 @@ import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewController
 import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewControllerEvent.SR2ControllerBecameUnavailable
 
 internal class SR2TOCChaptersFragment : Fragment() {
-
   private lateinit var eventSubscriptions: CompositeDisposable
   private lateinit var chaptersError: View
   private lateinit var chapterList: RecyclerView
@@ -70,9 +69,7 @@ internal class SR2TOCChaptersFragment : Fragment() {
     this.eventSubscriptions.dispose()
   }
 
-  private fun onViewEvent(
-    event: SR2ReaderViewEvent,
-  ) {
+  private fun onViewEvent(event: SR2ReaderViewEvent) {
     when (event) {
       is SR2BookLoadingFailed -> {
         // Nothing to do here.

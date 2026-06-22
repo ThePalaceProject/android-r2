@@ -13,7 +13,6 @@ internal class SR2TOCBookmarkAdapter(
   private val onBookmarkSelected: (SR2Bookmark) -> Unit,
   private val onBookmarkDeleteRequested: (SR2Bookmark) -> Unit,
 ) : ListAdapter<SR2Bookmark, SR2TOCBookmarkViewHolder>(bookmarkDiffCallback) {
-
   override fun onCreateViewHolder(
     parent: ViewGroup,
     viewType: Int,

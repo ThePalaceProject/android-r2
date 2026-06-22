@@ -7,7 +7,6 @@ import org.readium.r2.shared.publication.Link
 import org.readium.r2.shared.publication.Publication
 
 object SR2Books {
-
   fun makeMetadata(
     publication: Publication,
     bookId: String,
@@ -31,19 +30,14 @@ object SR2Books {
    * If tableOfContents is empty will try to use readingOrder instead.
    */
 
-  private fun makeTableOfContents(
-    publication: Publication,
-  ): List<SR2TOCEntry> {
-    return if (publication.tableOfContents.isNotEmpty()) {
+  private fun makeTableOfContents(publication: Publication): List<SR2TOCEntry> =
+    if (publication.tableOfContents.isNotEmpty()) {
       this.flattenTOC(publication.tableOfContents)
     } else {
       this.tocFromReadingOrder(publication.readingOrder)
     }
-  }
 
-  private fun flattenTOC(
-    tableOfContents: List<Link>,
-  ): List<SR2TOCEntry> {
+  private fun flattenTOC(tableOfContents: List<Link>): List<SR2TOCEntry> {
     val results = mutableListOf<SR2TOCEntry>()
     tableOfContents.forEach { node -> this.flattenTOCNode(node, 0, results) }
     return results.toList()
@@ -62,9 +56,7 @@ object SR2Books {
     }
   }
 
-  private fun tocFromReadingOrder(
-    readingOrder: List<Link>,
-  ): List<SR2TOCEntry> =
+  private fun tocFromReadingOrder(readingOrder: List<Link>): List<SR2TOCEntry> =
     readingOrder.mapIndexed { index, link ->
       val title = link.title?.takeUnless(String::isBlank) ?: "Chapter ${index + 1}"
       SR2TOCEntry(title, link.href, 0)

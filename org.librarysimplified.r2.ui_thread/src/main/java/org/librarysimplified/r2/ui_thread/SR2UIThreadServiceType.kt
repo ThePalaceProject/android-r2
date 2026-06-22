@@ -8,7 +8,6 @@ import android.os.Looper
  */
 
 interface SR2UIThreadServiceType {
-
   /**
    * Check that the current thread is the UI thread and raise [ ] if it isn't.
    */
@@ -26,9 +25,7 @@ interface SR2UIThreadServiceType {
    * @return `true` iff the current thread is the UI thread.
    */
 
-  fun isUIThread(): Boolean {
-    return Looper.getMainLooper().thread === Thread.currentThread()
-  }
+  fun isUIThread(): Boolean = Looper.getMainLooper().thread === Thread.currentThread()
 
   /**
    * Run the given Runnable on the UI thread.

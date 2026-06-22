@@ -9,15 +9,11 @@ class SR2CustomErrorPage private constructor(
   private val errorAttributes: Map<String, String>,
   private val message: String,
 ) {
-
   companion object {
-
     fun create(
       errorAttributes: Map<String, String>,
       message: String,
-    ): SR2CustomErrorPage {
-      return SR2CustomErrorPage(errorAttributes.toMap(), message)
-    }
+    ): SR2CustomErrorPage = SR2CustomErrorPage(errorAttributes.toMap(), message)
   }
 
   fun toText(): String {
@@ -119,11 +115,10 @@ a {
     return text.toString()
   }
 
-  fun toResourceResponse(): WebResourceResponse {
-    return WebResourceResponse(
+  fun toResourceResponse(): WebResourceResponse =
+    WebResourceResponse(
       "application/xhtml+xml",
       "UTF-8",
       ByteArrayInputStream(this.toText().toByteArray(charset = StandardCharsets.UTF_8)),
     )
-  }
 }

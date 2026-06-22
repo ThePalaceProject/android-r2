@@ -7,7 +7,6 @@ import android.graphics.Color
  */
 
 enum class SR2ColorScheme {
-
   /**
    * Dark text on a light background.
    */
@@ -32,29 +31,37 @@ enum class SR2ColorScheme {
    * @return The foreground color as an integer color
    */
 
-  fun foreground(): Int {
-    return when (this) {
-      DARK_TEXT_LIGHT_BACKGROUND ->
+  fun foreground(): Int =
+    when (this) {
+      DARK_TEXT_LIGHT_BACKGROUND -> {
         Color.argb(0xff, 0x00, 0x00, 0x00)
-      LIGHT_TEXT_DARK_BACKGROUND ->
+      }
+
+      LIGHT_TEXT_DARK_BACKGROUND -> {
         Color.argb(0xff, 0xff, 0xff, 0xff)
-      DARK_TEXT_ON_SEPIA ->
+      }
+
+      DARK_TEXT_ON_SEPIA -> {
         Color.argb(0xff, 0x00, 0x00, 0x00)
+      }
     }
-  }
 
   /**
    * @return The background color as an integer color
    */
 
-  fun background(): Int {
-    return when (this) {
-      DARK_TEXT_LIGHT_BACKGROUND ->
+  fun background(): Int =
+    when (this) {
+      DARK_TEXT_LIGHT_BACKGROUND -> {
         Color.argb(0xff, 0xff, 0xff, 0xff)
-      LIGHT_TEXT_DARK_BACKGROUND ->
+      }
+
+      LIGHT_TEXT_DARK_BACKGROUND -> {
         Color.argb(0xff, 0x00, 0x00, 0x00)
-      DARK_TEXT_ON_SEPIA ->
+      }
+
+      DARK_TEXT_ON_SEPIA -> {
         Color.argb(0xff, 0xfa, 0xf4, 0xe8)
+      }
     }
-  }
 }

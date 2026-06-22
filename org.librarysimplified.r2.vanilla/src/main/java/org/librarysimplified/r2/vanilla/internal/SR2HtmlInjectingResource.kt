@@ -1,6 +1,7 @@
 package org.librarysimplified.r2.vanilla.internal
 
 import org.librarysimplified.r2.vanilla.internal.SR2Controller.Companion.PREFIX_ASSETS
+import org.readium.r2.shared.publication.Layout
 import org.readium.r2.shared.publication.Manifest
 import org.readium.r2.shared.publication.Publication
 import org.readium.r2.shared.publication.epub.EpubLayout
@@ -17,10 +18,7 @@ class SR2HtmlInjectingResource(
   private val mediaType: MediaType,
   resource: Resource,
 ) : TransformingResource(resource) {
-
-  override suspend fun transform(
-    data: Try<ByteArray, ReadError>,
-  ): Try<ByteArray, ReadError> {
+  override suspend fun transform(data: Try<ByteArray, ReadError>): Try<ByteArray, ReadError> {
     if (!this.mediaType.isHtml) {
       return data
     }
@@ -35,21 +33,18 @@ class SR2HtmlInjectingResource(
     val trimmedText =
       bytes.toString(charset).trim()
 
-    val outputBytes = if (isReflowable()) {
-      injectReflowableHtml(trimmedText)
-    } else {
-      injectFixedLayoutHtml(trimmedText)
-    }
+    val outputBytes =
+      if (isReflowable()) {
+        injectReflowableHtml(trimmedText)
+      } else {
+        injectFixedLayoutHtml(trimmedText)
+      }
     return Try.success(outputBytes.toByteArray(charset))
   }
 
-  private fun isReflowable(): Boolean {
-    return this.publication.metadata.presentation.layout == EpubLayout.REFLOWABLE
-  }
+  private fun isReflowable(): Boolean = this.publication.metadata.layout == Layout.REFLOWABLE
 
-  private fun injectReflowableHtml(
-    content: String,
-  ): String {
+  private fun injectReflowableHtml(content: String): String {
     var resourceHtml = content
     // Inject links to css and js files
     val head = regexForOpeningHTMLTag("head").find(resourceHtml, 0)
@@ -62,7 +57,9 @@ class SR2HtmlInjectingResource(
     val layout = SR2ReadiumCssLayout(this.publication.metadata)
     val endIncludes = mutableListOf<String>()
     val beginIncludes = mutableListOf<String>()
-    beginIncludes.add("<meta name=\"viewport\" content=\"width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0, user-scalable=0\" />")
+    beginIncludes.add(
+      "<meta name=\"viewport\" content=\"width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0, user-scalable=0\" />",
+    )
 
     beginIncludes.add(linkToCSS("readium-css/${layout.readiumCSSPath}ReadiumCSS-before.css"))
     endIncludes.add(linkToCSS("readium-css/${layout.readiumCSSPath}ReadiumCSS-after.css"))
@@ -80,8 +77,17 @@ class SR2HtmlInjectingResource(
       resourceHtml = StringBuilder(resourceHtml).insert(endHeadIndex, element).toString()
       endHeadIndex += element.length
     }
-    resourceHtml = StringBuilder(resourceHtml).insert(endHeadIndex, getHtmlFont(fontFamily = "OpenDyslexic", href = "fonts/OpenDyslexic-Regular.otf")).toString()
-    resourceHtml = StringBuilder(resourceHtml).insert(endHeadIndex, "<style>@import url('https://fonts.googleapis.com/css?family=PT+Serif|Roboto|Source+Sans+Pro|Vollkorn');</style>\n").toString()
+    resourceHtml =
+      StringBuilder(
+        resourceHtml,
+      ).insert(endHeadIndex, getHtmlFont(fontFamily = "OpenDyslexic", href = "fonts/OpenDyslexic-Regular.otf")).toString()
+    resourceHtml =
+      StringBuilder(
+        resourceHtml,
+      ).insert(
+        endHeadIndex,
+        "<style>@import url('https://fonts.googleapis.com/css?family=PT+Serif|Roboto|Source+Sans+Pro|Vollkorn');</style>\n",
+      ).toString()
     resourceHtml = applyDirectionAttribute(resourceHtml, this.publication.manifest)
     return resourceHtml
   }
@@ -91,8 +97,12 @@ class SR2HtmlInjectingResource(
     manifest: Manifest,
   ): String {
     var resourceHtml1 = resourceHtml
-    fun addRTLDir(tagName: String, html: String): String {
-      return regexForOpeningHTMLTag(tagName).find(html, 0)?.let { result ->
+
+    fun addRTLDir(
+      tagName: String,
+      html: String,
+    ): String =
+      regexForOpeningHTMLTag(tagName).find(html, 0)?.let { result ->
         Regex("""dir=""").find(result.value, 0)?.let {
           html
         } ?: run {
@@ -102,7 +112,6 @@ class SR2HtmlInjectingResource(
       } ?: run {
         html
       }
-    }
 
     val layout = SR2ReadiumCssLayout(manifest.metadata)
 

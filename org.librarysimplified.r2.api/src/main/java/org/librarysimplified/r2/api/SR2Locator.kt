@@ -9,14 +9,11 @@ import java.util.regex.Pattern
  */
 
 sealed class SR2Locator : Comparable<SR2Locator> {
-
   companion object {
     private val leadingSlashes: Pattern =
       Pattern.compile("^/+")
 
-    private fun deslash(
-      href: Href,
-    ): Href {
+    private fun deslash(href: Href): Href {
       val asText = href.toString()
       if (asText.startsWith('/')) {
         return Href(Url(leadingSlashes.matcher(asText).replaceFirst(""))!!)
@@ -32,7 +29,6 @@ sealed class SR2Locator : Comparable<SR2Locator> {
     override val chapterHref: Href,
     val chapterProgress: Double,
   ) : SR2Locator() {
-
     init {
       require(this.chapterProgress in 0.0..1.0) {
         "${this.chapterProgress} must be in the range [0, 1]"
@@ -43,34 +39,33 @@ sealed class SR2Locator : Comparable<SR2Locator> {
     }
 
     companion object {
-
-      fun start(href: Href): SR2LocatorPercent {
-        return SR2LocatorPercent(
+      fun start(href: Href): SR2LocatorPercent =
+        SR2LocatorPercent(
           chapterProgress = 0.0,
           chapterHref = deslash(href),
         )
-      }
 
       fun create(
         chapterHref: Href,
         chapterProgress: Double,
-      ): SR2LocatorPercent {
-        return SR2LocatorPercent(
+      ): SR2LocatorPercent =
+        SR2LocatorPercent(
           chapterProgress = chapterProgress,
           chapterHref = deslash(chapterHref),
         )
-      }
     }
 
     override fun compareTo(other: SR2Locator): Int {
       val indexCmp = this.chapterHref.toString().compareTo(other.chapterHref.toString())
       return if (indexCmp == 0) {
         when (other) {
-          is SR2LocatorPercent ->
+          is SR2LocatorPercent -> {
             this.chapterProgress.compareTo(other.chapterProgress)
+          }
 
-          is SR2LocatorChapterEnd ->
+          is SR2LocatorChapterEnd -> {
             this.chapterProgress.compareTo(1.0)
+          }
         }
       } else {
         indexCmp
@@ -82,7 +77,6 @@ sealed class SR2Locator : Comparable<SR2Locator> {
   data class SR2LocatorChapterEnd private constructor(
     override val chapterHref: Href,
   ) : SR2Locator() {
-
     init {
       require(!this.chapterHref.toString().startsWith("/")) {
         "Chapter ${this.chapterHref} is not permitted to start with '/'"
@@ -90,25 +84,23 @@ sealed class SR2Locator : Comparable<SR2Locator> {
     }
 
     companion object {
-
-      fun create(
-        chapterHref: Href,
-      ): SR2LocatorChapterEnd {
-        return SR2LocatorChapterEnd(
+      fun create(chapterHref: Href): SR2LocatorChapterEnd =
+        SR2LocatorChapterEnd(
           chapterHref = deslash(chapterHref),
         )
-      }
     }
 
     override fun compareTo(other: SR2Locator): Int {
       val indexCmp = this.chapterHref.toString().compareTo(other.chapterHref.toString())
       return if (indexCmp == 0) {
         when (other) {
-          is SR2LocatorPercent ->
+          is SR2LocatorPercent -> {
             1.0.compareTo(other.chapterProgress)
+          }
 
-          is SR2LocatorChapterEnd ->
+          is SR2LocatorChapterEnd -> {
             0
+          }
         }
       } else {
         indexCmp

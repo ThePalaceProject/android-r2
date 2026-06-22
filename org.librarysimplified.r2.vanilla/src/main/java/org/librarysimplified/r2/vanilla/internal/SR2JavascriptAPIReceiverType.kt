@@ -5,7 +5,6 @@ package org.librarysimplified.r2.vanilla.internal
  */
 
 internal interface SR2JavascriptAPIReceiverType {
-
   /**
    * The reading position has changed.
    *

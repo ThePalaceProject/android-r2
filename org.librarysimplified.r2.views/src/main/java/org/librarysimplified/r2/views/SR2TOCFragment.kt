@@ -16,7 +16,6 @@ import org.librarysimplified.r2.views.internal.SR2TOCChaptersFragment
 import org.librarysimplified.r2.views.internal.SR2TOCPage
 
 class SR2TOCFragment : SR2Fragment() {
-
   private lateinit var buttonBack: View
   private lateinit var buttonBackIcon: ImageView
   private lateinit var tabLayout: TabLayout
@@ -47,16 +46,17 @@ class SR2TOCFragment : SR2Fragment() {
     this.viewPagerAdapter =
       SR2TOCAdapter(
         fragment = this,
-        pages = listOf(
-          SR2TOCPage(
-            title = this.resources.getString(R.string.tocTitle),
-            fragmentConstructor = { SR2TOCChaptersFragment() },
+        pages =
+          listOf(
+            SR2TOCPage(
+              title = this.resources.getString(R.string.tocTitle),
+              fragmentConstructor = { SR2TOCChaptersFragment() },
+            ),
+            SR2TOCPage(
+              title = this.resources.getString(R.string.tocBookmarks),
+              fragmentConstructor = { SR2TOCBookmarksFragment() },
+            ),
           ),
-          SR2TOCPage(
-            title = this.resources.getString(R.string.tocBookmarks),
-            fragmentConstructor = { SR2TOCBookmarksFragment() },
-          ),
-        ),
       )
 
     this.buttonBack.setOnClickListener {

@@ -6,6 +6,7 @@ import org.librarysimplified.r2.api.SR2Executors
 import org.librarysimplified.r2.api.SR2ScrollingMode
 import org.librarysimplified.r2.api.SR2ScrollingMode.SCROLLING_MODE_CONTINUOUS
 import org.librarysimplified.r2.api.SR2ScrollingMode.SCROLLING_MODE_PAGINATED
+import org.readium.r2.shared.publication.Layout
 import org.readium.r2.shared.publication.epub.EpubLayout
 import org.slf4j.LoggerFactory
 import java.util.UUID
@@ -23,26 +24,24 @@ internal class SR2WebViewConnection(
   private val uiExecutor: (f: () -> Unit) -> Unit,
   private val commandQueue: SR2Controller,
 ) : SR2WebViewConnectionType {
-
   private val logger =
     LoggerFactory.getLogger(SR2WebViewConnection::class.java)
 
   companion object {
-
     fun create(
       webView: WebView,
       jsReceiver: SR2JavascriptAPIReceiverType,
       uiExecutor: (f: () -> Unit) -> Unit,
       commandQueue: SR2Controller,
       scrollingMode: SR2ScrollingMode,
-      layout: EpubLayout,
+      layout: Layout,
     ): SR2WebViewConnectionType {
       val webChromeClient = SR2WebChromeClient()
       webView.webChromeClient = webChromeClient
       webView.settings.javaScriptEnabled = true
       webView.addJavascriptInterface(jsReceiver, "Android")
 
-      if (layout == EpubLayout.FIXED) {
+      if (layout == Layout.FIXED) {
         with(webView.settings) {
           /*
            * Allow pinch-and-zoom.
@@ -73,6 +72,7 @@ internal class SR2WebViewConnection(
             webView.isVerticalScrollBarEnabled = false
             webView.isHorizontalScrollBarEnabled = false
           }
+
           SCROLLING_MODE_CONTINUOUS -> {
             webView.isVerticalScrollBarEnabled = true
             webView.isHorizontalScrollBarEnabled = false
@@ -89,9 +89,7 @@ internal class SR2WebViewConnection(
     }
   }
 
-  override fun openURL(
-    location: String,
-  ): CompletableFuture<*> {
+  override fun openURL(location: String): CompletableFuture<*> {
     val id =
       UUID.randomUUID()
     val future =
@@ -139,9 +137,7 @@ internal class SR2WebViewConnection(
     }
   }
 
-  override fun executeJS(
-    function: (SR2JavascriptAPIType) -> CompletableFuture<*>,
-  ): CompletableFuture<*> {
+  override fun executeJS(function: (SR2JavascriptAPIType) -> CompletableFuture<*>): CompletableFuture<*> {
     val id =
       UUID.randomUUID()
     val future =

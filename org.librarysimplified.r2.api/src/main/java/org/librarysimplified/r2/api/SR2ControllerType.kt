@@ -16,8 +16,9 @@ import java.io.Closeable
  * a controller is created when a book is opened, and closed when the book is closed.
  */
 
-interface SR2ControllerType : Closeable, SR2ControllerCommandQueueType {
-
+interface SR2ControllerType :
+  Closeable,
+  SR2ControllerCommandQueueType {
   /**
    * The configuration used to open the controller.
    */

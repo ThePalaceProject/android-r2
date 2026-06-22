@@ -22,7 +22,6 @@ import org.librarysimplified.r2.views.SR2ReaderViewCommand.SR2ReaderViewNavigati
 import org.slf4j.LoggerFactory
 
 internal class SR2TOCBookmarksFragment : Fragment() {
-
   private val logger =
     LoggerFactory.getLogger(SR2TOCBookmarksFragment::class.java)
 
@@ -116,11 +115,12 @@ internal class SR2TOCBookmarksFragment : Fragment() {
       this.lastReadItem.rootView.visibility = View.GONE
     }
 
-    this.emptyMessage.visibility = if (bookmarks.isEmpty() && lastRead == null) {
-      View.VISIBLE
-    } else {
-      View.GONE
-    }
+    this.emptyMessage.visibility =
+      if (bookmarks.isEmpty() && lastRead == null) {
+        View.VISIBLE
+      } else {
+        View.GONE
+      }
   }
 
   private fun onBookmarkSelected(bookmark: SR2Bookmark) {

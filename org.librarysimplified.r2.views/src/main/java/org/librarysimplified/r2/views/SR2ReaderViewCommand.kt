@@ -5,7 +5,6 @@ package org.librarysimplified.r2.views
  */
 
 sealed class SR2ReaderViewCommand {
-
   /**
    * The user performed an action that means the current view should be closed.
    */

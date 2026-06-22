@@ -16,7 +16,6 @@ class SR2SearchResultSectionItemDecoration(
   private val context: Context,
   private val sectionListener: SR2SearchResultSectionListener,
 ) : RecyclerView.ItemDecoration() {
-
   private lateinit var headerTextView: TextView
 
   override fun getItemOffsets(
@@ -40,7 +39,11 @@ class SR2SearchResultSectionItemDecoration(
     }
   }
 
-  override fun onDrawOver(c: Canvas, parent: RecyclerView, state: RecyclerView.State) {
+  override fun onDrawOver(
+    c: Canvas,
+    parent: RecyclerView,
+    state: RecyclerView.State,
+  ) {
     super.onDrawOver(c, parent, state)
     initHeaderViewIfNeeded(parent)
 
@@ -69,7 +72,10 @@ class SR2SearchResultSectionItemDecoration(
         as TextView
   }
 
-  private fun fixLayoutSize(view: View, parent: ViewGroup) {
+  private fun fixLayoutSize(
+    view: View,
+    parent: ViewGroup,
+  ) {
     val widthSpec = View.MeasureSpec.makeMeasureSpec(parent.width, View.MeasureSpec.EXACTLY)
     val heightSpec = View.MeasureSpec.makeMeasureSpec(parent.height, View.MeasureSpec.UNSPECIFIED)
     val childWidth =
@@ -88,7 +94,11 @@ class SR2SearchResultSectionItemDecoration(
     view.layout(0, 0, view.measuredWidth, view.measuredHeight)
   }
 
-  private fun drawHeader(canvas: Canvas, child: View, headerView: View) {
+  private fun drawHeader(
+    canvas: Canvas,
+    child: View,
+    headerView: View,
+  ) {
     canvas.run {
       save()
       translate(0F, maxOf(0, child.top - headerView.height).toFloat())
@@ -97,7 +107,10 @@ class SR2SearchResultSectionItemDecoration(
     }
   }
 
-  private fun isTopChild(child: View, children: List<View>): Boolean {
+  private fun isTopChild(
+    child: View,
+    children: List<View>,
+  ): Boolean {
     val minimumChildTop = children.minOf { it.top }
     return child.top == minimumChildTop
   }

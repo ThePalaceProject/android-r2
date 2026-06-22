@@ -7,7 +7,6 @@ import org.librarysimplified.r2.api.SR2ControllerType
  */
 
 sealed class SR2ReaderViewEvent {
-
   abstract val eventId: Int
 
   sealed class SR2ReaderViewControllerEvent : SR2ReaderViewEvent() {

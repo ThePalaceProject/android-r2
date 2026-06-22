@@ -3,7 +3,9 @@ package org.librarysimplified.r2.vanilla.internal
 import org.readium.r2.shared.publication.Metadata
 import org.readium.r2.shared.publication.ReadingProgression
 
-internal enum class SR2ReadiumCssLayout(val cssId: String) {
+internal enum class SR2ReadiumCssLayout(
+  val cssId: String,
+) {
   // Right to left
   RTL("rtl"),
 
@@ -17,15 +19,15 @@ internal enum class SR2ReadiumCssLayout(val cssId: String) {
   CJK_HORIZONTAL("cjk-horizontal"),
   ;
 
-  val readiumCSSPath: String get() = when (this) {
-    LTR -> ""
-    RTL -> "rtl/"
-    CJK_VERTICAL -> "cjk-vertical/"
-    CJK_HORIZONTAL -> "cjk-horizontal/"
-  }
+  val readiumCSSPath: String get() =
+    when (this) {
+      LTR -> ""
+      RTL -> "rtl/"
+      CJK_VERTICAL -> "cjk-vertical/"
+      CJK_HORIZONTAL -> "cjk-horizontal/"
+    }
 
   companion object {
-
     operator fun invoke(metadata: Metadata): SR2ReadiumCssLayout =
       invoke(languages = metadata.languages, readingProgression = ReadingProgression.LTR)
 
@@ -34,7 +36,10 @@ internal enum class SR2ReadiumCssLayout(val cssId: String) {
      * [readingProgression].
      * Defaults to [LTR].
      */
-    operator fun invoke(languages: List<String>, readingProgression: ReadingProgression): SR2ReadiumCssLayout {
+    operator fun invoke(
+      languages: List<String>,
+      readingProgression: ReadingProgression,
+    ): SR2ReadiumCssLayout {
       val isCjk: Boolean =
         if (languages.size == 1) {
           val language = languages[0].split("-")[0] // Remove region
@@ -44,19 +49,21 @@ internal enum class SR2ReadiumCssLayout(val cssId: String) {
         }
 
       return when (readingProgression) {
-        ReadingProgression.RTL ->
+        ReadingProgression.RTL -> {
           if (isCjk) {
             CJK_VERTICAL
           } else {
             RTL
           }
+        }
 
-        ReadingProgression.LTR ->
+        ReadingProgression.LTR -> {
           if (isCjk) {
             CJK_HORIZONTAL
           } else {
             LTR
           }
+        }
       }
     }
   }

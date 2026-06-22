@@ -7,12 +7,7 @@ import java.util.concurrent.CompletableFuture
  */
 
 internal interface SR2WebViewConnectionType {
+  fun openURL(location: String): CompletableFuture<*>
 
-  fun openURL(
-    location: String,
-  ): CompletableFuture<*>
-
-  fun executeJS(
-    f: (SR2JavascriptAPIType) -> CompletableFuture<*>,
-  ): CompletableFuture<*>
+  fun executeJS(f: (SR2JavascriptAPIType) -> CompletableFuture<*>): CompletableFuture<*>
 }

@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory
 import java.net.URI
 
 object SR2NavigationGraphs {
-
   private val logger =
     LoggerFactory.getLogger(SR2NavigationGraphs::class.java)
 
@@ -18,9 +17,7 @@ object SR2NavigationGraphs {
     val link: Link,
   )
 
-  fun create(
-    publication: Publication,
-  ): SR2NavigationGraph {
+  fun create(publication: Publication): SR2NavigationGraph {
     val flatToc = mutableListOf<FlatTOCLink>()
     flattenTOC(flatToc, publication.tableOfContents, depth = 0)
 
@@ -57,22 +54,20 @@ object SR2NavigationGraphs {
   private fun makeResourceNode(
     flatTOC: List<FlatTOCLink>,
     link: Link,
-  ): SR2NavigationResourceNode {
-    return SR2NavigationResourceNode(
+  ): SR2NavigationResourceNode =
+    SR2NavigationResourceNode(
       navigationPoint = this.makeNavigationPoint(flatTOC, link),
     )
-  }
 
   private fun makeReadingOrderNode(
     flatTOC: List<FlatTOCLink>,
     index: Int,
     link: Link,
-  ): SR2NavigationReadingOrderNode {
-    return SR2NavigationReadingOrderNode(
+  ): SR2NavigationReadingOrderNode =
+    SR2NavigationReadingOrderNode(
       navigationPoint = this.makeNavigationPoint(flatTOC, link),
       index = index,
     )
-  }
 
   private fun makeNavigationPoint(
     flatTOC: List<FlatTOCLink>,
@@ -103,7 +98,8 @@ object SR2NavigationGraphs {
     }
 
     val bestLink =
-      flatTOC.filter { flatLink -> hasSuitableTitle(candidateEntry = flatLink.link, link) }
+      flatTOC
+        .filter { flatLink -> hasSuitableTitle(candidateEntry = flatLink.link, link) }
         .sortedBy(FlatTOCLink::depth)
         .lastOrNull()
 

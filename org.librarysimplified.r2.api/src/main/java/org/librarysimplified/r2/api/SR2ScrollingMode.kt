@@ -5,7 +5,6 @@ package org.librarysimplified.r2.api
  */
 
 enum class SR2ScrollingMode {
-
   /**
    * Paginated scrolling mode; book chapters are presented as a series of discrete pages.
    */

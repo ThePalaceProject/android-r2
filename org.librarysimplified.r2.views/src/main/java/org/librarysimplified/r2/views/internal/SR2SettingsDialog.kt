@@ -21,7 +21,6 @@ import org.librarysimplified.r2.views.R
 import org.librarysimplified.r2.views.SR2ReaderModel
 
 internal class SR2SettingsDialog private constructor() {
-
   enum class FontSelectionTab {
     SANS,
     SERIF,
@@ -29,19 +28,22 @@ internal class SR2SettingsDialog private constructor() {
     PUB,
     ;
 
-    fun toThemeUpdater(): (SR2Theme) -> SR2Theme = {
-      val font = when (this) {
-        SANS -> SR2Font.FONT_SANS
-        SERIF -> SR2Font.FONT_SERIF
-        DYSLEXIC -> SR2Font.FONT_OPEN_DYSLEXIC
-        PUB -> it.font
+    fun toThemeUpdater(): (SR2Theme) -> SR2Theme =
+      {
+        val font =
+          when (this) {
+            SANS -> SR2Font.FONT_SANS
+            SERIF -> SR2Font.FONT_SERIF
+            DYSLEXIC -> SR2Font.FONT_OPEN_DYSLEXIC
+            PUB -> it.font
+          }
+        val pubDefault =
+          when (this) {
+            PUB -> SR2_PUBLISHER_DEFAULT_CSS_ENABLED
+            else -> SR2_PUBLISHER_DEFAULT_CSS_DISABLED
+          }
+        it.copy(font = font, publisherCSS = pubDefault)
       }
-      val pubDefault = when (this) {
-        PUB -> SR2_PUBLISHER_DEFAULT_CSS_ENABLED
-        else -> SR2_PUBLISHER_DEFAULT_CSS_DISABLED
-      }
-      it.copy(font = font, publisherCSS = pubDefault)
-    }
 
     companion object {
       fun fromTheme(theme: SR2Theme): FontSelectionTab =
@@ -58,16 +60,11 @@ internal class SR2SettingsDialog private constructor() {
   }
 
   companion object {
-
     private var isOpen = false
 
-    fun isOpen(): Boolean {
-      return this.isOpen
-    }
+    fun isOpen(): Boolean = this.isOpen
 
-    private fun updateTheme(
-      updater: (SR2Theme) -> SR2Theme,
-    ) {
+    private fun updateTheme(updater: (SR2Theme) -> SR2Theme) {
       SR2ReaderModel.submitCommand(SR2Command.ThemeSet(updater.invoke(SR2ReaderModel.theme())))
     }
 
@@ -83,8 +80,7 @@ internal class SR2SettingsDialog private constructor() {
           .setOnDismissListener {
             isOpen = false
             eventSubscriptions.dispose()
-          }
-          .create()
+          }.create()
 
       dialog.show()
       isOpen = true
@@ -108,23 +104,25 @@ internal class SR2SettingsDialog private constructor() {
       setFontTabs.getTabAt(3)!!.customView = setFontPub
       val setFontDetail = dialog.findViewById<View>(R.id.setFontDetail)!!
 
-      setFontTabs.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
-        override fun onTabSelected(tab: TabLayout.Tab) {
-          val selectedTab = FontSelectionTab.values()[tab.position]
-          val updater = selectedTab.toThemeUpdater()
-          this@Companion.updateTheme(updater)
-          val showDetail = selectedTab == FontSelectionTab.PUB
-          setFontDetail.visibility = if (showDetail) View.VISIBLE else View.GONE
-        }
+      setFontTabs.addOnTabSelectedListener(
+        object : TabLayout.OnTabSelectedListener {
+          override fun onTabSelected(tab: TabLayout.Tab) {
+            val selectedTab = FontSelectionTab.values()[tab.position]
+            val updater = selectedTab.toThemeUpdater()
+            this@Companion.updateTheme(updater)
+            val showDetail = selectedTab == FontSelectionTab.PUB
+            setFontDetail.visibility = if (showDetail) View.VISIBLE else View.GONE
+          }
 
-        override fun onTabUnselected(tab: TabLayout.Tab) {
-          // Do nothing
-        }
+          override fun onTabUnselected(tab: TabLayout.Tab) {
+            // Do nothing
+          }
 
-        override fun onTabReselected(tab: TabLayout.Tab) {
-          // Do nothing
-        }
-      })
+          override fun onTabReselected(tab: TabLayout.Tab) {
+            // Do nothing
+          }
+        },
+      )
 
       val currentTabIndex =
         FontSelectionTab.fromTheme(SR2ReaderModel.theme()).ordinal
@@ -189,23 +187,26 @@ internal class SR2SettingsDialog private constructor() {
 
       val brightnessInitial = brightness.brightness()
       setBrightness.progress = (brightnessInitial * 100.0).toInt()
-      setBrightness.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-        var bright = brightnessInitial
-        override fun onProgressChanged(
-          seekBar: SeekBar,
-          progress: Int,
-          fromUser: Boolean,
-        ) {
-          this.bright = progress / 100.0
-        }
+      setBrightness.setOnSeekBarChangeListener(
+        object : SeekBar.OnSeekBarChangeListener {
+          var bright = brightnessInitial
 
-        override fun onStartTrackingTouch(seekBar: SeekBar) {
-        }
+          override fun onProgressChanged(
+            seekBar: SeekBar,
+            progress: Int,
+            fromUser: Boolean,
+          ) {
+            this.bright = progress / 100.0
+          }
 
-        override fun onStopTrackingTouch(seekBar: SeekBar) {
-          brightness.setBrightness(this.bright)
-        }
-      })
+          override fun onStartTrackingTouch(seekBar: SeekBar) {
+          }
+
+          override fun onStopTrackingTouch(seekBar: SeekBar) {
+            brightness.setBrightness(this.bright)
+          }
+        },
+      )
 
       return SR2SettingsDialog()
     }

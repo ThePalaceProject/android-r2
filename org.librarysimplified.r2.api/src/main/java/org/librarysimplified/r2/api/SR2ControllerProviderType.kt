@@ -7,7 +7,6 @@ import android.app.Application
  */
 
 interface SR2ControllerProviderType {
-
   /**
    * Create a new controller on the current thread.
    *

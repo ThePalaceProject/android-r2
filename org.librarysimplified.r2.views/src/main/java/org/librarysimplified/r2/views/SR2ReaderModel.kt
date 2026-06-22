@@ -43,7 +43,6 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicInteger
 
 object SR2ReaderModel {
-
   private val logger =
     LoggerFactory.getLogger(SR2ReaderModel::class.java)
 
@@ -59,18 +58,21 @@ object SR2ReaderModel {
     SR2PageNumberingMode.WHOLE_BOOK
 
   private val viewCommandSource =
-    PublishSubject.create<SR2ReaderViewCommand>()
+    PublishSubject
+      .create<SR2ReaderViewCommand>()
       .toSerialized()
 
   private val viewEventSource =
-    BehaviorSubject.create<SR2ReaderViewEvent>()
+    BehaviorSubject
+      .create<SR2ReaderViewEvent>()
       .toSerialized()
 
   private val viewEventIds =
     AtomicInteger(0)
 
   private val controllerEventSource =
-    PublishSubject.create<SR2Event>()
+    PublishSubject
+      .create<SR2Event>()
       .toSerialized()
 
   val viewCommands: Observable<SR2ReaderViewCommand> =
@@ -89,16 +91,19 @@ object SR2ReaderModel {
     MutableStateFlow<List<Locator>>(emptyList())
 
   @OptIn(ExperimentalReadiumApi::class)
-  private val pagingSourceFactory = InvalidatingPagingSourceFactory {
-    SR2SearchPagingSource(object : SR2SearchPagingSourceListener {
-      override suspend fun getIteratorNext(): SearchTry<LocatorCollection?> {
-        val iterator = this@SR2ReaderModel.searchIterator ?: return Try.success(null)
-        return iterator.next().onSuccess {
-          this@SR2ReaderModel.mutableSearchLocators.value += (it?.locators.orEmpty())
-        }
-      }
-    })
-  }
+  private val pagingSourceFactory =
+    InvalidatingPagingSourceFactory {
+      SR2SearchPagingSource(
+        object : SR2SearchPagingSourceListener {
+          override suspend fun getIteratorNext(): SearchTry<LocatorCollection?> {
+            val iterator = this@SR2ReaderModel.searchIterator ?: return Try.success(null)
+            return iterator.next().onSuccess {
+              this@SR2ReaderModel.mutableSearchLocators.value += (it?.locators.orEmpty())
+            }
+          }
+        },
+      )
+    }
 
   val searchLocators: StateFlow<List<Locator>> =
     this.mutableSearchLocators
@@ -114,9 +119,7 @@ object SR2ReaderModel {
 
   private var controllerField: SR2ControllerType? = null
 
-  fun controllerNow(): SR2ControllerType? {
-    return this.controllerField
-  }
+  fun controllerNow(): SR2ControllerType? = this.controllerField
 
   fun controllerCreate(
     context: Application,
@@ -179,9 +182,7 @@ object SR2ReaderModel {
     return future
   }
 
-  private fun closeAndPublishUnavailability(
-    existingController: SR2ControllerType?,
-  ) {
+  private fun closeAndPublishUnavailability(existingController: SR2ControllerType?) {
     if (existingController != null) {
       this.viewEventSource.onNext(
         SR2ControllerBecameUnavailable(this.viewEventIds.getAndIncrement(), existingController),
@@ -196,9 +197,7 @@ object SR2ReaderModel {
     this.pagingSourceFactory.invalidate()
   }
 
-  fun isBookmarkHere(): Boolean {
-    return this.controllerField?.isBookmarkHere() ?: false
-  }
+  fun isBookmarkHere(): Boolean = this.controllerField?.isBookmarkHere() ?: false
 
   fun bookmarkToggle() {
     this.controllerField?.bookmarkToggle()
@@ -212,11 +211,7 @@ object SR2ReaderModel {
     this.controllerField?.submitCommand(command)
   }
 
-  fun theme(): SR2Theme {
-    return this.controllerField?.themeNow() ?: SR2Theme()
-  }
+  fun theme(): SR2Theme = this.controllerField?.themeNow() ?: SR2Theme()
 
-  fun bookmarks(): List<SR2Bookmark> {
-    return this.controllerField?.bookmarksNow() ?: listOf()
-  }
+  fun bookmarks(): List<SR2Bookmark> = this.controllerField?.bookmarksNow() ?: listOf()
 }

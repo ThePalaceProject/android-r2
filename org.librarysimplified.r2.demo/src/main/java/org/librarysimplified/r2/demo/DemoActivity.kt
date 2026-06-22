@@ -57,7 +57,6 @@ import java.security.DigestInputStream
 import java.security.MessageDigest
 
 class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
-
   private val logger =
     LoggerFactory.getLogger(DemoActivity::class.java)
 
@@ -120,7 +119,8 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
 
     val fragment = this.fragmentNow
     if (fragment != null) {
-      this.supportFragmentManager.beginTransaction()
+      this.supportFragmentManager
+        .beginTransaction()
         .remove(fragment)
         .commitAllowingStateLoss()
     }
@@ -183,8 +183,9 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
         this.onControllerBecameAvailable(event.controller)
       }
 
-      is SR2BookLoadingFailed ->
+      is SR2BookLoadingFailed -> {
         this.onBookLoadingFailed(event.exception)
+      }
 
       is SR2ControllerBecameUnavailable -> {
         // Nothing to do here.
@@ -192,8 +193,8 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
     }
   }
 
-  private fun handleBack() {
-    return when (val f = this.fragmentNow) {
+  private fun handleBack() =
+    when (val f = this.fragmentNow) {
       is DemoFileSelectionFragment -> {
         DemoModel.clearEpubAndId()
         super.onBackPressed()
@@ -230,7 +231,6 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
         throw IllegalStateException("Unrecognized fragment: $f")
       }
     }
-  }
 
   @UiThread
   private fun onViewCommandReceived(command: SR2ReaderViewCommand) {
@@ -263,13 +263,15 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
   private fun switchFragment(fragment: Fragment) {
     this.logger.debug("Switching fragment {} -> {}", this.fragmentNow, fragment)
     this.fragmentNow = fragment
-    this.supportFragmentManager.beginTransaction()
+    this.supportFragmentManager
+      .beginTransaction()
       .replace(R.id.mainFragmentHolder, fragment)
       .commit()
   }
 
   private fun onBookLoadingFailed(exception: Throwable) {
-    AlertDialog.Builder(this)
+    AlertDialog
+      .Builder(this)
       .setMessage(exception.message)
       .setOnDismissListener { this.finish() }
       .create()
@@ -320,7 +322,10 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
    * Handle the result of a pick document intent.
    */
 
-  private fun onPickDocumentResult(resultCode: Int, intent: Intent?) {
+  private fun onPickDocumentResult(
+    resultCode: Int,
+    intent: Intent?,
+  ) {
     SR2UIThread.checkIsUIThread()
     this.switchFragment(DemoLoadingFragment())
 
@@ -374,9 +379,7 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
     return null
   }
 
-  private fun hashOf(
-    file: File,
-  ): String {
+  private fun hashOf(file: File): String {
     val digest = MessageDigest.getInstance("SHA-256")
 
     DigestInputStream(file.inputStream(), digest).use { input ->

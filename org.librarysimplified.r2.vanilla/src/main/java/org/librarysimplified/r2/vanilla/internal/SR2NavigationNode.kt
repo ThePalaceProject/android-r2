@@ -7,7 +7,6 @@ import org.librarysimplified.r2.api.SR2Locator
  */
 
 sealed class SR2NavigationNode {
-
   /**
    * @return true If the locator matches this navigation node
    */

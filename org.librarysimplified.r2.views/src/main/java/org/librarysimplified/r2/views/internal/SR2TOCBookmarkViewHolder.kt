@@ -16,7 +16,6 @@ import org.librarysimplified.r2.views.R
 internal class SR2TOCBookmarkViewHolder(
   val rootView: View,
 ) : RecyclerView.ViewHolder(rootView) {
-
   private val bookmarkIcon: ImageView =
     this.rootView.findViewById(R.id.bookmarkIcon)
   private val bookmarkDelete: ImageView =
@@ -59,6 +58,7 @@ internal class SR2TOCBookmarkViewHolder(
           this.openDeleteDialog(bookmark, onBookmarkDeleteRequested)
         }
       }
+
       LAST_READ -> {
         this.bookmarkIcon.setImageResource(R.drawable.sr2_daynight_last_read)
         this.bookmarkDelete.visibility = View.INVISIBLE
@@ -77,8 +77,10 @@ internal class SR2TOCBookmarkViewHolder(
           val percent = (locator.chapterProgress * 100.0).toInt()
           resources.getString(R.string.bookmarkProgressPercent, percent)
         }
-        is SR2Locator.SR2LocatorChapterEnd ->
+
+        is SR2Locator.SR2LocatorChapterEnd -> {
           resources.getString(R.string.bookmarkEnd)
+        }
       }
   }
 
@@ -91,8 +93,7 @@ internal class SR2TOCBookmarkViewHolder(
       .setCancelable(true)
       .setNegativeButton(R.string.tocBookmarkCancel) { dialog, which ->
         dialog.dismiss()
-      }
-      .setPositiveButton(R.string.tocBookmarkDelete) { dialog, which ->
+      }.setPositiveButton(R.string.tocBookmarkDelete) { dialog, which ->
         onBookmarkDeleteRequested.invoke(bookmark)
         dialog.dismiss()
       }.show()

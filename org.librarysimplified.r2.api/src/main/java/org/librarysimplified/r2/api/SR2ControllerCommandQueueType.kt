@@ -6,7 +6,6 @@ package org.librarysimplified.r2.api
  */
 
 interface SR2ControllerCommandQueueType {
-
   /**
    * Execute a command asynchronously.
    */

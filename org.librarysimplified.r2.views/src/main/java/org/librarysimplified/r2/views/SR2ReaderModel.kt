@@ -253,10 +253,11 @@ object SR2ReaderModel {
         this.logger.debug("wakeLockAcquire: Creating WakeLock")
         val power =
           context.getSystemService(POWER_SERVICE) as PowerManager
-        this.wakeLock = power.newWakeLock(
-          PowerManager.PARTIAL_WAKE_LOCK,
-          SR2ReaderModel::class.java.canonicalName
-        )
+        this.wakeLock =
+          power.newWakeLock(
+            PowerManager.PARTIAL_WAKE_LOCK,
+            SR2ReaderModel::class.java.canonicalName
+          )
       }
 
       this.logger.debug("wakeLockAcquire: Acquiring WakeLock")

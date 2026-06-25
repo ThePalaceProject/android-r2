@@ -1,295 +1,295 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-  xmlns:app="http://schemas.android.com/apk/res-auto"
-  xmlns:tools="http://schemas.android.com/tools"
-  android:id="@+id/readerContainer"
-  android:layout_width="match_parent"
-  android:layout_height="match_parent">
-
-  <TextView
-    android:id="@+id/titleText"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/readerContainer"
     android:layout_width="match_parent"
-    android:layout_height="@dimen/PalaceToolbarHeight"
-    android:gravity="center"
-    android:clickable="false"
-    android:focusable="false"
-    android:textAppearance="?android:textAppearanceMedium"
-    app:layout_constraintTop_toTopOf="parent"
-    tools:text="Placeholder" />
+    android:layout_height="match_parent">
 
-  <FrameLayout
-    android:id="@+id/readerShowTouch"
-    android:layout_width="32dp"
-    android:layout_height="32dp"
-    android:layout_marginEnd="16dp"
-    android:background="@drawable/sr2_arrow_tag"
-    android:clickable="true"
-    android:contentDescription="@string/accessibilityShowUIButton"
-    android:focusable="true"
-    android:foreground="?attr/selectableItemBackground"
-    app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintTop_toTopOf="parent">
-
-    <ImageView
-      android:id="@+id/readerShow"
-      android:layout_width="24dp"
-      android:layout_height="24dp"
-      android:layout_gravity="center"
-      android:clickable="false"
-      android:focusable="false"
-      android:importantForAccessibility="no"
-      android:src="@drawable/sr2_angle_down" />
-  </FrameLayout>
-
-  <androidx.constraintlayout.widget.ConstraintLayout
-    android:id="@+id/readerToolbar2"
-    android:layout_width="match_parent"
-    android:layout_height="64dp"
-    android:clickable="false"
-    android:focusable="false"
-    android:background="@color/PalaceScreenBackgroundColor"
-    app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toTopOf="parent"
-    tools:visibility="invisible">
-
-    <FrameLayout
-      android:id="@+id/readerToolbarBackTouch"
-      android:layout_width="64dp"
-      android:layout_height="64dp"
-      android:clickable="true"
-      android:contentDescription="@string/accessibilityCloseBook"
-      android:focusable="true"
-      app:layout_constraintBottom_toBottomOf="parent"
-      app:layout_constraintStart_toStartOf="parent"
-      app:layout_constraintTop_toTopOf="parent">
-
-      <ImageView
-        android:id="@+id/readerToolbarBack"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
-        android:layout_gravity="center"
+    <TextView
+        android:id="@+id/titleText"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/PalaceToolbarHeight"
         android:clickable="false"
         android:focusable="false"
-        android:importantForAccessibility="no"
-        android:src="@drawable/sr2_arrow_back" />
+        android:gravity="center"
+        android:textAppearance="?android:textAppearanceMedium"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="Placeholder" />
+
+    <FrameLayout
+        android:id="@+id/readerShowTouch"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginEnd="16dp"
+        android:background="@drawable/sr2_arrow_tag"
+        android:clickable="true"
+        android:contentDescription="@string/accessibilityShowUIButton"
+        android:focusable="true"
+        android:foreground="?attr/selectableItemBackground"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:id="@+id/readerShow"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center"
+            android:clickable="false"
+            android:focusable="false"
+            android:importantForAccessibility="no"
+            android:src="@drawable/sr2_angle_down" />
     </FrameLayout>
 
-    <LinearLayout
-      android:id="@+id/readerToolbarEndButtons"
-      android:layout_width="wrap_content"
-      android:layout_height="match_parent"
-      android:orientation="horizontal"
-      app:layout_constraintBottom_toBottomOf="parent"
-      app:layout_constraintEnd_toEndOf="parent"
-      app:layout_constraintTop_toTopOf="parent">
-
-      <FrameLayout
-        android:id="@+id/readerToolbarSearchTouch"
-        android:layout_width="48dp"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/readerToolbar2"
+        android:layout_width="match_parent"
         android:layout_height="64dp"
+        android:background="@color/PalaceScreenBackgroundColor"
+        android:clickable="false"
+        android:focusable="false"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:visibility="invisible">
+
+        <FrameLayout
+            android:id="@+id/readerToolbarBackTouch"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:clickable="true"
+            android:contentDescription="@string/accessibilityCloseBook"
+            android:focusable="true"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageView
+                android:id="@+id/readerToolbarBack"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center"
+                android:clickable="false"
+                android:focusable="false"
+                android:importantForAccessibility="no"
+                android:src="@drawable/sr2_arrow_back" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:id="@+id/readerToolbarEndButtons"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <FrameLayout
+                android:id="@+id/readerToolbarSearchTouch"
+                android:layout_width="48dp"
+                android:layout_height="64dp"
+                android:clickable="true"
+                android:contentDescription="@string/accessibilitySearch"
+                android:focusable="true"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <ImageView
+                    android:id="@+id/readerToolbarSearch"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    android:clickable="false"
+                    android:focusable="false"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/sr2_search" />
+            </FrameLayout>
+
+            <FrameLayout
+                android:id="@+id/readerToolbarSettingsTouch"
+                android:layout_width="48dp"
+                android:layout_height="64dp"
+                android:clickable="true"
+                android:contentDescription="@string/accessibilitySettings"
+                android:focusable="true"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <ImageView
+                    android:id="@+id/readerToolbarSettings"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    android:clickable="false"
+                    android:focusable="false"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/sr2_settings" />
+            </FrameLayout>
+
+            <FrameLayout
+                android:id="@+id/readerToolbarBookmarkTouch"
+                android:layout_width="48dp"
+                android:layout_height="64dp"
+                android:clickable="true"
+                android:contentDescription="@string/readerAccessAddBookmark"
+                android:focusable="true"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <ImageView
+                    android:id="@+id/readerToolbarBookmark"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    android:clickable="false"
+                    android:focusable="false"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/sr2_bookmark_inactive" />
+            </FrameLayout>
+        </LinearLayout>
+
+        <View
+            android:id="@+id/readerToolbarDivider"
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:background="@drawable/sr2_divider"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <org.librarysimplified.r2.views.internal.SR2LimitedWebView
+        android:id="@+id/readerWebView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="@dimen/palaceR2MarginSize"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="@dimen/palaceR2MarginSize"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintBottom_toTopOf="@id/readerProgressContainer"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/titleText" />
+
+    <FrameLayout
+        android:id="@+id/readerToolbarHideTouch"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginTop="-1dp"
+        android:layout_marginEnd="16dp"
+        android:background="@drawable/sr2_arrow_tag"
         android:clickable="true"
-        android:contentDescription="@string/accessibilitySearch"
+        android:contentDescription="@string/accessibilityHideUIButton"
         android:focusable="true"
+        android:foreground="?attr/selectableItemBackground"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/readerToolbar2">
+
+        <ImageView
+            android:id="@+id/readerToolbarHide"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center"
+            android:clickable="false"
+            android:focusable="false"
+            android:importantForAccessibility="no"
+            android:src="@drawable/sr2_angle_up" />
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/readerPageNextTouch"
+        android:layout_width="@dimen/palaceR2PageButtonSize"
+        android:layout_height="0dp"
+        android:layout_marginTop="128dp"
+        android:layout_marginBottom="128dp"
+        android:clickable="true"
+        android:contentDescription="@string/accessibilityGoToNextPage"
+        android:focusable="true"
+        android:foreground="?attr/selectableItemBackground"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
         <ImageView
-          android:id="@+id/readerToolbarSearch"
-          android:layout_width="24dp"
-          android:layout_height="24dp"
-          android:layout_gravity="center"
-          android:clickable="false"
-          android:focusable="false"
-          android:importantForAccessibility="no"
-          android:src="@drawable/sr2_search" />
-      </FrameLayout>
+            android:id="@+id/readerPageNext"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center"
+            android:alpha="0.75"
+            android:clickable="false"
+            android:focusable="false"
+            android:importantForAccessibility="no"
+            android:src="@drawable/sr2_angle_right" />
+    </FrameLayout>
 
-      <FrameLayout
-        android:id="@+id/readerToolbarSettingsTouch"
-        android:layout_width="48dp"
-        android:layout_height="64dp"
+    <FrameLayout
+        android:id="@+id/readerPagePreviousTouch"
+        android:layout_width="@dimen/palaceR2PageButtonSize"
+        android:layout_height="0dp"
+        android:layout_marginTop="128dp"
+        android:layout_marginBottom="128dp"
         android:clickable="true"
-        android:contentDescription="@string/accessibilitySettings"
+        android:contentDescription="@string/accessibilityGoToPreviousPage"
         android:focusable="true"
+        android:foreground="?attr/selectableItemBackground"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
         <ImageView
-          android:id="@+id/readerToolbarSettings"
-          android:layout_width="24dp"
-          android:layout_height="24dp"
-          android:layout_gravity="center"
-          android:clickable="false"
-          android:focusable="false"
-          android:importantForAccessibility="no"
-          android:src="@drawable/sr2_settings" />
-      </FrameLayout>
-
-      <FrameLayout
-        android:id="@+id/readerToolbarBookmarkTouch"
-        android:layout_width="48dp"
-        android:layout_height="64dp"
-        android:clickable="true"
-        android:contentDescription="@string/readerAccessAddBookmark"
-        android:focusable="true"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <ImageView
-          android:id="@+id/readerToolbarBookmark"
-          android:layout_width="24dp"
-          android:layout_height="24dp"
-          android:layout_gravity="center"
-          android:clickable="false"
-          android:focusable="false"
-          android:importantForAccessibility="no"
-          android:src="@drawable/sr2_bookmark_inactive" />
-      </FrameLayout>
-    </LinearLayout>
+            android:id="@+id/readerPagePrevious"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center"
+            android:alpha="0.75"
+            android:clickable="false"
+            android:focusable="false"
+            android:importantForAccessibility="no"
+            android:src="@drawable/sr2_angle_left" />
+    </FrameLayout>
 
     <View
-      android:id="@+id/readerToolbarDivider"
-      android:layout_width="0dp"
-      android:layout_height="1dp"
-      android:background="@drawable/sr2_divider"
-      app:layout_constraintBottom_toBottomOf="parent"
-      app:layout_constraintEnd_toEndOf="parent"
-      app:layout_constraintStart_toStartOf="parent" />
+        android:id="@+id/readerCenterTouch"
+        android:layout_width="128dp"
+        android:layout_height="128dp"
+        android:background="@drawable/sr2_center_tap"
+        android:clickable="true"
+        android:focusable="false"
+        android:focusableInTouchMode="false"
+        android:importantForAccessibility="no"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
-  </androidx.constraintlayout.widget.ConstraintLayout>
+    <include
+        android:id="@+id/readerProgressContainer"
+        layout="@layout/sr2_reader_progress"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
-  <org.librarysimplified.r2.views.internal.SR2LimitedWebView
-    android:id="@+id/readerWebView"
-    android:layout_width="0dp"
-    android:layout_height="0dp"
-    android:layout_marginStart="16dp"
-    android:layout_marginTop="8dp"
-    android:layout_marginEnd="16dp"
-    android:layout_marginBottom="8dp"
-    app:layout_constraintBottom_toTopOf="@id/readerProgressContainer"
-    app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toBottomOf="@id/titleText" />
-
-  <FrameLayout
-    android:id="@+id/readerToolbarHideTouch"
-    android:layout_width="32dp"
-    android:layout_height="32dp"
-    android:layout_marginTop="-1dp"
-    android:layout_marginEnd="16dp"
-    android:background="@drawable/sr2_arrow_tag"
-    android:clickable="true"
-    android:contentDescription="@string/accessibilityHideUIButton"
-    android:focusable="true"
-    android:foreground="?attr/selectableItemBackground"
-    app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintTop_toBottomOf="@id/readerToolbar2">
-
-    <ImageView
-      android:id="@+id/readerToolbarHide"
-      android:layout_width="24dp"
-      android:layout_height="24dp"
-      android:layout_gravity="center"
-      android:clickable="false"
-      android:focusable="false"
-      android:importantForAccessibility="no"
-      android:src="@drawable/sr2_angle_up" />
-  </FrameLayout>
-
-  <FrameLayout
-    android:id="@+id/readerPageNextTouch"
-    android:layout_width="32dp"
-    android:layout_height="0dp"
-    android:layout_marginTop="128dp"
-    android:layout_marginBottom="128dp"
-    android:clickable="true"
-    android:contentDescription="@string/accessibilityGoToNextPage"
-    android:focusable="true"
-    android:foreground="?attr/selectableItemBackground"
-    app:layout_constraintBottom_toBottomOf="parent"
-    app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintTop_toTopOf="parent">
-
-    <ImageView
-      android:id="@+id/readerPageNext"
-      android:layout_width="24dp"
-      android:layout_height="24dp"
-      android:layout_gravity="center"
-      android:alpha="0.75"
-      android:clickable="false"
-      android:focusable="false"
-      android:importantForAccessibility="no"
-      android:src="@drawable/sr2_angle_right" />
-  </FrameLayout>
-
-  <FrameLayout
-    android:id="@+id/readerPagePreviousTouch"
-    android:layout_width="32dp"
-    android:layout_height="0dp"
-    android:layout_marginTop="128dp"
-    android:layout_marginBottom="128dp"
-    android:clickable="true"
-    android:contentDescription="@string/accessibilityGoToPreviousPage"
-    android:focusable="true"
-    android:foreground="?attr/selectableItemBackground"
-    app:layout_constraintBottom_toBottomOf="parent"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toTopOf="parent">
-
-    <ImageView
-      android:id="@+id/readerPagePrevious"
-      android:layout_width="24dp"
-      android:layout_height="24dp"
-      android:layout_gravity="center"
-      android:alpha="0.75"
-      android:clickable="false"
-      android:focusable="false"
-      android:importantForAccessibility="no"
-      android:src="@drawable/sr2_angle_left" />
-  </FrameLayout>
-
-  <View
-    android:id="@+id/readerCenterTouch"
-    android:layout_width="128dp"
-    android:layout_height="128dp"
-    android:clickable="true"
-    android:focusable="false"
-    android:focusableInTouchMode="false"
-    android:importantForAccessibility="no"
-    android:background="@drawable/sr2_center_tap"
-    app:layout_constraintBottom_toBottomOf="parent"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintTop_toTopOf="parent"/>
-
-  <include
-    android:id="@+id/readerProgressContainer"
-    layout="@layout/sr2_reader_progress"
-    android:layout_width="0dp"
-    android:layout_height="wrap_content"
-    app:layout_constraintBottom_toBottomOf="parent"
-    app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintStart_toStartOf="parent" />
-
-  <ProgressBar
-    android:id="@+id/readerLoading"
-    style="?android:attr/progressBarStyleHorizontal"
-    android:layout_width="128dp"
-    android:layout_height="32dp"
-    android:layout_marginStart="16dp"
-    android:layout_marginTop="16dp"
-    android:layout_marginEnd="16dp"
-    android:layout_marginBottom="16dp"
-    android:focusable="false"
-    android:indeterminate="true"
-    app:layout_constraintBottom_toBottomOf="parent"
-    app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toTopOf="parent" />
+    <ProgressBar
+        android:id="@+id/readerLoading"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="128dp"
+        android:layout_height="32dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:focusable="false"
+        android:indeterminate="true"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

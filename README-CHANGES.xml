@@ -268,7 +268,7 @@
         </c:change>
       </c:changes>
     </c:release>
-    <c:release date="2026-06-25T09:48:00+00:00" is-open="true" ticket-system="org.lyrasis.jira" version="6.16.0">
+    <c:release date="2026-06-30T15:24:33+00:00" is-open="true" ticket-system="org.lyrasis.jira" version="6.16.0">
       <c:changes>
         <c:change date="2026-06-10T00:00:00+00:00" summary="Target API 36.">
           <c:tickets>
@@ -295,9 +295,14 @@
             <c:ticket id="PP-4550"/>
           </c:tickets>
         </c:change>
-        <c:change date="2026-06-25T09:48:00+00:00" summary="Increase size of page buttons.">
+        <c:change date="2026-06-25T00:00:00+00:00" summary="Increase size of page buttons.">
           <c:tickets>
             <c:ticket id="PP-4554"/>
+          </c:tickets>
+        </c:change>
+        <c:change date="2026-06-30T15:24:33+00:00" summary="Fix text clipping for huge texts.">
+          <c:tickets>
+            <c:ticket id="PP-4692"/>
           </c:tickets>
         </c:change>
       </c:changes>

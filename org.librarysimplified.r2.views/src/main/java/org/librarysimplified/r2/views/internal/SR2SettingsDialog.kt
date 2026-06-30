@@ -1,14 +1,11 @@
 package org.librarysimplified.r2.views.internal
 
 import android.content.Context
-import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
 import android.widget.SeekBar
-import android.widget.TextView
-import androidx.core.content.res.ResourcesCompat
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.android.material.tabs.TabLayout
 import io.reactivex.disposables.CompositeDisposable
 import org.librarysimplified.r2.api.SR2ColorScheme
 import org.librarysimplified.r2.api.SR2Command
@@ -21,44 +18,6 @@ import org.librarysimplified.r2.views.R
 import org.librarysimplified.r2.views.SR2ReaderModel
 
 internal class SR2SettingsDialog private constructor() {
-  enum class FontSelectionTab {
-    SANS,
-    SERIF,
-    DYSLEXIC,
-    PUB,
-    ;
-
-    fun toThemeUpdater(): (SR2Theme) -> SR2Theme =
-      {
-        val font =
-          when (this) {
-            SANS -> SR2Font.FONT_SANS
-            SERIF -> SR2Font.FONT_SERIF
-            DYSLEXIC -> SR2Font.FONT_OPEN_DYSLEXIC
-            PUB -> it.font
-          }
-        val pubDefault =
-          when (this) {
-            PUB -> SR2_PUBLISHER_DEFAULT_CSS_ENABLED
-            else -> SR2_PUBLISHER_DEFAULT_CSS_DISABLED
-          }
-        it.copy(font = font, publisherCSS = pubDefault)
-      }
-
-    companion object {
-      fun fromTheme(theme: SR2Theme): FontSelectionTab =
-        if (theme.publisherCSS == SR2_PUBLISHER_DEFAULT_CSS_ENABLED) {
-          PUB
-        } else {
-          when (theme.font) {
-            SR2Font.FONT_SERIF -> SERIF
-            SR2Font.FONT_SANS -> SANS
-            SR2Font.FONT_OPEN_DYSLEXIC -> DYSLEXIC
-          }
-        }
-    }
-  }
-
   companion object {
     private var isOpen = false
 
@@ -85,73 +44,74 @@ internal class SR2SettingsDialog private constructor() {
       dialog.show()
       isOpen = true
 
-      val inflater = LayoutInflater.from(context)
-      val setFontTabs = dialog.findViewById<TabLayout>(R.id.setFontTabs)!!
+      val setFontSans =
+        dialog.findViewById<View>(R.id.sr2_set_font_sans)!!
+      val setFontSerif =
+        dialog.findViewById<View>(R.id.sr2_set_font_serif)!!
+      val setFontDyslexic =
+        dialog.findViewById<View>(R.id.sr2_set_font_dyslexic)!!
+      val setFontPub =
+        dialog.findViewById<View>(R.id.sr2_set_font_publisher)!!
+      val publisherExplanation =
+        dialog.findViewById<ViewGroup>(R.id.sr2_publisher_explanation)!!
 
-      val setFontSans = inflater.inflate(R.layout.sr2_settings_fonts_sans, null)!!
-      setFontTabs.getTabAt(0)!!.customView = setFontSans
+      publisherExplanation.visibility = View.GONE
 
-      val setFontSerif = inflater.inflate(R.layout.sr2_settings_fonts_serif, null)!!
-      setFontTabs.getTabAt(1)!!.customView = setFontSerif
+      setFontSans.setOnClickListener {
+        publisherExplanation.visibility = View.GONE
+        this.updateTheme {
+          it.copy(
+            font = SR2Font.FONT_SANS,
+            publisherCSS = SR2_PUBLISHER_DEFAULT_CSS_DISABLED
+          )
+        }
+      }
+      setFontSerif.setOnClickListener {
+        publisherExplanation.visibility = View.GONE
+        this.updateTheme {
+          it.copy(
+            font = SR2Font.FONT_SERIF,
+            publisherCSS = SR2_PUBLISHER_DEFAULT_CSS_DISABLED
+          )
+        }
+      }
+      setFontDyslexic.setOnClickListener {
+        publisherExplanation.visibility = View.GONE
+        this.updateTheme {
+          it.copy(
+            font = SR2Font.FONT_OPEN_DYSLEXIC,
+            publisherCSS = SR2_PUBLISHER_DEFAULT_CSS_DISABLED
+          )
+        }
+      }
+      setFontPub.setOnClickListener {
+        publisherExplanation.visibility = View.VISIBLE
+        this.updateTheme { it.copy(publisherCSS = SR2_PUBLISHER_DEFAULT_CSS_ENABLED) }
+      }
 
-      val setFontDyslexic = inflater.inflate(R.layout.sr2_settings_fonts_dyslexic, null)!!
-      setFontTabs.getTabAt(2)!!.customView = setFontDyslexic
-      val setFontDyslexicText = setFontDyslexic.findViewById<TextView>(R.id.setFontDyslexicText)!!
-      val openDyslexic = ResourcesCompat.getFont(context, R.font.open_dyslexic)
-      setFontDyslexicText.typeface = openDyslexic
+      val setThemeBlackOnWhite =
+        dialog.findViewById<View>(R.id.sr2_set_black_on_white)!!
+      val setThemeWhiteOnBlack =
+        dialog.findViewById<View>(R.id.sr2_set_white_on_black)!!
+      val setThemeBlackOnSepia =
+        dialog.findViewById<View>(R.id.sr2_set_black_on_sepia)!!
 
-      val setFontPub = inflater.inflate(R.layout.sr2_settings_fonts_pub, null)!!
-      setFontTabs.getTabAt(3)!!.customView = setFontPub
-      val setFontDetail = dialog.findViewById<View>(R.id.setFontDetail)!!
-
-      setFontTabs.addOnTabSelectedListener(
-        object : TabLayout.OnTabSelectedListener {
-          override fun onTabSelected(tab: TabLayout.Tab) {
-            val selectedTab = FontSelectionTab.values()[tab.position]
-            val updater = selectedTab.toThemeUpdater()
-            this@Companion.updateTheme(updater)
-            val showDetail = selectedTab == FontSelectionTab.PUB
-            setFontDetail.visibility = if (showDetail) View.VISIBLE else View.GONE
-          }
-
-          override fun onTabUnselected(tab: TabLayout.Tab) {
-            // Do nothing
-          }
-
-          override fun onTabReselected(tab: TabLayout.Tab) {
-            // Do nothing
-          }
-        },
-      )
-
-      val currentTabIndex =
-        FontSelectionTab.fromTheme(SR2ReaderModel.theme()).ordinal
-
-      setFontTabs.selectTab(setFontTabs.getTabAt(currentTabIndex))
-
-      val setThemeLight =
-        dialog.findViewById<View>(R.id.setThemeLight)!!
-      val setThemeDark =
-        dialog.findViewById<View>(R.id.setThemeDark)!!
-      val setThemeSepia =
-        dialog.findViewById<View>(R.id.setThemeSepia)!!
-
-      setThemeLight.setOnClickListener {
+      setThemeBlackOnWhite.setOnClickListener {
         this.updateTheme { it.copy(colorScheme = SR2ColorScheme.DARK_TEXT_LIGHT_BACKGROUND) }
       }
-      setThemeDark.setOnClickListener {
+      setThemeWhiteOnBlack.setOnClickListener {
         this.updateTheme { it.copy(colorScheme = SR2ColorScheme.LIGHT_TEXT_DARK_BACKGROUND) }
       }
-      setThemeSepia.setOnClickListener {
+      setThemeBlackOnSepia.setOnClickListener {
         this.updateTheme { it.copy(colorScheme = SR2ColorScheme.DARK_TEXT_ON_SEPIA) }
       }
 
       val setTextSmaller =
-        dialog.findViewById<View>(R.id.setTextSmaller)!!
+        dialog.findViewById<View>(R.id.sr2_set_text_smaller)!!
       val setTextReset =
-        dialog.findViewById<View>(R.id.setTextSizeReset)!!
+        dialog.findViewById<View>(R.id.sr2_set_text_reset)!!
       val setTextLarger =
-        dialog.findViewById<View>(R.id.setTextLarger)!!
+        dialog.findViewById<View>(R.id.sr2_set_text_larger)!!
       val setBrightness =
         dialog.findViewById<SeekBar>(R.id.setBrightness)!!
       val dismiss =

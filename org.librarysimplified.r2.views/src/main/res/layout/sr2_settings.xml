@@ -1,311 +1,313 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-  xmlns:app="http://schemas.android.com/apk/res-auto"
-  android:layout_width="match_parent"
-  android:layout_height="match_parent">
-
-  <LinearLayout
-    android:id="@+id/settingsControls"
-    android:layout_width="0dp"
-    android:layout_height="wrap_content"
-    android:layout_marginStart="16dp"
-    android:layout_marginTop="16dp"
-    android:layout_marginEnd="16dp"
-    android:layout_marginBottom="16dp"
-    android:orientation="vertical"
-    app:layout_constraintBottom_toBottomOf="parent"
-    app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toTopOf="parent">
-
-    <com.google.android.material.tabs.TabLayout
-      android:id="@+id/setFontTabs"
-      android:layout_width="match_parent"
-      android:layout_height="64dp"
-      app:tabBackground="@drawable/sr2_transparent_bordered"
-      app:tabGravity="center"
-      app:tabMode="fixed">
-
-      <com.google.android.material.tabs.TabItem
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:contentDescription="@string/accessibilitySetSans"
-        android:text="@string/settingsABC" />
-
-      <com.google.android.material.tabs.TabItem
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:contentDescription="@string/accessibilitySetSerif"
-        android:text="@string/settingsABC" />
-
-      <com.google.android.material.tabs.TabItem
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:contentDescription="@string/accessibilitySetDyslexic"
-        android:text="@string/settingsABC" />
-
-      <com.google.android.material.tabs.TabItem
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:contentDescription="@string/accessibilitySetPublisher"
-        android:text="@string/settingsPub" />
-
-    </com.google.android.material.tabs.TabLayout>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:padding="16dp"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
     <LinearLayout
-      android:id="@+id/setFontDetail"
-      android:layout_width="match_parent"
-      android:layout_height="wrap_content"
-      android:background="@drawable/sr2_transparent_bordered"
-      android:orientation="vertical"
-      android:visibility="gone">
-
-      <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="5sp"
-        android:text="@string/settingsPublisherTitle"
-        android:textStyle="bold" />
+        android:orientation="horizontal">
 
-      <TextView
+        <FrameLayout
+            android:id="@+id/sr2_set_font_sans"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:layout_weight="1"
+            android:background="@drawable/sr2_white_with_outline"
+            android:clickable="true"
+            android:contentDescription="@string/accessibilitySetSans"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground">
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:clickable="false"
+                android:focusable="false"
+                android:importantForAccessibility="no"
+                android:src="@drawable/sr2_font_sans_serif" />
+        </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/sr2_set_font_serif"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:layout_weight="1"
+            android:background="@drawable/sr2_white_with_outline"
+            android:clickable="true"
+            android:contentDescription="@string/accessibilitySetSerif"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground">
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:clickable="false"
+                android:focusable="false"
+                android:importantForAccessibility="no"
+                android:src="@drawable/sr2_font_serif" />
+        </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/sr2_set_font_dyslexic"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:layout_weight="1"
+            android:background="@drawable/sr2_white_with_outline"
+            android:clickable="true"
+            android:contentDescription="@string/accessibilitySetDyslexic"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground">
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:clickable="false"
+                android:focusable="false"
+                android:importantForAccessibility="no"
+                android:src="@drawable/sr2_font_dyslexic" />
+        </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/sr2_set_font_publisher"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:layout_weight="1"
+            android:background="@drawable/sr2_white_with_outline"
+            android:clickable="true"
+            android:contentDescription="@string/accessibilitySetPublisher"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground">
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:clickable="false"
+                android:focusable="false"
+                android:importantForAccessibility="no"
+                android:src="@drawable/sr2_font_publisher" />
+        </FrameLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/sr2_publisher_explanation"
+        android:padding="16dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="5sp"
-        android:padding="5sp"
-        android:text="@string/settingsPublisherText" />
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="@string/settingsPublisherTitle"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/settingsPublisherText"/>
 
     </LinearLayout>
 
     <LinearLayout
-      android:layout_width="match_parent"
-      android:layout_height="64dp"
-      android:orientation="horizontal">
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
 
-      <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/setThemeLight"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:background="@drawable/sr2_white"
-        android:clickable="true"
-        android:contentDescription="@string/accessibilitySetBlackTextOnWhite"
-        android:focusable="true">
+        <FrameLayout
+            android:id="@+id/sr2_set_black_on_white"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:layout_weight="1"
+            android:background="@drawable/sr2_white_with_outline"
+            android:clickable="true"
+            android:contentDescription="@string/accessibilitySetBlackTextOnWhite"
+            android:focusable="true"
+            android:forceDarkAllowed="false"
+            android:foreground="?attr/selectableItemBackground"
+            app:tint="@null">
 
-        <TextView
-          android:layout_width="0dp"
-          android:layout_height="match_parent"
-          android:layout_weight="1"
-          android:background="?attr/selectableItemBackground"
-          android:clickable="false"
-          android:focusable="false"
-          android:gravity="center"
-          android:text="@string/settingsAa"
-          android:textAlignment="center"
-          android:textColor="#000000"
-          android:textSize="20sp"
-          app:layout_constraintBottom_toBottomOf="parent"
-          app:layout_constraintEnd_toEndOf="parent"
-          app:layout_constraintStart_toStartOf="parent"
-          app:layout_constraintTop_toTopOf="parent" />
-      </androidx.constraintlayout.widget.ConstraintLayout>
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:clickable="false"
+                android:focusable="false"
+                android:forceDarkAllowed="false"
+                android:importantForAccessibility="no"
+                android:src="@drawable/sr2_color_text_black"
+                app:tint="@null" />
+        </FrameLayout>
 
-      <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/setThemeDark"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:background="@drawable/sr2_black"
-        android:clickable="true"
-        android:contentDescription="@string/accessibilitySetWhiteTextOnBlack"
-        android:focusable="true">
+        <FrameLayout
+            android:id="@+id/sr2_set_white_on_black"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:layout_weight="1"
+            android:background="@drawable/sr2_black_with_outline"
+            android:clickable="true"
+            android:contentDescription="@string/accessibilitySetWhiteTextOnBlack"
+            android:focusable="true"
+            android:forceDarkAllowed="false"
+            android:foreground="?attr/selectableItemBackground"
+            app:tint="@null">
 
-        <TextView
-          android:layout_width="0dp"
-          android:layout_height="match_parent"
-          android:layout_weight="1"
-          android:background="?attr/selectableItemBackground"
-          android:clickable="false"
-          android:focusable="false"
-          android:gravity="center"
-          android:text="@string/settingsAa"
-          android:textAlignment="center"
-          android:textColor="#FFFFFF"
-          android:textSize="20sp"
-          app:layout_constraintBottom_toBottomOf="parent"
-          app:layout_constraintEnd_toEndOf="parent"
-          app:layout_constraintStart_toStartOf="parent"
-          app:layout_constraintTop_toTopOf="parent" />
-      </androidx.constraintlayout.widget.ConstraintLayout>
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:clickable="false"
+                android:focusable="false"
+                android:forceDarkAllowed="false"
+                android:importantForAccessibility="no"
+                android:src="@drawable/sr2_color_text_white"
+                app:tint="@null" />
+        </FrameLayout>
 
-      <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/setThemeSepia"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:background="@drawable/sr2_beige"
-        android:clickable="true"
-        android:contentDescription="@string/accessibilitySetBlackTextOnSepia"
-        android:focusable="true">
+        <FrameLayout
+            android:id="@+id/sr2_set_black_on_sepia"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:layout_weight="1"
+            android:background="@drawable/sr2_beige_with_outline"
+            android:clickable="true"
+            android:contentDescription="@string/accessibilitySetBlackTextOnSepia"
+            android:focusable="true"
+            android:forceDarkAllowed="false"
+            android:foreground="?attr/selectableItemBackground"
+            app:tint="@null">
 
-        <TextView
-          android:layout_width="0dp"
-          android:layout_height="match_parent"
-          android:layout_weight="1"
-          android:background="?attr/selectableItemBackground"
-          android:clickable="false"
-          android:focusable="false"
-          android:gravity="center"
-          android:text="@string/settingsAa"
-          android:textAlignment="center"
-          android:textColor="#000000"
-          android:textSize="20sp"
-          app:layout_constraintBottom_toBottomOf="parent"
-          app:layout_constraintEnd_toEndOf="parent"
-          app:layout_constraintStart_toStartOf="parent"
-          app:layout_constraintTop_toTopOf="parent" />
-      </androidx.constraintlayout.widget.ConstraintLayout>
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:clickable="false"
+                android:focusable="false"
+                android:forceDarkAllowed="false"
+                android:importantForAccessibility="no"
+                android:src="@drawable/sr2_color_text_black"
+                app:tint="@null" />
+        </FrameLayout>
     </LinearLayout>
 
     <LinearLayout
-      android:layout_width="match_parent"
-      android:layout_height="64dp"
-      android:orientation="horizontal">
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
 
-      <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/setTextSmaller"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:background="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:contentDescription="@string/accessibilitySetSizeSmaller"
-        android:focusable="true">
+        <FrameLayout
+            android:id="@+id/sr2_set_text_smaller"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:layout_weight="1"
+            android:background="@drawable/sr2_white_with_outline"
+            android:clickable="true"
+            android:contentDescription="@string/accessibilitySetSizeSmaller"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground">
 
-        <TextView
-          android:layout_width="0dp"
-          android:layout_height="match_parent"
-          android:layout_weight="1"
-          android:background="@drawable/sr2_transparent_bordered"
-          android:clickable="false"
-          android:duplicateParentState="true"
-          android:focusable="false"
-          android:gravity="center"
-          android:text="@string/settingsABCSmaller"
-          android:textAlignment="center"
-          android:textSize="12sp"
-          app:layout_constraintBottom_toBottomOf="parent"
-          app:layout_constraintEnd_toEndOf="parent"
-          app:layout_constraintStart_toStartOf="parent"
-          app:layout_constraintTop_toTopOf="parent" />
-      </androidx.constraintlayout.widget.ConstraintLayout>
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:clickable="false"
+                android:focusable="false"
+                android:importantForAccessibility="no"
+                android:src="@drawable/sr2_size_smaller" />
+        </FrameLayout>
 
-      <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/setTextSizeReset"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:background="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:contentDescription="@string/accessibilitySetSizeReset"
-        android:focusable="true">
+        <FrameLayout
+            android:id="@+id/sr2_set_text_reset"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:layout_weight="1"
+            android:background="@drawable/sr2_white_with_outline"
+            android:clickable="true"
+            android:contentDescription="@string/accessibilitySetSizeReset"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground">
 
-        <TextView
-          android:layout_width="0dp"
-          android:layout_height="match_parent"
-          android:layout_weight="1"
-          android:background="@drawable/sr2_transparent_bordered"
-          android:clickable="false"
-          android:focusable="false"
-          android:gravity="center"
-          android:text="@string/settingsABCReset"
-          android:textAlignment="center"
-          android:textSize="20sp"
-          app:layout_constraintBottom_toBottomOf="parent"
-          app:layout_constraintEnd_toEndOf="parent"
-          app:layout_constraintStart_toStartOf="parent"
-          app:layout_constraintTop_toTopOf="parent" />
-      </androidx.constraintlayout.widget.ConstraintLayout>
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:clickable="false"
+                android:focusable="false"
+                android:importantForAccessibility="no"
+                android:src="@drawable/sr2_size_reset" />
+        </FrameLayout>
 
-      <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/setTextLarger"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:background="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:contentDescription="@string/accessibilitySetSizeLarger"
-        android:focusable="true">
+        <FrameLayout
+            android:id="@+id/sr2_set_text_larger"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:layout_weight="1"
+            android:background="@drawable/sr2_white_with_outline"
+            android:clickable="true"
+            android:contentDescription="@string/accessibilitySetSizeLarger"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground">
 
-        <TextView
-          android:layout_width="0dp"
-          android:layout_height="match_parent"
-          android:layout_weight="1"
-          android:background="@drawable/sr2_transparent_bordered"
-          android:clickable="false"
-          android:duplicateParentState="true"
-          android:focusable="false"
-          android:gravity="center"
-          android:text="@string/settingsABCLarger"
-          android:textAlignment="center"
-          android:textSize="28sp"
-          app:layout_constraintBottom_toBottomOf="parent"
-          app:layout_constraintEnd_toEndOf="parent"
-          app:layout_constraintStart_toStartOf="parent"
-          app:layout_constraintTop_toTopOf="parent" />
-      </androidx.constraintlayout.widget.ConstraintLayout>
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:clickable="false"
+                android:focusable="false"
+                android:importantForAccessibility="no"
+                android:src="@drawable/sr2_size_larger" />
+        </FrameLayout>
+
     </LinearLayout>
 
     <androidx.constraintlayout.widget.ConstraintLayout
-      android:layout_width="match_parent"
-      android:layout_height="64dp"
-      android:background="@drawable/sr2_transparent_bordered">
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:background="@drawable/sr2_transparent_bordered">
 
-      <ImageView
-        android:layout_width="24dp"
-        android:layout_height="24dp"
-        android:layout_marginStart="16dp"
-        android:layout_weight="1"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/sr2_brightness_low" />
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginStart="16dp"
+            android:layout_weight="1"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/sr2_brightness_low" />
 
-      <SeekBar
-        android:id="@+id/setBrightness"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="56dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="56dp"
-        android:layout_marginBottom="16dp"
-        android:contentDescription="@string/accessibilityBrightnessSlider"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        <SeekBar
+            android:id="@+id/setBrightness"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="56dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="56dp"
+            android:layout_marginBottom="16dp"
+            android:contentDescription="@string/accessibilityBrightnessSlider"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-      <ImageView
-        android:layout_width="24dp"
-        android:layout_height="24dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="16dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/sr2_brightness_high" />
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="16dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/sr2_brightness_high" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <Button
-      android:id="@+id/dismiss"
-      android:layout_width="wrap_content"
-      android:layout_height="64dp"
-      android:layout_gravity="center"
-      android:layout_marginTop="16dp"
-      android:minWidth="128dp"
-      android:text="@string/dismiss" />
-  </LinearLayout>
+        android:id="@+id/dismiss"
+        android:layout_width="wrap_content"
+        android:layout_height="64dp"
+        android:layout_gravity="center"
+        android:layout_marginTop="16dp"
+        android:minWidth="128dp"
+        android:text="@string/dismiss" />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+</LinearLayout>

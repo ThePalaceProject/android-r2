@@ -53,13 +53,12 @@ internal class SR2TOCBookmarksFragment : Fragment() {
     val layout =
       inflater.inflate(R.layout.sr2_toc_bookmarks, container, false)
 
-    val recyclerView =
-      layout.findViewById<RecyclerView>(R.id.tocBookmarksList)
+    this.emptyMessage =
+      layout.findViewById(R.id.empty_bookmarks_text)
 
-    this.emptyMessage = layout.findViewById(R.id.empty_bookmarks_text)
-
+    val recyclerView = layout.findViewById<RecyclerView>(R.id.tocBookmarksList)
     recyclerView.adapter = this.bookmarkAdapter
-    recyclerView.setHasFixedSize(true)
+    recyclerView.setHasFixedSize(false)
     recyclerView.setItemViewCacheSize(32)
     recyclerView.layoutManager = LinearLayoutManager(this.context)
     (recyclerView.itemAnimator as SimpleItemAnimator).supportsChangeAnimations = false

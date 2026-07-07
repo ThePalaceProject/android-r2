@@ -14,6 +14,9 @@ import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposables
 import org.librarysimplified.r2.api.SR2ColorScheme.DARK_TEXT_LIGHT_BACKGROUND
@@ -51,6 +54,7 @@ import org.librarysimplified.r2.views.internal.SR2SettingsDialog
 import org.slf4j.LoggerFactory
 
 class SR2ReaderFragment : SR2Fragment() {
+  private lateinit var root: View
   private lateinit var centerTouch: View
   private lateinit var pageNext: View
   private lateinit var pagePrevious: View
@@ -98,6 +102,7 @@ class SR2ReaderFragment : SR2Fragment() {
     val view =
       inflater.inflate(R.layout.sr2_reader, container, false)
 
+    this.root = view
     this.container =
       view.findViewById(R.id.readerContainer)
     this.progressContainer =
@@ -255,6 +260,19 @@ class SR2ReaderFragment : SR2Fragment() {
     }
 
     this.viewsHandleLoadingState(showLoading = true)
+
+    /*
+     * Apply window insets as the bottom of the reader may overlap navigation controls on some
+     * devices.
+     */
+
+    ViewCompat.setOnApplyWindowInsetsListener(view) { v, insets ->
+      val bottom = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom
+      v.updatePadding(bottom = bottom)
+      insets
+    }
+
+    ViewCompat.requestApplyInsets(view)
     return view
   }
 

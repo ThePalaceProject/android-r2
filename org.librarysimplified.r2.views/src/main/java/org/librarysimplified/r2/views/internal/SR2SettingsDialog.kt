@@ -4,6 +4,7 @@ import android.content.Context
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.SeekBar
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import io.reactivex.disposables.CompositeDisposable
@@ -14,6 +15,7 @@ import org.librarysimplified.r2.api.SR2Font
 import org.librarysimplified.r2.api.SR2PublisherCSS.SR2_PUBLISHER_DEFAULT_CSS_DISABLED
 import org.librarysimplified.r2.api.SR2PublisherCSS.SR2_PUBLISHER_DEFAULT_CSS_ENABLED
 import org.librarysimplified.r2.api.SR2Theme
+import org.librarysimplified.r2.api.SR2UISettings
 import org.librarysimplified.r2.views.R
 import org.librarysimplified.r2.views.SR2ReaderModel
 
@@ -54,8 +56,37 @@ internal class SR2SettingsDialog private constructor() {
         dialog.findViewById<View>(R.id.sr2_set_font_publisher)!!
       val publisherExplanation =
         dialog.findViewById<ViewGroup>(R.id.sr2_publisher_explanation)!!
+      val pageButtonsOff =
+        dialog.findViewById<View>(R.id.sr2_set_page_buttons_off)!!
+      val pageButtonsSmall =
+        dialog.findViewById<View>(R.id.sr2_set_page_buttons_small)!!
+      val pageButtonsMedium =
+        dialog.findViewById<View>(R.id.sr2_set_page_buttons_medium)!!
+      val pageButtonsLarge =
+        dialog.findViewById<View>(R.id.sr2_set_page_buttons_large)!!
 
       publisherExplanation.visibility = View.GONE
+
+      pageButtonsOff.setOnClickListener {
+        this.updateSettings { f ->
+          f.copy(pageButtonWidth = null)
+        }
+      }
+      pageButtonsSmall.setOnClickListener {
+        this.updateSettings { f ->
+          f.copy(pageButtonWidth = 32.0)
+        }
+      }
+      pageButtonsMedium.setOnClickListener {
+        this.updateSettings { f ->
+          f.copy(pageButtonWidth = 48.0)
+        }
+      }
+      pageButtonsLarge.setOnClickListener {
+        this.updateSettings { f ->
+          f.copy(pageButtonWidth = 64.0)
+        }
+      }
 
       setFontSans.setOnClickListener {
         publisherExplanation.visibility = View.GONE
@@ -169,6 +200,10 @@ internal class SR2SettingsDialog private constructor() {
       )
 
       return SR2SettingsDialog()
+    }
+
+    private fun updateSettings(f: (SR2UISettings) -> SR2UISettings) {
+      SR2ReaderModel.submitCommand(SR2Command.UISettingsSet(f.invoke(SR2ReaderModel.uiSettings())))
     }
   }
 }

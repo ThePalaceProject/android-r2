@@ -5,6 +5,7 @@ plugins {
 dependencies {
     coreLibraryDesugaring(libs.android.desugaring)
 
+    implementation(libs.androidx.annotation)
     implementation(libs.joda.time)
     implementation(libs.kotlin.stdlib)
     implementation(libs.r2.shared)

@@ -9,11 +9,13 @@ import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewGroup.MarginLayoutParams
 import android.view.ViewTreeObserver.OnGlobalFocusChangeListener
 import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.annotation.Dimension
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
@@ -39,6 +41,7 @@ import org.librarysimplified.r2.api.SR2Event.SR2ThemeChanged
 import org.librarysimplified.r2.api.SR2ScrollingMode.SCROLLING_MODE_CONTINUOUS
 import org.librarysimplified.r2.api.SR2ScrollingMode.SCROLLING_MODE_PAGINATED
 import org.librarysimplified.r2.api.SR2Theme
+import org.librarysimplified.r2.api.SR2UISettings
 import org.librarysimplified.r2.ui_thread.SR2UIThread
 import org.librarysimplified.r2.views.SR2ReaderViewCommand.SR2ReaderViewNavigationReaderClose
 import org.librarysimplified.r2.views.SR2ReaderViewCommand.SR2ReaderViewNavigationSearchOpen
@@ -460,6 +463,10 @@ class SR2ReaderFragment : SR2Fragment() {
 
     this.eventSubscriptions.add(Disposables.fromAction { uiVisibleSubscription.close() })
     SR2ReaderModel.wakeLockAcquire(this.requireActivity())
+    this.configureForUISettings(
+      SR2ReaderModel.uiSettings(),
+      SR2ReaderModel.uiSettings()
+    )
   }
 
   private fun onViewEvent(event: SR2ReaderViewEvent) {
@@ -629,7 +636,58 @@ class SR2ReaderFragment : SR2Fragment() {
       is SR2BookmarkDeleted -> {
         this.reconfigureBookmarkMenuItem()
       }
+
+      is SR2Event.SR2UISettingsUpdated -> {
+        this.configureForUISettings(
+          event.oldSettings,
+          event.newSettings
+        )
+      }
     }
+  }
+
+  private fun configureForUISettings(
+    oldSettings: SR2UISettings,
+    newSettings: SR2UISettings
+  ) {
+    val pageButtonWidth = newSettings.pageButtonWidth
+    if (pageButtonWidth != null) {
+      this.pageNext.visibility = View.VISIBLE
+      this.pagePrevious.visibility = View.VISIBLE
+      setViewWidth(this.pageNext, pageButtonWidth)
+      setViewWidth(this.pagePrevious, pageButtonWidth)
+      this.setWebViewMargins(pageButtonWidth)
+    } else {
+      this.pageNext.visibility = View.GONE
+      this.pagePrevious.visibility = View.GONE
+      this.setWebViewMargins(0.0)
+    }
+
+    SR2ReaderModel.submitCommand(SR2Command.Refresh)
+  }
+
+  private fun setViewWidth(
+    view: View,
+    @Dimension(unit = Dimension.DP) width: Double
+  ) {
+    val widthPx = this.dpToPixels(width)
+    val params = view.layoutParams
+    params.width = widthPx
+    view.layoutParams = params
+  }
+
+  private fun dpToPixels(
+    @Dimension(unit = Dimension.DP) d: Double
+  ): Int = (d * this.resources.displayMetrics.density).toInt()
+
+  private fun setWebViewMargins(
+    @Dimension(unit = Dimension.DP) marginDp: Double
+  ) {
+    val marginPx = this.dpToPixels(marginDp)
+    val params = this.webView.layoutParams as MarginLayoutParams
+    params.leftMargin = marginPx
+    params.rightMargin = marginPx
+    this.webView.layoutParams = params
   }
 
   private fun disableReadingUI() {

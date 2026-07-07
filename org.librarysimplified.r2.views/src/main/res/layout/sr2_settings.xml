@@ -2,10 +2,10 @@
 
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:padding="16dp"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:padding="16dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -95,10 +95,10 @@
 
     <LinearLayout
         android:id="@+id/sr2_publisher_explanation"
-        android:padding="16dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:padding="16dp">
 
         <TextView
             android:layout_width="wrap_content"
@@ -110,7 +110,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/settingsPublisherText"/>
+            android:text="@string/settingsPublisherText" />
 
     </LinearLayout>
 
@@ -195,6 +195,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:baselineAligned="false"
         android:orientation="horizontal">
 
         <FrameLayout
@@ -269,6 +270,9 @@
             android:layout_height="24dp"
             android:layout_marginStart="16dp"
             android:layout_weight="1"
+            android:clickable="false"
+            android:focusable="false"
+            android:importantForAccessibility="no"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -294,12 +298,103 @@
             android:layout_marginTop="16dp"
             android:layout_marginEnd="16dp"
             android:layout_marginBottom="16dp"
+            android:clickable="false"
+            android:focusable="false"
+            android:importantForAccessibility="no"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/sr2_brightness_high" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:baselineAligned="false"
+        android:orientation="horizontal">
+
+        <FrameLayout
+            android:id="@+id/sr2_set_page_buttons_off"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:layout_weight="1"
+            android:background="@drawable/sr2_white_with_outline"
+            android:clickable="true"
+            android:contentDescription="@string/accessibilitySetPageButtonsOff"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground">
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:clickable="false"
+                android:focusable="false"
+                android:importantForAccessibility="no"
+                android:src="@drawable/sr2_page_buttons_off" />
+        </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/sr2_set_page_buttons_small"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:layout_weight="1"
+            android:background="@drawable/sr2_white_with_outline"
+            android:clickable="true"
+            android:contentDescription="@string/accessibilitySetPageButtonsSmall"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground">
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:clickable="false"
+                android:focusable="false"
+                android:importantForAccessibility="no"
+                android:src="@drawable/sr2_page_buttons_small" />
+        </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/sr2_set_page_buttons_medium"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:layout_weight="1"
+            android:background="@drawable/sr2_white_with_outline"
+            android:clickable="true"
+            android:contentDescription="@string/accessibilitySetPageButtonsMedium"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground">
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:clickable="false"
+                android:focusable="false"
+                android:importantForAccessibility="no"
+                android:src="@drawable/sr2_page_buttons_medium" />
+        </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/sr2_set_page_buttons_large"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:layout_weight="1"
+            android:background="@drawable/sr2_white_with_outline"
+            android:clickable="true"
+            android:contentDescription="@string/accessibilitySetPageButtonsLarge"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground">
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:clickable="false"
+                android:focusable="false"
+                android:importantForAccessibility="no"
+                android:src="@drawable/sr2_page_buttons_large" />
+        </FrameLayout>
+
+    </LinearLayout>
 
     <Button
         android:id="@+id/dismiss"

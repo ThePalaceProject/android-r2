@@ -13,11 +13,6 @@ data class SR2UISettings(
 
   @Dimension(unit = Dimension.DP)
   val pageButtonWidth: Double?,
-  /**
-   * Whether swipe navigation is enabled.
-   */
-
-  val pageSwipeEnabled: Boolean
 ) {
   companion object {
     @Dimension(unit = Dimension.DP)
@@ -26,14 +21,22 @@ data class SR2UISettings(
     @Dimension(unit = Dimension.DP)
     val pageButtonWidthMaximum = 80.0
 
+    @Dimension(unit = Dimension.DP)
+    val pageButtonWidthSmall = 32.0
+
+    @Dimension(unit = Dimension.DP)
+    val pageButtonWidthMedium = 48.0
+
+    @Dimension(unit = Dimension.DP)
+    val pageButtonWidthLarge = 64.0
+
     /**
      * The default UI settings.
      */
 
     val defaultSettings =
       SR2UISettings(
-        pageButtonWidth = 64.0,
-        pageSwipeEnabled = true
+        pageButtonWidth = 64.0
       )
   }
 }

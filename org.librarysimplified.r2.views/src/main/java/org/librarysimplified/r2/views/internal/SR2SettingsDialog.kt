@@ -74,17 +74,17 @@ internal class SR2SettingsDialog private constructor() {
       }
       pageButtonsSmall.setOnClickListener {
         this.updateSettings { f ->
-          f.copy(pageButtonWidth = 32.0)
+          f.copy(pageButtonWidth = SR2UISettings.pageButtonWidthSmall)
         }
       }
       pageButtonsMedium.setOnClickListener {
         this.updateSettings { f ->
-          f.copy(pageButtonWidth = 48.0)
+          f.copy(pageButtonWidth = SR2UISettings.pageButtonWidthMedium)
         }
       }
       pageButtonsLarge.setOnClickListener {
         this.updateSettings { f ->
-          f.copy(pageButtonWidth = 64.0)
+          f.copy(pageButtonWidth = SR2UISettings.pageButtonWidthLarge)
         }
       }
 

@@ -74,6 +74,15 @@ sealed class SR2Event {
   }
 
   /**
+   * The UI settings were updated.
+   */
+
+  data class SR2UISettingsUpdated(
+    val oldSettings: SR2UISettings,
+    val newSettings: SR2UISettings
+  ) : SR2Event()
+
+  /**
    * The set of events related to bookmarks.
    */
 

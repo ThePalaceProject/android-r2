@@ -32,6 +32,7 @@ import org.librarysimplified.r2.api.SR2Event.SR2ExternalLinkSelected
 import org.librarysimplified.r2.api.SR2Event.SR2OnCenterTapped
 import org.librarysimplified.r2.api.SR2Event.SR2ReadingPositionChanged
 import org.librarysimplified.r2.api.SR2Event.SR2ThemeChanged
+import org.librarysimplified.r2.api.SR2Event.SR2UISettingsUpdated
 import org.librarysimplified.r2.api.SR2Locator
 import org.librarysimplified.r2.ui_thread.SR2UIThread
 import org.librarysimplified.r2.views.SR2ReaderViewCommand.SR2ReaderViewNavigationSearchClose
@@ -221,6 +222,7 @@ class SR2SearchFragment : SR2Fragment() {
       is SR2CommandExecutionSucceeded,
       is SR2CommandExecutionFailed,
       is SR2ExternalLinkSelected,
+      is SR2UISettingsUpdated,
       -> {
         // Nothing
       }

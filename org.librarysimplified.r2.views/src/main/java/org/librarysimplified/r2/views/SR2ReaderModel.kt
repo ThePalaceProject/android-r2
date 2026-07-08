@@ -30,6 +30,7 @@ import org.librarysimplified.r2.api.SR2Executors
 import org.librarysimplified.r2.api.SR2PageNumberingMode
 import org.librarysimplified.r2.api.SR2ScrollingMode
 import org.librarysimplified.r2.api.SR2Theme
+import org.librarysimplified.r2.api.SR2UISettings
 import org.librarysimplified.r2.ui_thread.SR2UIThread
 import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewBookEvent.SR2BookLoadingFailed
 import org.librarysimplified.r2.views.SR2ReaderViewEvent.SR2ReaderViewControllerEvent.SR2ControllerBecameAvailable
@@ -244,6 +245,8 @@ object SR2ReaderModel {
   }
 
   fun theme(): SR2Theme = this.controllerField?.themeNow() ?: SR2Theme()
+
+  fun uiSettings(): SR2UISettings = this.controllerField?.uiSettingsNow() ?: SR2UISettings.defaultSettings
 
   fun bookmarks(): List<SR2Bookmark> = this.controllerField?.bookmarksNow() ?: listOf()
 

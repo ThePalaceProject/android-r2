@@ -2,6 +2,6 @@
 active = "ALWAYS"
 applyMavenCentralRules = false
 sign = false
-stagingRepositories = ["build/maven"]
+stagingRepositories = ["maven"]
 url = "https://central.sonatype.com/api/v1/publisher"
 verifyPom = false

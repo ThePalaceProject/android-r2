@@ -1,0 +1,27 @@
+{
+  "name": "palace-r2-ts",
+  "version": "1.0.0",
+  "description": "Palace R2",
+  "main": "r2.js",
+  "scripts": {
+    "prettier": "prettier --write src/*.ts",
+    "prettier-dist": "prettier --write dist/*.js",
+    "eslint-ts": "eslint --fix --ignore-pattern '*.mjs' -c eslint-ts.ts src",
+    "tsc": "./node_modules/.bin/tsc",
+    "test": "jest",
+    "build": "esbuild src/r2.ts --sourcemap --bundle --format=esm --line-limit=72 --outfile=dist/bundle.js --minify"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@html-eslint/eslint-plugin": "^0.47.0",
+    "@types/jest": "^30.0.0",
+    "esbuild": "^0.25.11",
+    "jest": "^30.4.2",
+    "jiti": "^2.6.1",
+    "prettier": "^3.6.2",
+    "ts-jest": "^29.4.11",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.2"
+  }
+}

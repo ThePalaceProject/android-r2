@@ -11,6 +11,14 @@ export default defineConfig(
         projectService: true,
       },
     },
+    rules: {
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+        },
+      ],
+    },
   },
 );
 

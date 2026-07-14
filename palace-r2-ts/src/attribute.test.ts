@@ -53,3 +53,18 @@ test('attribute value received on multiple subscribers', () => {
   expect(r[4]).toStrictEqual([24, 25]);
   expect(r.length).toStrictEqual(5);
 });
+
+test('subscriber errors are ignored', () => {
+  const a = Attribute.create(23);
+  const r: [number, number][] = [];
+
+  a.subscribe((_oldV, _newV) => {
+    throw Error();
+  });
+  expect(a.valueNow()).toStrictEqual(23);
+
+  a.set(24);
+  expect(a.valueNow()).toStrictEqual(24);
+
+  expect(r.length).toStrictEqual(0);
+});

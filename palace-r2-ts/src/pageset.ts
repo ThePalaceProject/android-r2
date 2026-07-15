@@ -8,11 +8,11 @@ import { requireNotNull } from './notnull';
  */
 
 export class SR2Page {
-  readonly index: bigint;
+  readonly index: number;
   readonly scrollOffset: number;
   readonly scrollOffsetRaw: number;
 
-  constructor(index: bigint, scrollOffset: number, scrollOffsetRaw: number) {
+  constructor(index: number, scrollOffset: number, scrollOffsetRaw: number) {
     this.index = index;
     this.scrollOffset = scrollOffset;
     this.scrollOffsetRaw = scrollOffsetRaw;
@@ -30,9 +30,11 @@ export class SR2Page {
  */
 
 export interface SR2PageSetType {
+  pagePrevious(pageCurrent: SR2Page): SR2Page | null;
+  pageNext(pageCurrent: SR2Page): SR2Page | null;
   findClosestPage(scrollOffset: number): SR2Page;
   recompute(documentWidth: number, pageWidth: number): void;
-  pageCount(): bigint;
+  pageCount(): number;
   pages(): SR2Page[];
   statusNow(): SR2PageSetStatus;
   readonly status: Attribute<SR2PageSetStatus>;
@@ -61,7 +63,7 @@ export class SR2PageSet implements SR2PageSetType {
   readonly status: Attribute<SR2PageSetStatus>;
 
   private constructor() {
-    this.pageArray = [new SR2Page(0n, 0.0, 0.0)];
+    this.pageArray = [new SR2Page(0, 0.0, 0.0)];
 
     const initial: SR2PageSetStatus = {
       kind: 'Initial',
@@ -78,8 +80,8 @@ export class SR2PageSet implements SR2PageSetType {
     return this.status.valueNow();
   }
 
-  pageCount(): bigint {
-    return BigInt(this.pageArray.length);
+  pageCount(): number {
+    return this.pageArray.length;
   }
 
   pages(): SR2Page[] {
@@ -106,7 +108,7 @@ export class SR2PageSet implements SR2PageSetType {
     const newPages: SR2Page[] = [];
     const maxOffset = Math.max(0, documentWidth - pageWidth);
 
-    let index = 0n;
+    let index = 0;
     for (
       let pageOffsetRaw: number = 0;
       pageOffsetRaw < maxOffset;
@@ -125,5 +127,19 @@ export class SR2PageSet implements SR2PageSetType {
     this.pageArray = newPages;
     this.status.set({ kind: 'CalculatingPages', progress: 1.0 });
     this.status.set({ kind: 'Ready' });
+  }
+
+  pagePrevious(pageCurrent: SR2Page): SR2Page | null {
+    if (pageCurrent.index == 0) {
+      return null;
+    }
+    return this.pageArray[pageCurrent.index - 1]!;
+  }
+
+  pageNext(pageCurrent: SR2Page): SR2Page | null {
+    if (pageCurrent.index == this.pageArray.length - 1) {
+      return null;
+    }
+    return this.pageArray[pageCurrent.index + 1]!;
   }
 }

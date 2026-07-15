@@ -2,19 +2,19 @@ import { SR2Page, SR2PageSet, SR2PageSetStatus } from './pageset';
 
 test('page constructor asserts range', () => {
   expect(() => {
-    new SR2Page(0n, -1.0, 100);
+    new SR2Page(0, -1.0, 100);
   }).toThrow();
 });
 
 test('page constructor asserts range', () => {
   expect(() => {
-    new SR2Page(0n, 1.1, 100);
+    new SR2Page(0, 1.1, 100);
   }).toThrow();
 });
 
 test('empty controller has one page', () => {
   const c = SR2PageSet.create();
-  expect(c.pageCount()).toStrictEqual(1n);
+  expect(c.pageCount()).toStrictEqual(1);
   expect(c.statusNow()).toStrictEqual({ kind: 'Initial' });
 });
 
@@ -25,7 +25,7 @@ test('recomputing the controller publishes status values', () => {
     r.push([oldV, newV]);
   });
 
-  expect(c.pageCount()).toStrictEqual(1n);
+  expect(c.pageCount()).toStrictEqual(1);
   expect(c.statusNow()).toStrictEqual({ kind: 'Initial' });
   c.recompute(1000.0, 100.0);
 
@@ -132,18 +132,18 @@ test('finding pages works', () => {
 
   {
     const p = c.findClosestPage(0.0);
-    expect(p.index).toStrictEqual(0n);
+    expect(p.index).toStrictEqual(0);
     expect(p.scrollOffset).toStrictEqual(0.0);
   }
 
   {
     const p = c.findClosestPage(1.0);
-    expect(p.index).toStrictEqual(0n);
+    expect(p.index).toStrictEqual(0);
     expect(p.scrollOffset).toStrictEqual(0.0);
   }
 
   c.recompute(1000.0, 100.0);
-  expect(c.pageCount()).toStrictEqual(9n);
+  expect(c.pageCount()).toStrictEqual(9);
 
   for (const p of c.pages()) {
     console.log('Page: ', p);
@@ -151,20 +151,20 @@ test('finding pages works', () => {
 
   {
     const p = c.findClosestPage(0.0);
-    expect(p.index).toStrictEqual(0n);
+    expect(p.index).toStrictEqual(0);
     expect(p.scrollOffset).toStrictEqual(0.0);
   }
 
   {
     const p = c.findClosestPage(0.3);
-    expect(p.index).toStrictEqual(2n);
+    expect(p.index).toStrictEqual(2);
     expect(p.scrollOffset).toStrictEqual(0.2222222222222222);
     expect(p.scrollOffsetRaw).toStrictEqual(200);
   }
 
   {
     const p = c.findClosestPage(1.1);
-    expect(p.index).toStrictEqual(8n);
+    expect(p.index).toStrictEqual(8);
     expect(p.scrollOffset).toStrictEqual(0.8888888888888888);
     expect(p.scrollOffsetRaw).toStrictEqual(800);
   }

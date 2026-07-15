@@ -2,68 +2,99 @@ import { Attribute } from './attribute';
 import { requireNotNull } from './notnull';
 
 /**
- * The interface exposed by a page controller.
- */
-
-export interface R2PageControllerType {
-  recompute(documentWidth: number, pageWidth: number): void;
-  pageCount(): bigint;
-  statusNow(): R2PageControllerStatus;
-  readonly status: Attribute<R2PageControllerStatus>;
-}
-
-export interface R2PageControllerStatusReady {
-  kind: 'Ready';
-}
-
-export interface R2PageControllerStatusCalculatingPages {
-  kind: 'CalculatingPages';
-  progress: number;
-}
-
-export type R2PageControllerStatus =
-  R2PageControllerStatusReady | R2PageControllerStatusCalculatingPages;
-
-/**
  * An immutable page value. Pages are numbered starting from zero
  * and contain a scroll offset value indicating the start of the
  * page.
  */
 
-export class R2Page {
+export class SR2Page {
   readonly index: bigint;
   readonly scrollOffset: number;
+  readonly scrollOffsetRaw: number;
 
-  constructor(index: bigint, scrollOffset: number) {
+  constructor(index: bigint, scrollOffset: number, scrollOffsetRaw: number) {
     this.index = index;
     this.scrollOffset = scrollOffset;
+    this.scrollOffsetRaw = scrollOffsetRaw;
+
+    if (this.scrollOffset < 0.0 || this.scrollOffset > 1.0) {
+      throw Error(
+        'Scroll offset ${this.scrollOffset} must be in the range [0, 1]',
+      );
+    }
   }
 }
 
-export class R2PageController implements R2PageControllerType {
-  private pages: R2Page[];
-  readonly status: Attribute<R2PageControllerStatus>;
+/**
+ * The interface exposed by a page controller.
+ */
+
+export interface SR2PageControllerType {
+  findClosestPage(scrollOffset: number): SR2Page;
+  recompute(documentWidth: number, pageWidth: number): void;
+  pageCount(): bigint;
+  pages(): SR2Page[];
+  statusNow(): SR2PageControllerStatus;
+  readonly status: Attribute<SR2PageControllerStatus>;
+}
+
+export interface SR2PageControllerStatusInitial {
+  kind: 'Initial';
+}
+
+export interface SR2PageControllerStatusReady {
+  kind: 'Ready';
+}
+
+export interface SR2PageControllerStatusCalculatingPages {
+  kind: 'CalculatingPages';
+  progress: number;
+}
+
+export type SR2PageControllerStatus =
+  | SR2PageControllerStatusInitial
+  | SR2PageControllerStatusReady
+  | SR2PageControllerStatusCalculatingPages;
+
+export class SR2PageController implements SR2PageControllerType {
+  private pageArray: SR2Page[];
+  readonly status: Attribute<SR2PageControllerStatus>;
 
   private constructor() {
-    this.pages = [new R2Page(0n, 0.0)];
+    this.pageArray = [new SR2Page(0n, 0.0, 0.0)];
 
-    const initial: R2PageControllerStatus = {
-      kind: 'Ready',
+    const initial: SR2PageControllerStatus = {
+      kind: 'Initial',
     };
 
-    this.status = Attribute.create<R2PageControllerStatus>(initial);
+    this.status = Attribute.create<SR2PageControllerStatus>(initial);
   }
 
-  public static create(): R2PageControllerType {
-    return new R2PageController();
+  public static create(): SR2PageControllerType {
+    return new SR2PageController();
   }
 
-  statusNow(): R2PageControllerStatus {
+  statusNow(): SR2PageControllerStatus {
     return this.status.valueNow();
   }
 
   pageCount(): bigint {
-    return BigInt(this.pages.length);
+    return BigInt(this.pageArray.length);
+  }
+
+  pages(): SR2Page[] {
+    return this.pageArray;
+  }
+
+  findClosestPage(scrollOffset: number): SR2Page {
+    let pageNow = this.pageArray[0]!;
+    for (const pageNew of this.pageArray) {
+      if (pageNew.scrollOffset > scrollOffset) {
+        return pageNow;
+      }
+      pageNow = pageNew;
+    }
+    return pageNow;
   }
 
   recompute(documentWidth: number, pageWidth: number): void {
@@ -72,26 +103,26 @@ export class R2PageController implements R2PageControllerType {
 
     this.status.set({ kind: 'CalculatingPages', progress: 0.0 });
 
-    const newPages: R2Page[] = [];
+    const newPages: SR2Page[] = [];
     const maxOffset = Math.max(0, documentWidth - pageWidth);
 
     let index = 0n;
     for (
-      let pageOffset: number = 0;
-      pageOffset < maxOffset;
-      pageOffset += pageWidth
+      let pageOffsetRaw: number = 0;
+      pageOffsetRaw < maxOffset;
+      pageOffsetRaw += pageWidth
     ) {
-      const newPage = new R2Page(index, pageOffset);
+      const pageOffset = pageOffsetRaw / maxOffset;
+      const newPage = new SR2Page(index, pageOffset, pageOffsetRaw);
       ++index;
-      const progress = pageOffset / maxOffset;
       newPages.push(newPage);
       this.status.set({
         kind: 'CalculatingPages',
-        progress: progress,
+        progress: pageOffset,
       });
     }
 
-    this.pages = newPages;
+    this.pageArray = newPages;
     this.status.set({ kind: 'CalculatingPages', progress: 1.0 });
     this.status.set({ kind: 'Ready' });
   }

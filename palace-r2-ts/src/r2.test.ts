@@ -1,26 +1,38 @@
-import { R2PageController, R2PageControllerStatus } from './r2';
+import { SR2Page, SR2PageController, SR2PageControllerStatus } from './r2';
+
+test('page constructor asserts range', () => {
+  expect(() => {
+    new SR2Page(0n, -1.0, 100);
+  }).toThrow();
+});
+
+test('page constructor asserts range', () => {
+  expect(() => {
+    new SR2Page(0n, 1.1, 100);
+  }).toThrow();
+});
 
 test('empty controller has one page', () => {
-  const c = R2PageController.create();
+  const c = SR2PageController.create();
   expect(c.pageCount()).toStrictEqual(1n);
-  expect(c.statusNow()).toStrictEqual({ kind: 'Ready' });
+  expect(c.statusNow()).toStrictEqual({ kind: 'Initial' });
 });
 
 test('recomputing the controller publishes status values', () => {
-  const c = R2PageController.create();
-  const r: [R2PageControllerStatus, R2PageControllerStatus][] = [];
+  const c = SR2PageController.create();
+  const r: [SR2PageControllerStatus, SR2PageControllerStatus][] = [];
   const s = c.status.subscribe((oldV, newV) => {
     r.push([oldV, newV]);
   });
 
   expect(c.pageCount()).toStrictEqual(1n);
-  expect(c.statusNow()).toStrictEqual({ kind: 'Ready' });
+  expect(c.statusNow()).toStrictEqual({ kind: 'Initial' });
   c.recompute(1000.0, 100.0);
 
-  expect(r[0]?.[0]).toStrictEqual({ kind: 'Ready' });
-  expect(r[0]?.[1]).toStrictEqual({ kind: 'Ready' });
+  expect(r[0]?.[0]).toStrictEqual({ kind: 'Initial' });
+  expect(r[0]?.[1]).toStrictEqual({ kind: 'Initial' });
 
-  expect(r[1]?.[0]).toStrictEqual({ kind: 'Ready' });
+  expect(r[1]?.[0]).toStrictEqual({ kind: 'Initial' });
   expect(r[1]?.[1]).toStrictEqual({ kind: 'CalculatingPages', progress: 0.0 });
 
   expect(r[2]?.[0]).toStrictEqual({ kind: 'CalculatingPages', progress: 0.0 });
@@ -113,4 +125,47 @@ test('recomputing the controller publishes status values', () => {
   expect(r.length).toStrictEqual(13);
 
   s.unsubscribe();
+});
+
+test('finding pages works', () => {
+  const c = SR2PageController.create();
+
+  {
+    const p = c.findClosestPage(0.0);
+    expect(p.index).toStrictEqual(0n);
+    expect(p.scrollOffset).toStrictEqual(0.0);
+  }
+
+  {
+    const p = c.findClosestPage(1.0);
+    expect(p.index).toStrictEqual(0n);
+    expect(p.scrollOffset).toStrictEqual(0.0);
+  }
+
+  c.recompute(1000.0, 100.0);
+  expect(c.pageCount()).toStrictEqual(9n);
+
+  for (const p of c.pages()) {
+    console.log('Page: ', p);
+  }
+
+  {
+    const p = c.findClosestPage(0.0);
+    expect(p.index).toStrictEqual(0n);
+    expect(p.scrollOffset).toStrictEqual(0.0);
+  }
+
+  {
+    const p = c.findClosestPage(0.3);
+    expect(p.index).toStrictEqual(2n);
+    expect(p.scrollOffset).toStrictEqual(0.2222222222222222);
+    expect(p.scrollOffsetRaw).toStrictEqual(200);
+  }
+
+  {
+    const p = c.findClosestPage(1.1);
+    expect(p.index).toStrictEqual(8n);
+    expect(p.scrollOffset).toStrictEqual(0.8888888888888888);
+    expect(p.scrollOffsetRaw).toStrictEqual(800);
+  }
 });

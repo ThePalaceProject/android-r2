@@ -9,7 +9,7 @@
     "eslint-ts": "eslint --fix --ignore-pattern '*.mjs' -c eslint-ts.ts src",
     "tsc": "./node_modules/.bin/tsc",
     "test": "jest --coverage",
-    "build": "esbuild src/r2.ts --sourcemap --bundle --format=esm --line-limit=72 --outfile=dist/bundle.js --minify"
+    "build": "esbuild src/pageset.ts --sourcemap --bundle --format=esm --line-limit=72 --outfile=dist/bundle.js --minify"
   },
   "author": "",
   "license": "ISC",

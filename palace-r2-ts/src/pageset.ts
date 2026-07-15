@@ -26,55 +26,55 @@ export class SR2Page {
 }
 
 /**
- * The interface exposed by a page controller.
+ * The interface exposed by a page set.
  */
 
-export interface SR2PageControllerType {
+export interface SR2PageSetType {
   findClosestPage(scrollOffset: number): SR2Page;
   recompute(documentWidth: number, pageWidth: number): void;
   pageCount(): bigint;
   pages(): SR2Page[];
-  statusNow(): SR2PageControllerStatus;
-  readonly status: Attribute<SR2PageControllerStatus>;
+  statusNow(): SR2PageSetStatus;
+  readonly status: Attribute<SR2PageSetStatus>;
 }
 
-export interface SR2PageControllerStatusInitial {
+export interface SR2PageSetStatusInitial {
   kind: 'Initial';
 }
 
-export interface SR2PageControllerStatusReady {
+export interface SR2PageSetStatusReady {
   kind: 'Ready';
 }
 
-export interface SR2PageControllerStatusCalculatingPages {
+export interface SR2PageSetStatusCalculatingPages {
   kind: 'CalculatingPages';
   progress: number;
 }
 
-export type SR2PageControllerStatus =
-  | SR2PageControllerStatusInitial
-  | SR2PageControllerStatusReady
-  | SR2PageControllerStatusCalculatingPages;
+export type SR2PageSetStatus =
+  | SR2PageSetStatusInitial
+  | SR2PageSetStatusReady
+  | SR2PageSetStatusCalculatingPages;
 
-export class SR2PageController implements SR2PageControllerType {
+export class SR2PageSet implements SR2PageSetType {
   private pageArray: SR2Page[];
-  readonly status: Attribute<SR2PageControllerStatus>;
+  readonly status: Attribute<SR2PageSetStatus>;
 
   private constructor() {
     this.pageArray = [new SR2Page(0n, 0.0, 0.0)];
 
-    const initial: SR2PageControllerStatus = {
+    const initial: SR2PageSetStatus = {
       kind: 'Initial',
     };
 
-    this.status = Attribute.create<SR2PageControllerStatus>(initial);
+    this.status = Attribute.create<SR2PageSetStatus>(initial);
   }
 
-  public static create(): SR2PageControllerType {
-    return new SR2PageController();
+  public static create(): SR2PageSetType {
+    return new SR2PageSet();
   }
 
-  statusNow(): SR2PageControllerStatus {
+  statusNow(): SR2PageSetStatus {
     return this.status.valueNow();
   }
 

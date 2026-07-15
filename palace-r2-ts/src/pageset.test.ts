@@ -1,4 +1,4 @@
-import { SR2Page, SR2PageController, SR2PageControllerStatus } from './r2';
+import { SR2Page, SR2PageSet, SR2PageSetStatus } from './pageset';
 
 test('page constructor asserts range', () => {
   expect(() => {
@@ -13,14 +13,14 @@ test('page constructor asserts range', () => {
 });
 
 test('empty controller has one page', () => {
-  const c = SR2PageController.create();
+  const c = SR2PageSet.create();
   expect(c.pageCount()).toStrictEqual(1n);
   expect(c.statusNow()).toStrictEqual({ kind: 'Initial' });
 });
 
 test('recomputing the controller publishes status values', () => {
-  const c = SR2PageController.create();
-  const r: [SR2PageControllerStatus, SR2PageControllerStatus][] = [];
+  const c = SR2PageSet.create();
+  const r: [SR2PageSetStatus, SR2PageSetStatus][] = [];
   const s = c.status.subscribe((oldV, newV) => {
     r.push([oldV, newV]);
   });
@@ -128,7 +128,7 @@ test('recomputing the controller publishes status values', () => {
 });
 
 test('finding pages works', () => {
-  const c = SR2PageController.create();
+  const c = SR2PageSet.create();
 
   {
     const p = c.findClosestPage(0.0);

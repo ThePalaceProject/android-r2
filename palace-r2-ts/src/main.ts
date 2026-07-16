@@ -94,35 +94,6 @@ const gestures = SR2Gestures.create(
   },
 );
 
-export const api: SR2APIType = {
-  setProperty(key, value) {
-    const root = document.documentElement;
-    root.style.setProperty(key, value);
-  },
-  removeProperty: function (name: string): void {
-    const root = document.documentElement;
-    root.style.removeProperty(name);
-  },
-  highlightSearchingTerms: function (
-    _searchingTerms: string,
-    _clearHighlight: boolean,
-  ): void {
-    throw new Error('Function not implemented.');
-  },
-  turnPageLeft: function () {
-    onWantPagePrevious();
-  },
-  turnPageRight: function () {
-    onWantPageNext();
-  },
-  goToPosition: function (_offset: number): void {
-    throw new Error('Function not implemented.');
-  },
-  goToId: function (_id: string): void {
-    throw new Error('Function not implemented.');
-  },
-};
-
 function onViewportWidthChanged(): void {
   if (document == null) {
     throw Error('Document is null!');
@@ -146,6 +117,37 @@ function onViewportWidthChanged(): void {
   );
   pageSet.recompute(documentWidth, pageWidth);
 }
+
+export const api: SR2APIType = {
+  setProperty(key, value) {
+    const root = document.documentElement;
+    root.style.setProperty(key, value);
+    onViewportWidthChanged();
+  },
+  removeProperty: function (name: string): void {
+    const root = document.documentElement;
+    root.style.removeProperty(name);
+    onViewportWidthChanged();
+  },
+  highlightSearchingTerms: function (
+    _searchingTerms: string,
+    _clearHighlight: boolean,
+  ): void {
+    throw new Error('Function not implemented.');
+  },
+  turnPageLeft: function () {
+    onWantPagePrevious();
+  },
+  turnPageRight: function () {
+    onWantPageNext();
+  },
+  goToPosition: function (_offset: number): void {
+    throw new Error('Function not implemented.');
+  },
+  goToId: function (_id: string): void {
+    throw new Error('Function not implemented.');
+  },
+};
 
 /*
  * Register an event listener so that the Android app can receive the error messages.

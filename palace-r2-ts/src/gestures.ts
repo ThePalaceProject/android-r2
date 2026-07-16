@@ -1,7 +1,20 @@
 import { requireNotNull } from './notnull';
 
+/**
+ * The API exposed by the gesture handler.
+ */
+
 export interface SR2GesturesType {
+  /**
+   * A starting touch event was received.
+   */
+
   onTouchStart(event: TouchEvent): void;
+
+  /**
+   * An ending touch event was received.
+   */
+
   onTouchEnd(event: TouchEvent): void;
 }
 

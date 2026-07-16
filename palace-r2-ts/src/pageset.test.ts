@@ -169,3 +169,31 @@ test('finding pages works', () => {
     expect(p.scrollOffsetRaw).toStrictEqual(800);
   }
 });
+
+test('next/previous page works', () => {
+  const c = SR2PageSet.create();
+  c.recompute(10.0, 3.0);
+  expect(c.pageCount()).toStrictEqual(3);
+
+  for (const p of c.pages()) {
+    console.log('Page: ', p);
+  }
+
+  {
+    const p0 = c.pages()[0]!;
+    const p1 = c.pageNext(p0);
+    const p2 = c.pageNext(p1!);
+    const p3 = c.pageNext(p2!);
+    expect(p0?.index).toStrictEqual(0);
+    expect(p1?.index).toStrictEqual(1);
+    expect(p2?.index).toStrictEqual(2);
+    expect(p3).toBeNull();
+
+    const q1 = c.pagePrevious(p2!);
+    expect(q1).toStrictEqual(p1);
+    const q0 = c.pagePrevious(q1!);
+    expect(q0).toStrictEqual(p0);
+    const qk0 = c.pagePrevious(q0!);
+    expect(qk0).toBeNull();
+  }
+});

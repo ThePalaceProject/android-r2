@@ -4,7 +4,6 @@ import android.app.DownloadManager
 import android.content.Context
 import android.os.Environment
 import androidx.core.net.toUri
-import org.librarysimplified.r2.api.SR2ScrollingMode
 import org.slf4j.LoggerFactory
 import java.io.File
 
@@ -25,10 +24,6 @@ object DemoModel {
 
   @Volatile
   private var epubFileField: File? = null
-
-  @Volatile
-  var scrollMode: SR2ScrollingMode =
-    SR2ScrollingMode.SCROLLING_MODE_PAGINATED
 
   val database: DemoDatabase
     get() = this.databaseField

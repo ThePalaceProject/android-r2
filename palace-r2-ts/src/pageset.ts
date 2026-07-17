@@ -19,7 +19,7 @@ export class SR2Page {
 
     if (this.scrollOffset < 0.0 || this.scrollOffset > 1.0) {
       throw Error(
-        'Scroll offset ${this.scrollOffset} must be in the range [0, 1]',
+        `Scroll offset ${this.scrollOffset} must be in the range [0, 1]`,
       );
     }
   }
@@ -90,12 +90,16 @@ export class SR2PageSet implements SR2PageSetType {
 
   findClosestPage(scrollOffset: number): SR2Page {
     let pageNow = this.pageArray[0]!;
+    requireNotNull(pageNow, 'InitialPageNow');
+
     for (const pageNew of this.pageArray) {
       if (pageNew.scrollOffset > scrollOffset) {
         return pageNow;
       }
       pageNow = pageNew;
     }
+
+    requireNotNull(pageNow, 'ReturnedPageNow');
     return pageNow;
   }
 
@@ -103,8 +107,9 @@ export class SR2PageSet implements SR2PageSetType {
     requireNotNull(documentWidth, 'DocumentWidth');
     requireNotNull(pageWidth, 'PageWidth');
 
-    this.status.set({ kind: 'CalculatingPages', progress: 0.0 });
+    console.log(`Recomputing pages: ${documentWidth} / ${pageWidth}`);
 
+    this.status.set({ kind: 'CalculatingPages', progress: 0.0 });
     const newPages: SR2Page[] = [];
     const maxOffset = Math.max(0, documentWidth - pageWidth);
 
@@ -124,6 +129,11 @@ export class SR2PageSet implements SR2PageSetType {
       });
     }
 
+    if (newPages.length === 0) {
+      newPages.push(new SR2Page(0, 0.0, 0.0));
+    }
+
+    console.log(`Recomputed pages: ${newPages.length}`);
     this.pageArray = newPages;
     this.status.set({ kind: 'CalculatingPages', progress: 1.0 });
     this.status.set({ kind: 'Ready' });

@@ -170,6 +170,21 @@ test('finding pages works', () => {
   }
 });
 
+test('computing a single page works', () => {
+  const c = SR2PageSet.create();
+  c.recompute(1.0, 1.0);
+  expect(c.pageCount()).toStrictEqual(1);
+
+  for (const p of c.pages()) {
+    console.log('Page: ', p);
+  }
+
+  {
+    const p0 = c.pages()[0]!;
+    expect(p0).toStrictEqual(new SR2Page(0, 0, 0));
+  }
+});
+
 test('next/previous page works', () => {
   const c = SR2PageSet.create();
   c.recompute(10.0, 3.0);

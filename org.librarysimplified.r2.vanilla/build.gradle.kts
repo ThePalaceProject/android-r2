@@ -10,6 +10,9 @@ dependencies {
 
     implementation(libs.androidx.annotation)
     implementation(libs.google.guava)
+    implementation(libs.jackson.annotations)
+    implementation(libs.jackson.core)
+    implementation(libs.jackson.databind)
     implementation(libs.jcip.annotations)
     implementation(libs.joda.time)
     implementation(libs.kotlin.stdlib)

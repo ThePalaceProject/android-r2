@@ -18,6 +18,14 @@ export interface SR2GesturesType {
   onTouchEnd(event: TouchEvent): void;
 }
 
+export interface SR2GestureParametersType {
+  window: Window;
+  onTapLeft: () => void;
+  onTapRight: () => void;
+  onSwipeLeft: () => void;
+  onSwipeRight: () => void;
+}
+
 export class SR2Gestures implements SR2GesturesType {
   private readonly availWidth: number;
   private readonly availHeight: number;
@@ -33,17 +41,14 @@ export class SR2Gestures implements SR2GesturesType {
   private constructor(
     availWidth: number,
     availHeight: number,
-    onTapLeft: () => void,
-    onTapRight: () => void,
-    onSwipeLeft: () => void,
-    onSwipeRight: () => void,
+    parameters: SR2GestureParametersType,
   ) {
     this.availWidth = requireNotNull(availWidth, 'AvailWidth');
     this.availHeight = requireNotNull(availHeight, 'AvailHeight');
-    this.onTapLeft = requireNotNull(onTapLeft, 'OnTapLeft');
-    this.onTapRight = requireNotNull(onTapRight, 'OnTapRight');
-    this.onSwipeLeft = requireNotNull(onSwipeLeft, 'OnSwipeLeft');
-    this.onSwipeRight = requireNotNull(onSwipeRight, 'OnSwipeRight');
+    this.onTapLeft = requireNotNull(parameters.onTapLeft, 'OnTapLeft');
+    this.onTapRight = requireNotNull(parameters.onTapRight, 'OnTapRight');
+    this.onSwipeLeft = requireNotNull(parameters.onSwipeLeft, 'OnSwipeLeft');
+    this.onSwipeRight = requireNotNull(parameters.onSwipeRight, 'OnSwipeRight');
   }
 
   onTouchStart(event: TouchEvent): void {
@@ -135,23 +140,10 @@ export class SR2Gestures implements SR2GesturesType {
     event.preventDefault();
   }
 
-  public static create(
-    window: Window,
-    onTapLeft: () => void,
-    onTapRight: () => void,
-    onSwipeLeft: () => void,
-    onSwipeRight: () => void,
-  ): SR2GesturesType {
+  public static create(parameters: SR2GestureParametersType): SR2GesturesType {
     const availWidth = window.screen.availWidth;
     const availHeight = window.screen.availHeight;
 
-    return new SR2Gestures(
-      availWidth,
-      availHeight,
-      onTapLeft,
-      onTapRight,
-      onSwipeLeft,
-      onSwipeRight,
-    );
+    return new SR2Gestures(availWidth, availHeight, parameters);
   }
 }

@@ -480,11 +480,7 @@ internal class SR2Controller private constructor(
 
     val allFutures =
       CompletableFuture.allOf(
-        viewConnection.executeJS { js -> js.setFontFamily(SR2Fonts.fontFamilyStringOf(theme.font)) },
-        viewConnection.executeJS { js -> js.setTheme(SR2ReadiumInternalTheme.from(theme.colorScheme)) },
-        viewConnection.executeJS { js -> js.setFontSize(theme.textSize) },
-        viewConnection.executeJS { js -> js.setPublisherCSS(theme.publisherCSS) },
-        viewConnection.executeJS { js -> js.broadcastReadingPosition() },
+        viewConnection.executeJS { js -> js.setSettings(theme) }
       )
 
     allFutures.whenComplete { _, _ ->
@@ -718,13 +714,12 @@ internal class SR2Controller private constructor(
        * The order of operations performed here is significant:
        *
        * 1. The URL must be opened first.
-       * 2. When the URL is opened, the scroll mode must be set.
-       * 3. After the scroll mode, the theme must be set. The reason the theme must be set is that the theme
+       * 2. After opening, the theme must be set. The reason the theme must be set is that the theme
        *    affects pagination due to setting font families and sizes. If the webview is being restored, then
        *    the position to which it is being restored will have been generated when the theme was active, and
        *    if we try to restore a position _before_ the theme is restored, then we'll end up scrolling to the
        *    wrong position.
-       * 4. Finally, the actual position is set.
+       * 3. Finally, the actual position is set.
        */
 
       val openFuture =
@@ -733,12 +728,6 @@ internal class SR2Controller private constructor(
           .handle { _, exception ->
             if (exception != null) {
               this.logger.debug("{} Failed to completely open URL: ", this.name(), exception)
-            }
-          }.thenCompose {
-            connection.executeJS { js -> js.setScrollMode(this.configuration.scrollingMode) }
-          }.handle { _, exception ->
-            if (exception != null) {
-              this.logger.debug("{} Failed to set scroll mode: ", this.name(), exception)
             }
           }.thenCompose {
             this.executeThemeSet(connection, this.themeNow())
@@ -967,100 +956,40 @@ internal class SR2Controller private constructor(
     }
 
     @android.webkit.JavascriptInterface
-    override fun onCenterTapped() {
-      this@SR2Controller.logger.debug(
-        "{} onCenterTapped",
-        this@SR2Controller.name(),
-      )
-      this@SR2Controller.uiVisible = !this@SR2Controller.uiVisible
-      this@SR2Controller.publishEvent(SR2OnCenterTapped(this@SR2Controller.uiVisible))
+    override fun onWantChapterNext() {
+      this@SR2Controller.logger.debug("onWantChapterNext")
+      this@SR2Controller.submitCommand(SR2Command.OpenChapterNext)
     }
 
     @android.webkit.JavascriptInterface
-    override fun onClicked() {
-      this@SR2Controller.logger.debug(
-        "{} onClicked",
-        this@SR2Controller.name(),
-      )
+    override fun onWantChapterPrevious() {
+      this@SR2Controller.logger.debug("onWantChapterPrevious")
+      this@SR2Controller.submitCommand(SR2Command.OpenChapterPrevious(atEnd = true))
     }
 
     @android.webkit.JavascriptInterface
-    override fun onLeftTapped() {
-      this@SR2Controller.logger.debug(
-        "{} onLeftTapped",
-        this@SR2Controller.name(),
-      )
-
-      return when (this@SR2Controller.publication.metadata.layout) {
-        Layout.FIXED -> {
-          this@SR2Controller.submitCommand(SR2Command.OpenChapterPrevious(atEnd = true))
-        }
-
-        Layout.REFLOWABLE, Layout.SCROLLED, null -> {
-          this@SR2Controller.submitCommand(SR2Command.OpenPagePrevious)
-        }
-      }
+    override fun onPageSetInitial() {
+      this@SR2Controller.logger.debug("onPageSetInitial")
     }
 
     @android.webkit.JavascriptInterface
-    override fun onRightTapped() {
-      this@SR2Controller.logger.debug(
-        "{} onRightTapped",
-        this@SR2Controller.name(),
-      )
-
-      return when (this@SR2Controller.publication.metadata.layout) {
-        Layout.FIXED -> {
-          this@SR2Controller.submitCommand(SR2Command.OpenChapterNext)
-        }
-
-        Layout.REFLOWABLE, Layout.SCROLLED, null -> {
-          this@SR2Controller.submitCommand(SR2Command.OpenPageNext)
-        }
-      }
+    override fun onPageSetCalculating(progress: Double) {
+      this@SR2Controller.logger.debug("onPageSetCalculating: {}", progress)
     }
 
     @android.webkit.JavascriptInterface
-    override fun onLeftSwiped() {
-      this@SR2Controller.logger.debug(
-        "{} onLeftSwiped",
-        this@SR2Controller.name(),
-      )
-
-      return when (this@SR2Controller.publication.metadata.layout) {
-        Layout.FIXED -> {
-          this@SR2Controller.submitCommand(SR2Command.OpenChapterNext)
-        }
-
-        Layout.REFLOWABLE, Layout.SCROLLED, null -> {
-          this@SR2Controller.submitCommand(SR2Command.OpenPageNext)
-        }
-      }
+    override fun onPageSetReady(count: Double) {
+      this@SR2Controller.logger.debug("onPageSetReady: {}", count)
     }
 
     @android.webkit.JavascriptInterface
-    override fun onRightSwiped() {
-      this@SR2Controller.logger.debug(
-        "{} onRightSwiped",
-        this@SR2Controller.name(),
-      )
-
-      return when (this@SR2Controller.publication.metadata.layout) {
-        Layout.FIXED -> {
-          this@SR2Controller.submitCommand(SR2Command.OpenChapterPrevious(atEnd = true))
-        }
-
-        Layout.REFLOWABLE, Layout.SCROLLED, null -> {
-          this@SR2Controller.submitCommand(SR2Command.OpenPagePrevious)
-        }
-      }
+    override fun onGetViewportWidth(): Double {
+      this@SR2Controller.logger.debug("onGetViewportWidth")
+      return this.webView.width.toDouble()
     }
 
     @android.webkit.JavascriptInterface
-    override fun getViewportWidth(): Double = this.webView.width.toDouble()
-
-    @android.webkit.JavascriptInterface
-    override fun logError(
+    override fun onLogError(
       message: String?,
       file: String?,
       line: String?,
@@ -1188,7 +1117,6 @@ internal class SR2Controller private constructor(
         jsReceiver = this.JavascriptAPIReceiver(webView),
         commandQueue = this,
         uiExecutor = this.configuration.uiExecutor,
-        scrollingMode = this.configuration.scrollingMode,
         layout = this.publication.metadata.layout ?: Layout.REFLOWABLE,
       )
 

@@ -1,10 +1,20 @@
 import { SR2APIType } from './api';
 import { SR2Gestures } from './gestures';
+import { requireNotNull } from './notnull';
 import { SR2Page, SR2PageSet } from './pageset';
+import { putSettings, SR2SettingsType } from './settings';
 import { unreachable } from './unreachable';
 
 const pageSet = SR2PageSet.create();
 let pageCurrent: SR2Page = pageSet.pages()[0]!;
+
+/** Set the current page. */
+
+function setPage(page: SR2Page) {
+  requireNotNull(page, 'Page');
+  console.log(`Setting current page to: ${JSON.stringify(page)}`);
+  pageCurrent = page;
+}
 
 /*
  * Tell the native application about the status of the page set. This allows
@@ -43,6 +53,8 @@ function isRTL() {
  */
 
 function onScrollToPosition(page: SR2Page) {
+  requireNotNull(page, 'Page');
+
   const scrollElement = document.scrollingElement;
   if (scrollElement == null) {
     console.warn('Document scroll element is null');
@@ -51,6 +63,8 @@ function onScrollToPosition(page: SR2Page) {
 
   const factor = isRTL() ? -1 : 1;
   scrollElement.scrollLeft = page.scrollOffsetRaw * factor;
+  setPage(page);
+
   Android.onReadingPositionChanged(
     page.scrollOffset,
     page.index + 1,
@@ -63,7 +77,6 @@ function onWantPagePrevious() {
   if (page == null) {
     Android.onWantChapterPrevious();
   } else {
-    pageCurrent = page;
     onScrollToPosition(page);
   }
 }
@@ -73,62 +86,69 @@ function onWantPageNext() {
   if (page == null) {
     Android.onWantChapterNext();
   } else {
-    pageCurrent = page;
     onScrollToPosition(page);
   }
 }
 
-const gestures = SR2Gestures.create(
-  window,
-  () => {
-    onWantPagePrevious();
-  },
-  () => {
-    onWantPageNext();
-  },
-  () => {
-    onWantPagePrevious();
-  },
-  () => {
-    onWantPageNext();
-  },
-);
+const gestures = SR2Gestures.create({
+  window: window,
+  onSwipeLeft: () => onWantPageNext(),
+  onSwipeRight: () => onWantPagePrevious(),
+  onTapLeft: () => onWantPagePrevious(),
+  onTapRight: () => onWantPageNext(),
+});
+
+let onViewportWidthChangedExecuting = false;
 
 function onViewportWidthChanged(): void {
-  if (document == null) {
-    throw Error('Document is null!');
-  }
-  const scrollingElement = document.scrollingElement;
-  if (scrollingElement == null) {
-    throw Error('Document scrolling element is null!');
+  if (onViewportWidthChangedExecuting) {
+    return;
   }
 
-  const documentWidth = scrollingElement.scrollWidth;
-  // We can't rely on window.innerWidth for the pageWidth on Android, because if the
-  // device pixel ratio is not an integer, we get rounding issues offsetting the pages.
-  //
-  // See https://github.com/readium/readium-css/issues/97
-  // and https://github.com/readium/r2-navigator-kotlin/issues/146
-  const width = Android.onGetViewportWidth();
-  const pageWidth = width / window.devicePixelRatio;
-  api.setProperty(
-    '--RS__viewportWidth',
-    'calc(' + width + 'px / ' + window.devicePixelRatio + ')',
-  );
-  pageSet.recompute(documentWidth, pageWidth);
+  try {
+    onViewportWidthChangedExecuting = true;
+
+    console.log('onViewportWidthChanged');
+
+    if (document == null) {
+      throw Error('Document is null!');
+    }
+    const scrollingElement = document.scrollingElement;
+    if (scrollingElement == null) {
+      throw Error('Document scrolling element is null!');
+    }
+
+    const documentWidth = scrollingElement.scrollWidth;
+    // We can't rely on window.innerWidth for the pageWidth on Android, because if the
+    // device pixel ratio is not an integer, we get rounding issues offsetting the pages.
+    //
+    // See https://github.com/readium/readium-css/issues/97
+    // and https://github.com/readium/r2-navigator-kotlin/issues/146
+    const width = Android.onGetViewportWidth();
+    const pageWidth = width / window.devicePixelRatio;
+
+    const root = document.documentElement;
+    root.style.setProperty(
+      '--RS__viewportWidth',
+      'calc(' + width + 'px / ' + window.devicePixelRatio + ')',
+    );
+
+    pageSet.recompute(documentWidth, pageWidth);
+  } finally {
+    onViewportWidthChangedExecuting = false;
+  }
 }
 
+function onPutSettings(settings: SR2SettingsType) {
+  putSettings(settings);
+  onViewportWidthChanged();
+}
+
+/**
+ * The API exposed to the native application.
+ */
+
 export const api: SR2APIType = {
-  setProperty(key, value) {
-    const root = document.documentElement;
-    root.style.setProperty(key, value);
-    onViewportWidthChanged();
-  },
-  removeProperty: function (name: string): void {
-    const root = document.documentElement;
-    root.style.removeProperty(name);
-    onViewportWidthChanged();
-  },
   highlightSearchingTerms: function (
     _searchingTerms: string,
     _clearHighlight: boolean,
@@ -141,13 +161,28 @@ export const api: SR2APIType = {
   turnPageRight: function () {
     onWantPageNext();
   },
-  goToPosition: function (_offset: number): void {
-    throw new Error('Function not implemented.');
+  goToPosition: function (offset: number): void {
+    onScrollToPosition(pageSet.findClosestPage(offset));
   },
   goToId: function (_id: string): void {
     throw new Error('Function not implemented.');
   },
+  putSettings: function (settings: SR2SettingsType): void {
+    onPutSettings(settings);
+  },
 };
+
+/*
+ * Expose the API in a manner that will survive minification.
+ */
+
+declare global {
+  interface Window {
+    api: SR2APIType;
+  }
+}
+
+window.api = api;
 
 /*
  * Register an event listener so that the Android app can receive the error messages.

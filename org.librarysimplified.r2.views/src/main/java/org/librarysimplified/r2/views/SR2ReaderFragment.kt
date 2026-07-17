@@ -38,8 +38,6 @@ import org.librarysimplified.r2.api.SR2Event.SR2Error.SR2WebViewInaccessible
 import org.librarysimplified.r2.api.SR2Event.SR2OnCenterTapped
 import org.librarysimplified.r2.api.SR2Event.SR2ReadingPositionChanged
 import org.librarysimplified.r2.api.SR2Event.SR2ThemeChanged
-import org.librarysimplified.r2.api.SR2ScrollingMode.SCROLLING_MODE_CONTINUOUS
-import org.librarysimplified.r2.api.SR2ScrollingMode.SCROLLING_MODE_PAGINATED
 import org.librarysimplified.r2.api.SR2Theme
 import org.librarysimplified.r2.api.SR2UISettings
 import org.librarysimplified.r2.ui_thread.SR2UIThread
@@ -246,20 +244,6 @@ class SR2ReaderFragment : SR2Fragment() {
 
     this.webView.setKeyboardControlListener { event ->
       this.onUserPressedKeyOnWebView(event)
-    }
-
-    /*
-     * We don't show page numbers in continuous scroll mode.
-     */
-
-    when (SR2ReaderModel.scrollMode) {
-      SCROLLING_MODE_PAGINATED -> {
-        // The defaults are fine
-      }
-
-      SCROLLING_MODE_CONTINUOUS -> {
-        this.positionPageView.visibility = View.INVISIBLE
-      }
     }
 
     this.viewsHandleLoadingState(showLoading = true)

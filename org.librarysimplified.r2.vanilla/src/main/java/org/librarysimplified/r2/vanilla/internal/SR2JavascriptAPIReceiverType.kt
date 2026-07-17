@@ -5,14 +5,6 @@ package org.librarysimplified.r2.vanilla.internal
  */
 
 internal interface SR2JavascriptAPIReceiverType {
-  /**
-   * The reading position has changed.
-   *
-   * @param chapterProgress The chapter progress in the range `[0, 1]`.
-   * @param currentPage The page position within the chapter.
-   * @param pageCount Total pages within the chapter with the current styling.
-   */
-
   @android.webkit.JavascriptInterface
   fun onReadingPositionChanged(
     chapterProgress: Double,
@@ -20,45 +12,26 @@ internal interface SR2JavascriptAPIReceiverType {
     pageCount: Int,
   )
 
-  /** The center of the screen was tapped. */
+  @android.webkit.JavascriptInterface
+  fun onWantChapterNext()
 
   @android.webkit.JavascriptInterface
-  fun onCenterTapped()
-
-  /** The screen was clicked somewhere. */
+  fun onWantChapterPrevious()
 
   @android.webkit.JavascriptInterface
-  fun onClicked()
-
-  /** The left edge of the screen was tapped. */
+  fun onPageSetInitial()
 
   @android.webkit.JavascriptInterface
-  fun onLeftTapped()
-
-  /** The right edge of the screen was tapped. */
+  fun onPageSetCalculating(progress: Double)
 
   @android.webkit.JavascriptInterface
-  fun onRightTapped()
-
-  /** The user swiped left. */
+  fun onPageSetReady(count: Double)
 
   @android.webkit.JavascriptInterface
-  fun onLeftSwiped()
-
-  /** The user swiped right. */
+  fun onGetViewportWidth(): Double
 
   @android.webkit.JavascriptInterface
-  fun onRightSwiped()
-
-  @android.webkit.JavascriptInterface
-  fun getViewportWidth(): Double
-
-  /**
-   * An error was encountered in the JS.
-   */
-
-  @android.webkit.JavascriptInterface
-  fun logError(
+  fun onLogError(
     message: String?,
     file: String?,
     line: String?,

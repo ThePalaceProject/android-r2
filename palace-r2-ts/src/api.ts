@@ -2,6 +2,8 @@
  * The API exposed to the native application.
  */
 
+import { SR2SettingsType } from './settings';
+
 export interface SR2APIType {
   /**
    * Highlight search terms.
@@ -37,14 +39,8 @@ export interface SR2APIType {
   goToId(id: string): void;
 
   /**
-   * Set a document property.
+   * Write settings.
    */
 
-  setProperty(name: string, value: string): void;
-
-  /**
-   * Remove a document property.
-   */
-
-  removeProperty(name: string): void;
+  putSettings(settings: SR2SettingsType): void;
 }

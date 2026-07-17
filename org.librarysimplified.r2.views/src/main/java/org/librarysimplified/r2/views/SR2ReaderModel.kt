@@ -28,7 +28,6 @@ import org.librarysimplified.r2.api.SR2Event
 import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandSearchResults
 import org.librarysimplified.r2.api.SR2Executors
 import org.librarysimplified.r2.api.SR2PageNumberingMode
-import org.librarysimplified.r2.api.SR2ScrollingMode
 import org.librarysimplified.r2.api.SR2Theme
 import org.librarysimplified.r2.api.SR2UISettings
 import org.librarysimplified.r2.ui_thread.SR2UIThread
@@ -77,10 +76,6 @@ object SR2ReaderModel {
   fun uiToggle() {
     this.uiSetVisible(!this.uiIsVisibleSource.get())
   }
-
-  @Volatile
-  var scrollMode: SR2ScrollingMode =
-    SR2ScrollingMode.SCROLLING_MODE_PAGINATED
 
   @Volatile
   var perChapterNumbering: SR2PageNumberingMode =
@@ -181,7 +176,6 @@ object SR2ReaderModel {
               context = context,
               contentProtections = contentProtections,
               uiExecutor = SR2UIThread::runOnUIThread,
-              scrollingMode = this.scrollMode,
               pageNumberingMode = this.perChapterNumbering,
               initialBookmarks = bookmarks,
               allowCopyPaste = allowCopyPaste,

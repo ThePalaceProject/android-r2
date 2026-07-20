@@ -74,7 +74,6 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Pattern
-import kotlin.math.round
 
 /**
  * The default R2 controller implementation.
@@ -325,7 +324,7 @@ internal class SR2Controller private constructor(
           type = LAST_READ,
           title = position.chapterTitle.orEmpty(),
           locator = position.locator,
-          bookProgress = this.currentBookProgress,
+          bookProgress = position.bookProgress,
           uri = null,
         )
 
@@ -829,36 +828,6 @@ internal class SR2Controller private constructor(
     return result
   }
 
-  private suspend fun getCurrentPage(chapterProgress: Double): Pair<Int?, Int?> {
-    val currentNode =
-      this.navigationGraph.findNavigationNode(this.currentNavigationIntent)
-        ?: return null to null
-
-    if (currentNode.node !is SR2NavigationNode.SR2NavigationReadingOrderNode) {
-      return null to null
-    }
-
-    val indexInReadingOrder = currentNode.node.index
-    val positionsByChapter = this.publication.positionsByReadingOrder()
-    val currentChapterPositions = positionsByChapter[indexInReadingOrder]
-    val positionIndex =
-      round(chapterProgress * currentChapterPositions.size)
-        .toInt()
-        .coerceIn(0, currentChapterPositions.size - 1)
-
-    return when (this@SR2Controller.publication.metadata.layout) {
-      Layout.FIXED -> {
-        val pageNumber = currentChapterPositions[positionIndex].locations.position!!
-        val pageCount = positionsByChapter.fold(0) { current, list -> current + list.size }
-        pageNumber to pageCount
-      }
-
-      else -> {
-        (positionIndex + 1) to currentChapterPositions.size
-      }
-    }
-  }
-
   /**
    * A receiver that accepts calls from the Javascript code running inside the current
    * WebView.
@@ -921,16 +890,13 @@ internal class SR2Controller private constructor(
             currentTarget.node.navigationPoint.locator.chapterHref
           val targetTitle =
             currentTarget.node.title
-          val (resultCurrentPage, resultPageCount) =
-            controller.getCurrentPage(chapterProgress)
-
           controller.publishEvent(
             SR2ReadingPositionChanged(
               chapterHref = targetHref,
               chapterTitle = targetTitle,
               chapterProgress = chapterProgress,
-              currentPage = resultCurrentPage,
-              pageCount = resultPageCount,
+              currentPage = currentPage,
+              pageCount = pageCount,
               bookProgress = controller.currentBookProgress,
             ),
           )

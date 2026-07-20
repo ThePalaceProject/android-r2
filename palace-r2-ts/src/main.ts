@@ -2,6 +2,7 @@ import { SR2APIType } from './api';
 import { SR2Gestures } from './gestures';
 import { requireNotNull } from './notnull';
 import { SR2Page, SR2PageSet } from './pageset';
+import { highlightSearchingTerms } from './search_highlight';
 import { putSettings, SR2SettingsType } from './settings';
 import { unreachable } from './unreachable';
 
@@ -144,16 +145,23 @@ function onPutSettings(settings: SR2SettingsType) {
   onViewportWidthChanged();
 }
 
+function onHighlightSearchingTerms(
+  searchingTerms: string,
+  clearHighlight: boolean,
+) {
+  highlightSearchingTerms(searchingTerms, clearHighlight);
+}
+
 /**
  * The API exposed to the native application.
  */
 
 export const api: SR2APIType = {
   highlightSearchingTerms: function (
-    _searchingTerms: string,
-    _clearHighlight: boolean,
+    searchingTerms: string,
+    clearHighlight: boolean,
   ): void {
-    throw new Error('Function not implemented.');
+    onHighlightSearchingTerms(searchingTerms, clearHighlight);
   },
   turnPageLeft: function () {
     onWantPagePrevious();

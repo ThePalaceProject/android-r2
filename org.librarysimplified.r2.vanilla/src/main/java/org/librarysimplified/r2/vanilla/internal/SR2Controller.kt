@@ -924,16 +924,19 @@ internal class SR2Controller private constructor(
     @android.webkit.JavascriptInterface
     override fun onPageSetInitial() {
       this@SR2Controller.logger.debug("onPageSetInitial")
+      this@SR2Controller.publishEvent(SR2Event.SR2PageSetRecalculating(0.0))
     }
 
     @android.webkit.JavascriptInterface
     override fun onPageSetCalculating(progress: Double) {
       this@SR2Controller.logger.debug("onPageSetCalculating: {}", progress)
+      this@SR2Controller.publishEvent(SR2Event.SR2PageSetRecalculating(progress))
     }
 
     @android.webkit.JavascriptInterface
     override fun onPageSetReady(count: Double) {
       this@SR2Controller.logger.debug("onPageSetReady: {}", count)
+      this@SR2Controller.publishEvent(SR2Event.SR2PageSetRecalculationFinished())
     }
 
     @android.webkit.JavascriptInterface

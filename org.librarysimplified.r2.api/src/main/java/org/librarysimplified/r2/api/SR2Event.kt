@@ -121,6 +121,26 @@ sealed class SR2Event {
   ) : SR2Event()
 
   /**
+   * The page set is currently being recalculated. The progress value is in the range [0, 1].
+   */
+
+  data class SR2PageSetRecalculating(
+    val progress: Double,
+  ) : SR2Event() {
+    init {
+      require(progress in 0.0..1.0) {
+        "Page set recalculation progress $progress must be in the range [0, 1]"
+      }
+    }
+  }
+
+  /**
+   * The page set has finished recalculating.
+   */
+
+  class SR2PageSetRecalculationFinished : SR2Event()
+
+  /**
    * The set of events related to commands.
    */
 

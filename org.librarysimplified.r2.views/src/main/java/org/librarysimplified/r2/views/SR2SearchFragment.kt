@@ -30,6 +30,8 @@ import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandSearchRes
 import org.librarysimplified.r2.api.SR2Event.SR2Error
 import org.librarysimplified.r2.api.SR2Event.SR2ExternalLinkSelected
 import org.librarysimplified.r2.api.SR2Event.SR2OnCenterTapped
+import org.librarysimplified.r2.api.SR2Event.SR2PageSetRecalculating
+import org.librarysimplified.r2.api.SR2Event.SR2PageSetRecalculationFinished
 import org.librarysimplified.r2.api.SR2Event.SR2ReadingPositionChanged
 import org.librarysimplified.r2.api.SR2Event.SR2ThemeChanged
 import org.librarysimplified.r2.api.SR2Event.SR2UISettingsUpdated
@@ -210,18 +212,20 @@ class SR2SearchFragment : SR2Fragment() {
     SR2UIThread.checkIsUIThread()
 
     when (event) {
-      is SR2ReadingPositionChanged,
-      is SR2BookmarkDeleted,
       is SR2BookmarkCreated,
-      is SR2ThemeChanged,
-      is SR2Error.SR2ChapterNonexistent,
-      is SR2Error.SR2WebViewInaccessible,
-      is SR2OnCenterTapped,
+      is SR2BookmarkDeleted,
+      is SR2CommandExecutionFailed,
       is SR2CommandExecutionRunningLong,
       is SR2CommandExecutionStarted,
       is SR2CommandExecutionSucceeded,
-      is SR2CommandExecutionFailed,
+      is SR2Error.SR2ChapterNonexistent,
+      is SR2Error.SR2WebViewInaccessible,
       is SR2ExternalLinkSelected,
+      is SR2OnCenterTapped,
+      is SR2PageSetRecalculating,
+      is SR2PageSetRecalculationFinished,
+      is SR2ReadingPositionChanged,
+      is SR2ThemeChanged,
       is SR2UISettingsUpdated,
       -> {
         // Nothing

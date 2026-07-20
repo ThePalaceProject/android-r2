@@ -41,11 +41,6 @@ data class SR2ControllerConfiguration(
 
   val uiExecutor: (f: () -> Unit) -> Unit,
   /**
-   * The pagination numbering mode.
-   */
-
-  val pageNumberingMode: SR2PageNumberingMode,
-  /**
    * The initial set of bookmarks.
    */
 

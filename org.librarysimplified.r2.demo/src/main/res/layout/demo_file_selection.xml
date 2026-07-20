@@ -28,13 +28,6 @@
     android:text="@string/btn_download_epub" />
 
   <CheckBox
-    android:id="@+id/demoPerChapterPageNumbering"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:layout_marginTop="8dp"
-    android:text="Per chapter page numbering" />
-
-  <CheckBox
     android:id="@+id/demoAllowCopyPaste"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"

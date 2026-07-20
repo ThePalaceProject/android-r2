@@ -35,7 +35,6 @@ import org.librarysimplified.r2.api.SR2Event.SR2ReadingPositionChanged
 import org.librarysimplified.r2.api.SR2Locator
 import org.librarysimplified.r2.api.SR2Locator.SR2LocatorChapterEnd
 import org.librarysimplified.r2.api.SR2Locator.SR2LocatorPercent
-import org.librarysimplified.r2.api.SR2PageNumberingMode
 import org.librarysimplified.r2.api.SR2Theme
 import org.librarysimplified.r2.api.SR2UISettings
 import org.librarysimplified.r2.ui_thread.SR2UIThread
@@ -311,8 +310,6 @@ internal class SR2Controller private constructor(
         .subscribe(this::updateBookmarkLastRead),
     )
 
-    // Pre-compute positions
-    runBlocking { this@SR2Controller.publication.positionsByReadingOrder() }
     this.logger.debug(
       "[0x{}] Controller: Now Open {}",
       Integer.toUnsignedString(this.hashCode(), 16),
@@ -841,32 +838,23 @@ internal class SR2Controller private constructor(
       return null to null
     }
 
-    val pageNumberingMode =
-      when (this@SR2Controller.publication.metadata.layout) {
-        Layout.FIXED -> SR2PageNumberingMode.WHOLE_BOOK
-        else -> this.configuration.pageNumberingMode
-      }
-
     val indexInReadingOrder = currentNode.node.index
     val positionsByChapter = this.publication.positionsByReadingOrder()
     val currentChapterPositions = positionsByChapter[indexInReadingOrder]
-
     val positionIndex =
       round(chapterProgress * currentChapterPositions.size)
         .toInt()
-        .coerceAtMost(currentChapterPositions.size - 1)
+        .coerceIn(0, currentChapterPositions.size - 1)
 
-    return when (pageNumberingMode) {
-      SR2PageNumberingMode.PER_CHAPTER -> {
-        val pageNumber = positionIndex + 1
-        val pageCount = currentChapterPositions.size
-        pageNumber to pageCount
-      }
-
-      SR2PageNumberingMode.WHOLE_BOOK -> {
+    return when (this@SR2Controller.publication.metadata.layout) {
+      Layout.FIXED -> {
         val pageNumber = currentChapterPositions[positionIndex].locations.position!!
         val pageCount = positionsByChapter.fold(0) { current, list -> current + list.size }
         pageNumber to pageCount
+      }
+
+      else -> {
+        (positionIndex + 1) to currentChapterPositions.size
       }
     }
   }

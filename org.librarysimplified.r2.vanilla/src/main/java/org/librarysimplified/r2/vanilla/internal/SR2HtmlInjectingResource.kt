@@ -64,8 +64,6 @@ class SR2HtmlInjectingResource(
     beginIncludes.add(linkToCSS("readium-css/${layout.readiumCSSPath}ReadiumCSS-before.css"))
     endIncludes.add(linkToCSS("readium-css/${layout.readiumCSSPath}ReadiumCSS-after.css"))
     endIncludes.add(linkToScript("scripts/sr2.js"))
-    endIncludes.add(linkToScript("scripts/crypto-sha256.js"))
-    endIncludes.add(linkToScript("scripts/highlight.js"))
 
     for (element in beginIncludes) {
       resourceHtml = StringBuilder(resourceHtml).insert(beginHeadIndex, element).toString()

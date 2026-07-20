@@ -9,14 +9,12 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.CheckBox
 import androidx.fragment.app.Fragment
-import org.librarysimplified.r2.api.SR2PageNumberingMode
 import org.librarysimplified.r2.views.SR2ReaderModel
 
 class DemoFileSelectionFragment : Fragment(R.layout.demo_file_selection) {
   private lateinit var demoLoaderAllowCopyPaste: CheckBox
   private lateinit var demoLoaderDownloadButton: Button
   private lateinit var demoLoaderBrowseButton: Button
-  private lateinit var demoLoaderPerChapterPageNumbering: CheckBox
 
   override fun onCreateView(
     inflater: LayoutInflater,
@@ -28,8 +26,6 @@ class DemoFileSelectionFragment : Fragment(R.layout.demo_file_selection) {
 
     this.demoLoaderBrowseButton =
       layout.findViewById(R.id.demoBrowseFileButton)
-    this.demoLoaderPerChapterPageNumbering =
-      layout.findViewById(R.id.demoPerChapterPageNumbering)
     this.demoLoaderDownloadButton =
       layout.findViewById(R.id.demoDownloadSampleEpub)
     this.demoLoaderAllowCopyPaste =
@@ -43,19 +39,10 @@ class DemoFileSelectionFragment : Fragment(R.layout.demo_file_selection) {
       DemoModel.downloadEpub()
     }
 
-    this.demoLoaderPerChapterPageNumbering.setOnCheckedChangeListener { _, isChecked ->
-      SR2ReaderModel.perChapterNumbering =
-        when (isChecked) {
-          true -> SR2PageNumberingMode.PER_CHAPTER
-          false -> SR2PageNumberingMode.WHOLE_BOOK
-        }
-    }
-
     this.demoLoaderAllowCopyPaste.setOnCheckedChangeListener { _, isChecked ->
       DemoModel.allowCopyPaste = isChecked
     }
 
-    SR2ReaderModel.perChapterNumbering = SR2PageNumberingMode.WHOLE_BOOK
     return layout
   }
 

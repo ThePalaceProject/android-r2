@@ -27,7 +27,6 @@ import org.librarysimplified.r2.api.SR2ControllerType
 import org.librarysimplified.r2.api.SR2Event
 import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandSearchResults
 import org.librarysimplified.r2.api.SR2Executors
-import org.librarysimplified.r2.api.SR2PageNumberingMode
 import org.librarysimplified.r2.api.SR2Theme
 import org.librarysimplified.r2.api.SR2UISettings
 import org.librarysimplified.r2.ui_thread.SR2UIThread
@@ -76,10 +75,6 @@ object SR2ReaderModel {
   fun uiToggle() {
     this.uiSetVisible(!this.uiIsVisibleSource.get())
   }
-
-  @Volatile
-  var perChapterNumbering: SR2PageNumberingMode =
-    SR2PageNumberingMode.WHOLE_BOOK
 
   private val viewCommandSource =
     PublishSubject
@@ -176,7 +171,6 @@ object SR2ReaderModel {
               context = context,
               contentProtections = contentProtections,
               uiExecutor = SR2UIThread::runOnUIThread,
-              pageNumberingMode = this.perChapterNumbering,
               initialBookmarks = bookmarks,
               allowCopyPaste = allowCopyPaste,
             ),

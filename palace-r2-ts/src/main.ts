@@ -152,6 +152,18 @@ function onHighlightSearchingTerms(
   highlightSearchingTerms(searchingTerms, clearHighlight);
 }
 
+function onScrollToID(id: string) {
+  const element = document.getElementById(id);
+  if (!element) {
+    console.warn(`No element with id ${id}`);
+    return;
+  }
+  console.log(`Scrolling to element ${element.localName} with ID ${id}`);
+  const rect = element.getBoundingClientRect();
+  const page = pageSet.findClosestPage(rect.left);
+  onScrollToPosition(page);
+}
+
 /**
  * The API exposed to the native application.
  */
@@ -172,8 +184,8 @@ export const api: SR2APIType = {
   goToPosition: function (offset: number): void {
     onScrollToPosition(pageSet.findClosestPage(offset));
   },
-  goToId: function (_id: string): void {
-    throw new Error('Function not implemented.');
+  goToId: function (id: string): void {
+    onScrollToID(id);
   },
   putSettings: function (settings: SR2SettingsType): void {
     onPutSettings(settings);

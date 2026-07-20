@@ -63,10 +63,7 @@ class SR2HtmlInjectingResource(
 
     beginIncludes.add(linkToCSS("readium-css/${layout.readiumCSSPath}ReadiumCSS-before.css"))
     endIncludes.add(linkToCSS("readium-css/${layout.readiumCSSPath}ReadiumCSS-after.css"))
-    endIncludes.add(linkToScript("scripts/gestures.js"))
-    endIncludes.add(linkToScript("scripts/utils.js"))
-    endIncludes.add(linkToScript("scripts/crypto-sha256.js"))
-    endIncludes.add(linkToScript("scripts/highlight.js"))
+    endIncludes.add(linkToScript("scripts/sr2.js"))
 
     for (element in beginIncludes) {
       resourceHtml = StringBuilder(resourceHtml).insert(beginHeadIndex, element).toString()
@@ -133,8 +130,7 @@ class SR2HtmlInjectingResource(
       return content
     }
     val includes = mutableListOf<String>()
-    includes.add(linkToScript("scripts/gestures.js"))
-    includes.add(linkToScript("scripts/utils.js"))
+    includes.add(linkToScript("scripts/sr2.js"))
     for (element in includes) {
       resourceHtml = StringBuilder(resourceHtml).insert(endHeadIndex, element).toString()
     }

@@ -3,11 +3,7 @@ package org.librarysimplified.r2.vanilla.internal
 import android.view.MotionEvent
 import android.webkit.WebView
 import org.librarysimplified.r2.api.SR2Executors
-import org.librarysimplified.r2.api.SR2ScrollingMode
-import org.librarysimplified.r2.api.SR2ScrollingMode.SCROLLING_MODE_CONTINUOUS
-import org.librarysimplified.r2.api.SR2ScrollingMode.SCROLLING_MODE_PAGINATED
 import org.readium.r2.shared.publication.Layout
-import org.readium.r2.shared.publication.epub.EpubLayout
 import org.slf4j.LoggerFactory
 import java.util.UUID
 import java.util.concurrent.CompletableFuture
@@ -33,7 +29,6 @@ internal class SR2WebViewConnection(
       jsReceiver: SR2JavascriptAPIReceiverType,
       uiExecutor: (f: () -> Unit) -> Unit,
       commandQueue: SR2Controller,
-      scrollingMode: SR2ScrollingMode,
       layout: Layout,
     ): SR2WebViewConnectionType {
       val webChromeClient = SR2WebChromeClient()
@@ -62,26 +57,17 @@ internal class SR2WebViewConnection(
           useWideViewPort = true
         }
       } else {
-        when (scrollingMode) {
-          SCROLLING_MODE_PAGINATED -> {
-            /*
-             * Disable manual scrolling on the web view. Scrolling is controlled via the javascript API.
-             */
+        /*
+         * Disable manual scrolling on the web view. Scrolling is controlled via the javascript API.
+         */
 
-            webView.setOnTouchListener { v, event -> event.action == MotionEvent.ACTION_MOVE }
-            webView.isVerticalScrollBarEnabled = false
-            webView.isHorizontalScrollBarEnabled = false
-          }
-
-          SCROLLING_MODE_CONTINUOUS -> {
-            webView.isVerticalScrollBarEnabled = true
-            webView.isHorizontalScrollBarEnabled = false
-          }
-        }
+        webView.setOnTouchListener { v, event -> event.action == MotionEvent.ACTION_MOVE }
+        webView.isVerticalScrollBarEnabled = false
+        webView.isHorizontalScrollBarEnabled = false
       }
 
       return SR2WebViewConnection(
-        jsAPI = SR2JavascriptAPI(webView, commandQueue),
+        jsAPI = SR2JavascriptAPI(webView),
         webView = webView,
         uiExecutor = uiExecutor,
         commandQueue = commandQueue,

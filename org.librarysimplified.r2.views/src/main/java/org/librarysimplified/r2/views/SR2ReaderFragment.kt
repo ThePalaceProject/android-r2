@@ -8,6 +8,8 @@ import android.os.Bundle
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
+import android.view.View.INVISIBLE
+import android.view.View.VISIBLE
 import android.view.ViewGroup
 import android.view.ViewGroup.MarginLayoutParams
 import android.view.ViewTreeObserver.OnGlobalFocusChangeListener
@@ -37,9 +39,9 @@ import org.librarysimplified.r2.api.SR2Event.SR2Error.SR2ChapterNonexistent
 import org.librarysimplified.r2.api.SR2Event.SR2Error.SR2WebViewInaccessible
 import org.librarysimplified.r2.api.SR2Event.SR2OnCenterTapped
 import org.librarysimplified.r2.api.SR2Event.SR2ReadingPositionChanged
+import org.librarysimplified.r2.api.SR2Event.SR2PageSetRecalculating
+import org.librarysimplified.r2.api.SR2Event.SR2PageSetRecalculationFinished
 import org.librarysimplified.r2.api.SR2Event.SR2ThemeChanged
-import org.librarysimplified.r2.api.SR2ScrollingMode.SCROLLING_MODE_CONTINUOUS
-import org.librarysimplified.r2.api.SR2ScrollingMode.SCROLLING_MODE_PAGINATED
 import org.librarysimplified.r2.api.SR2Theme
 import org.librarysimplified.r2.api.SR2UISettings
 import org.librarysimplified.r2.ui_thread.SR2UIThread
@@ -236,7 +238,7 @@ class SR2ReaderFragment : SR2Fragment() {
     this.toolbarButtons.forEach { buttonView ->
       buttonView.setOnKeyListener { _, keyCode, event ->
         return@setOnKeyListener if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ESCAPE) {
-          onUserPressedEscapeOnToolbarButton()
+          this.onUserPressedEscapeOnToolbarButton()
           true
         } else {
           false
@@ -246,20 +248,6 @@ class SR2ReaderFragment : SR2Fragment() {
 
     this.webView.setKeyboardControlListener { event ->
       this.onUserPressedKeyOnWebView(event)
-    }
-
-    /*
-     * We don't show page numbers in continuous scroll mode.
-     */
-
-    when (SR2ReaderModel.scrollMode) {
-      SCROLLING_MODE_PAGINATED -> {
-        // The defaults are fine
-      }
-
-      SCROLLING_MODE_CONTINUOUS -> {
-        this.positionPageView.visibility = View.INVISIBLE
-      }
     }
 
     this.viewsHandleLoadingState(showLoading = true)
@@ -535,8 +523,8 @@ class SR2ReaderFragment : SR2Fragment() {
       this.positionTitleView.visibility = View.GONE
     } else {
       this.positionTitleView.text = event.chapterTitle
-      this.positionTitleView.visibility = View.VISIBLE
-      this.titleTouchIcon.visibility = View.VISIBLE
+      this.positionTitleView.visibility = VISIBLE
+      this.titleTouchIcon.visibility = VISIBLE
     }
 
     if (event.currentPage == null || event.pageCount == null) {
@@ -544,7 +532,7 @@ class SR2ReaderFragment : SR2Fragment() {
     } else {
       this.positionPageView.text =
         context.getString(R.string.progress_page, event.currentPage, event.pageCount)
-      this.positionPageView.visibility = View.VISIBLE
+      this.positionPageView.visibility = VISIBLE
     }
 
     val bookProgressPercent = event.bookProgressPercent
@@ -554,8 +542,8 @@ class SR2ReaderFragment : SR2Fragment() {
     } else {
       this.positionPercentView.text = this.getString(R.string.progress_percent, bookProgressPercent)
       this.setProgress(bookProgressPercent / 100.0)
-      this.positionPercentView.visibility = View.VISIBLE
-      this.progressViewContainer.visibility = View.VISIBLE
+      this.positionPercentView.visibility = VISIBLE
+      this.progressViewContainer.visibility = VISIBLE
     }
     this.reconfigureBookmarkMenuItem()
   }
@@ -617,15 +605,20 @@ class SR2ReaderFragment : SR2Fragment() {
       }
 
       is SR2CommandExecutionRunningLong -> {
-        this.viewsHandleLoadingState(showLoading = true)
+        this.loadingView.isIndeterminate = true
+        this.loadingView.progress = 0
+        this.loadingView.visibility = VISIBLE
+        this.webView.visibility = INVISIBLE
       }
 
       is SR2CommandExecutionSucceeded -> {
-        this.viewsHandleLoadingState(showLoading = false)
+        this.loadingView.visibility = INVISIBLE
+        this.webView.visibility = VISIBLE
       }
 
       is SR2CommandExecutionFailed -> {
-        this.viewsHandleLoadingState(showLoading = false)
+        this.loadingView.visibility = INVISIBLE
+        this.webView.visibility = VISIBLE
       }
 
       is SR2Event.SR2ExternalLinkSelected -> {
@@ -643,6 +636,20 @@ class SR2ReaderFragment : SR2Fragment() {
           event.newSettings
         )
       }
+
+      is SR2PageSetRecalculating -> {
+        this.loadingView.isIndeterminate = false
+        this.loadingView.progress = (event.progress * 100).toInt()
+        this.loadingView.visibility = VISIBLE
+        this.webView.visibility = INVISIBLE
+      }
+
+      is SR2PageSetRecalculationFinished -> {
+        this.loadingView.postDelayed({
+          this.loadingView.visibility = INVISIBLE
+          this.webView.visibility = VISIBLE
+        }, 200L)
+      }
     }
   }
 
@@ -652,10 +659,10 @@ class SR2ReaderFragment : SR2Fragment() {
   ) {
     val pageButtonWidth = newSettings.pageButtonWidth
     if (pageButtonWidth != null) {
-      this.pageNext.visibility = View.VISIBLE
-      this.pagePrevious.visibility = View.VISIBLE
-      setViewWidth(this.pageNext, pageButtonWidth)
-      setViewWidth(this.pagePrevious, pageButtonWidth)
+      this.pageNext.visibility = VISIBLE
+      this.pagePrevious.visibility = VISIBLE
+      this.setViewWidth(this.pageNext, pageButtonWidth)
+      this.setViewWidth(this.pagePrevious, pageButtonWidth)
       this.setWebViewMargins(pageButtonWidth)
     } else {
       this.pageNext.visibility = View.GONE
@@ -691,10 +698,10 @@ class SR2ReaderFragment : SR2Fragment() {
   }
 
   private fun disableReadingUI() {
-    this.toolbar.visibility = View.INVISIBLE
-    this.pageNextIcon.visibility = View.INVISIBLE
-    this.pagePreviousIcon.visibility = View.INVISIBLE
-    this.centerTouch.contentDescription = getString(R.string.accessibilityShowUIButton)
+    this.toolbar.visibility = INVISIBLE
+    this.pageNextIcon.visibility = INVISIBLE
+    this.pagePreviousIcon.visibility = INVISIBLE
+    this.centerTouch.contentDescription = this.getString(R.string.accessibilityShowUIButton)
 
     /*
      * When the reading UI is disabled, we change the behavior of the remaining buttons such
@@ -705,10 +712,10 @@ class SR2ReaderFragment : SR2Fragment() {
     this.pagePrevious.isClickable = true
     this.pageNext.isFocusable = false
     this.pageNext.isClickable = true
-    this.uiShow.visibility = View.VISIBLE
+    this.uiShow.visibility = VISIBLE
     this.uiShow.isFocusable = false
     this.uiShow.isClickable = true
-    this.buttonHideUI.visibility = View.INVISIBLE
+    this.buttonHideUI.visibility = INVISIBLE
     this.titleTouch.isFocusable = false
     this.titleTouch.isClickable = true
 
@@ -728,7 +735,7 @@ class SR2ReaderFragment : SR2Fragment() {
 
   private fun isUsingKeyboard(): Boolean {
     val config: Configuration =
-      resources.configuration
+      this.resources.configuration
     val hasHardwareKeyboard =
       config.keyboard != Configuration.KEYBOARD_NOKEYS
     val isHardwareKeyboardPresent =
@@ -738,10 +745,10 @@ class SR2ReaderFragment : SR2Fragment() {
   }
 
   private fun enableReadingUI() {
-    this.toolbar.visibility = View.VISIBLE
-    this.pageNextIcon.visibility = View.VISIBLE
-    this.pagePreviousIcon.visibility = View.VISIBLE
-    this.centerTouch.contentDescription = getString(R.string.accessibilityHideUIButton)
+    this.toolbar.visibility = VISIBLE
+    this.pageNextIcon.visibility = VISIBLE
+    this.pagePreviousIcon.visibility = VISIBLE
+    this.centerTouch.contentDescription = this.getString(R.string.accessibilityHideUIButton)
 
     /*
      * When the reading UI is enabled, we configure all views to give the standard Android
@@ -752,9 +759,9 @@ class SR2ReaderFragment : SR2Fragment() {
     this.pagePrevious.isClickable = true
     this.pageNext.isFocusable = true
     this.pageNext.isClickable = true
-    this.buttonHideUI.visibility = View.VISIBLE
+    this.buttonHideUI.visibility = VISIBLE
 
-    this.uiShow.visibility = View.INVISIBLE
+    this.uiShow.visibility = INVISIBLE
     this.uiShow.isFocusable = false
     this.uiShow.isClickable = false
     this.titleTouch.isFocusable = true
@@ -769,9 +776,9 @@ class SR2ReaderFragment : SR2Fragment() {
 
     val (webViewVisibility, loadingVisibility) =
       if (showLoading) {
-        View.INVISIBLE to View.VISIBLE
+        INVISIBLE to VISIBLE
       } else {
-        View.VISIBLE to View.INVISIBLE
+        VISIBLE to INVISIBLE
       }
 
     if (this.webView.visibility != webViewVisibility) {

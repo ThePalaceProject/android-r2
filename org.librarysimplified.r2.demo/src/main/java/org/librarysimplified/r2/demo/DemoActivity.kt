@@ -25,6 +25,8 @@ import org.librarysimplified.r2.api.SR2Event.SR2Error.SR2ChapterNonexistent
 import org.librarysimplified.r2.api.SR2Event.SR2Error.SR2WebViewInaccessible
 import org.librarysimplified.r2.api.SR2Event.SR2ExternalLinkSelected
 import org.librarysimplified.r2.api.SR2Event.SR2OnCenterTapped
+import org.librarysimplified.r2.api.SR2Event.SR2PageSetRecalculating
+import org.librarysimplified.r2.api.SR2Event.SR2PageSetRecalculationFinished
 import org.librarysimplified.r2.api.SR2Event.SR2ReadingPositionChanged
 import org.librarysimplified.r2.api.SR2Event.SR2ThemeChanged
 import org.librarysimplified.r2.api.SR2Event.SR2UISettingsUpdated
@@ -303,16 +305,18 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
         DemoModel.database.themeSet(event.theme)
       }
 
-      is SR2OnCenterTapped,
-      is SR2ReadingPositionChanged,
       is SR2ChapterNonexistent,
-      is SR2WebViewInaccessible,
-      is SR2ExternalLinkSelected,
-      is SR2CommandExecutionStarted,
-      is SR2CommandExecutionRunningLong,
-      is SR2CommandExecutionSucceeded,
       is SR2CommandExecutionFailed,
+      is SR2CommandExecutionRunningLong,
+      is SR2CommandExecutionStarted,
+      is SR2CommandExecutionSucceeded,
       is SR2CommandSearchResults,
+      is SR2ExternalLinkSelected,
+      is SR2OnCenterTapped,
+      is SR2PageSetRecalculating,
+      is SR2PageSetRecalculationFinished,
+      is SR2ReadingPositionChanged,
+      is SR2WebViewInaccessible,
       is SR2UISettingsUpdated,
       -> {
         // Nothing

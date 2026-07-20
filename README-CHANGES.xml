@@ -268,7 +268,7 @@
         </c:change>
       </c:changes>
     </c:release>
-    <c:release date="2026-07-10T11:49:18+00:00" is-open="false" ticket-system="org.lyrasis.jira" version="6.16.0">
+    <c:release date="2026-07-10T00:00:00+00:00" is-open="false" ticket-system="org.lyrasis.jira" version="6.16.0">
       <c:changes>
         <c:change date="2026-06-10T00:00:00+00:00" summary="Target API 36.">
           <c:tickets>
@@ -308,6 +308,15 @@
         <c:change date="2026-06-30T00:00:00+00:00" summary="Bookmark list items may now be variable height.">
           <c:tickets>
             <c:ticket id="PP-4700"/>
+          </c:tickets>
+        </c:change>
+      </c:changes>
+    </c:release>
+    <c:release date="2026-07-20T14:50:34+00:00" is-open="true" ticket-system="org.lyrasis.jira" version="6.17.0">
+      <c:changes>
+        <c:change date="2026-07-20T14:50:34+00:00" summary="Completely reimplement the JS with a small Typescript implementation.">
+          <c:tickets>
+            <c:ticket id="PP-4737"/>
           </c:tickets>
         </c:change>
       </c:changes>

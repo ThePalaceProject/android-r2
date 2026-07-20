@@ -2,20 +2,13 @@ package org.librarysimplified.r2.vanilla.internal
 
 import android.webkit.WebView
 import androidx.annotation.UiThread
-import org.librarysimplified.r2.api.SR2Command
-import org.librarysimplified.r2.api.SR2ControllerCommandQueueType
-import org.librarysimplified.r2.api.SR2PublisherCSS
+import com.fasterxml.jackson.databind.ObjectMapper
+import org.librarysimplified.r2.api.SR2ColorScheme
+import org.librarysimplified.r2.api.SR2Font
 import org.librarysimplified.r2.api.SR2PublisherCSS.SR2_PUBLISHER_DEFAULT_CSS_DISABLED
 import org.librarysimplified.r2.api.SR2PublisherCSS.SR2_PUBLISHER_DEFAULT_CSS_ENABLED
-import org.librarysimplified.r2.api.SR2ScrollingMode
-import org.librarysimplified.r2.api.SR2ScrollingMode.SCROLLING_MODE_CONTINUOUS
-import org.librarysimplified.r2.api.SR2ScrollingMode.SCROLLING_MODE_PAGINATED
+import org.librarysimplified.r2.api.SR2Theme
 import org.librarysimplified.r2.ui_thread.SR2UIThread
-import org.librarysimplified.r2.vanilla.internal.SR2ReadiumInternalTheme.DARK
-import org.librarysimplified.r2.vanilla.internal.SR2ReadiumInternalTheme.DAY
-import org.librarysimplified.r2.vanilla.internal.SR2ReadiumInternalTheme.LIGHT
-import org.librarysimplified.r2.vanilla.internal.SR2ReadiumInternalTheme.NIGHT
-import org.librarysimplified.r2.vanilla.internal.SR2ReadiumInternalTheme.SEPIA
 import org.slf4j.LoggerFactory
 import java.util.concurrent.CompletableFuture
 
@@ -25,10 +18,12 @@ import java.util.concurrent.CompletableFuture
 
 internal class SR2JavascriptAPI(
   private val webView: WebView,
-  private val commandQueue: SR2ControllerCommandQueueType,
 ) : SR2JavascriptAPIType {
   private val logger =
     LoggerFactory.getLogger(SR2JavascriptAPI::class.java)
+
+  private val mapper =
+    ObjectMapper()
 
   @UiThread
   private fun executeJavascript(script: String): CompletableFuture<String> {
@@ -53,113 +48,46 @@ internal class SR2JavascriptAPI(
   ): CompletableFuture<String> = this.executeJavascript("readium.highlightSearchingTerms(\"$searchingTerms\", $clearHighlight);")
 
   @UiThread
-  override fun openPageNext(): CompletableFuture<String> {
-    return this
-      .executeJavascript("readium.scrollRight();")
-      .thenApply { r: String ->
-        return@thenApply when (r) {
-          "false" -> {
-            this.commandQueue.submitCommand(SR2Command.OpenChapterNext)
-            r
-          }
+  override fun openPageNext(): CompletableFuture<*> = this.executeJavascript("api.turnPageRight();")
 
-          else -> {
-            r
-          }
-        }
+  @UiThread
+  override fun openPagePrevious(): CompletableFuture<*> = this.executeJavascript("api.turnPageLeft();")
+
+  @UiThread
+  override fun openPageLast(): CompletableFuture<String> = this.executeJavascript("api.goToPosition(1.0);")
+
+  override fun setSettings(value: SR2Theme): CompletableFuture<*> {
+    val o = this.mapper.createObjectNode()
+    o.put("colorScheme",
+      when (value.colorScheme) {
+        SR2ColorScheme.DARK_TEXT_LIGHT_BACKGROUND -> "SR2_BLACK_ON_WHITE"
+        SR2ColorScheme.LIGHT_TEXT_DARK_BACKGROUND -> "SR2_WHITE_ON_BLACK"
+        SR2ColorScheme.DARK_TEXT_ON_SEPIA -> "SR2_BLACK_ON_SEPIA"
       }
-  }
-
-  @UiThread
-  override fun openPagePrevious(): CompletableFuture<String> {
-    return this
-      .executeJavascript("readium.scrollLeft();")
-      .thenApply { r: String ->
-        return@thenApply when (r) {
-          "false" -> {
-            this.commandQueue.submitCommand(SR2Command.OpenChapterPrevious(atEnd = true))
-            r
-          }
-
-          else -> {
-            r
-          }
-        }
-      }
-  }
-
-  @UiThread
-  override fun openPageLast(): CompletableFuture<String> = this.executeJavascript("readium.scrollToEnd();")
-
-  @UiThread
-  override fun setFontFamily(value: String): CompletableFuture<*> =
-    CompletableFuture.allOf(
-      this.setUserProperty("fontFamily", value),
-      this.setUserProperty("fontOverride", "readium-font-on"),
     )
-
-  @UiThread
-  override fun setFontSize(value: Double): CompletableFuture<String> {
-    val percent = (value * 100.0).toString() + "%"
-    return this.setUserProperty("fontSize", percent)
-  }
-
-  override fun setTheme(value: SR2ReadiumInternalTheme): CompletableFuture<String> =
-    when (value) {
-      LIGHT, DAY -> {
-        this.setUserProperty("appearance", "readium-default-on")
+    o.put("font",
+      when (value.font) {
+        SR2Font.FONT_SANS -> "SR2_FONT_SANS_SERIF"
+        SR2Font.FONT_SERIF -> "SR2_FONT_SERIF"
+        SR2Font.FONT_OPEN_DYSLEXIC -> "SR2_FONT_OPENDYSLEXIC"
       }
-
-      DARK, NIGHT -> {
-        this.setUserProperty("appearance", "readium-night-on")
-      }
-
-      SEPIA -> {
-        this.setUserProperty("appearance", "readium-sepia-on")
-      }
-    }
-
-  @UiThread
-  override fun setProgression(progress: Double): CompletableFuture<String> = this.executeJavascript("readium.scrollToPosition($progress);")
-
-  @UiThread
-  override fun broadcastReadingPosition(): CompletableFuture<*> = this.executeJavascript("readium.broadcastReadingPosition();")
-
-  @UiThread
-  override fun setScrollMode(mode: SR2ScrollingMode): CompletableFuture<*> =
-    this.setUserProperty(
-      name = "scroll",
-      value =
-        when (mode) {
-          SCROLLING_MODE_PAGINATED -> "readium-scroll-off"
-          SCROLLING_MODE_CONTINUOUS -> "readium-scroll-on"
-        },
     )
-
-  @UiThread
-  override fun scrollToId(id: String): CompletableFuture<*> = this.executeJavascript("readium.scrollToId(\"$id\");")
-
-  @UiThread
-  override fun setPublisherCSS(css: SR2PublisherCSS): CompletableFuture<*> =
-    when (css) {
+    when (value.publisherCSS) {
       SR2_PUBLISHER_DEFAULT_CSS_ENABLED -> {
-        CompletableFuture.allOf(
-          this.setUserProperty("advancedSettings", ""),
-          this.setUserProperty("fontOverride", ""),
-        )
+        o.put("font", "SR2_FONT_PUBLISHER")
       }
 
       SR2_PUBLISHER_DEFAULT_CSS_DISABLED -> {
-        CompletableFuture.allOf(
-          this.setUserProperty("advancedSettings", "readium-advanced-on"),
-          this.setUserProperty("fontOverride", "readium-font-on"),
-        )
+        // Nothing required.
       }
     }
+    o.put("fontSizePercent", value.textSize * 100.0)
+    return this.executeJavascript("api.putSettings($o);")
+  }
 
   @UiThread
-  fun setUserProperty(
-    name: String,
-    value: String,
-  ): CompletableFuture<String> = this.executeJavascript("readium.setProperty(\"--USER__${name}\", \"${value}\");")
+  override fun setProgression(progress: Double): CompletableFuture<String> = this.executeJavascript("api.goToPosition($progress);")
+
+  @UiThread
+  override fun scrollToId(id: String): CompletableFuture<*> = this.executeJavascript("api.goToId(\"$id\");")
 }

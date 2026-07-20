@@ -143,11 +143,7 @@ test('finding pages works', () => {
   }
 
   c.recompute(1000.0, 100.0);
-  expect(c.pageCount()).toStrictEqual(9);
-
-  for (const p of c.pages()) {
-    console.log('Page: ', p);
-  }
+  expect(c.pageCount()).toStrictEqual(10);
 
   {
     const p = c.findClosestPage(0.0);
@@ -164,9 +160,9 @@ test('finding pages works', () => {
 
   {
     const p = c.findClosestPage(1.1);
-    expect(p.index).toStrictEqual(8);
-    expect(p.scrollOffset).toStrictEqual(0.8888888888888888);
-    expect(p.scrollOffsetRaw).toStrictEqual(800);
+    expect(p.index).toStrictEqual(9);
+    expect(p.scrollOffset).toStrictEqual(1.0);
+    expect(p.scrollOffsetRaw).toStrictEqual(900);
   }
 });
 
@@ -188,27 +184,66 @@ test('computing a single page works', () => {
 test('next/previous page works', () => {
   const c = SR2PageSet.create();
   c.recompute(10.0, 3.0);
-  expect(c.pageCount()).toStrictEqual(3);
-
-  for (const p of c.pages()) {
-    console.log('Page: ', p);
-  }
+  expect(c.pageCount()).toStrictEqual(4);
 
   {
     const p0 = c.pages()[0]!;
     const p1 = c.pageNext(p0);
     const p2 = c.pageNext(p1!);
     const p3 = c.pageNext(p2!);
+    const p4 = c.pageNext(p3!);
     expect(p0?.index).toStrictEqual(0);
     expect(p1?.index).toStrictEqual(1);
     expect(p2?.index).toStrictEqual(2);
-    expect(p3).toBeNull();
+    expect(p3?.index).toStrictEqual(3);
+    expect(p4).toBeNull();
 
-    const q1 = c.pagePrevious(p2!);
+    const q2 = c.pagePrevious(p3!);
+    expect(q2).toStrictEqual(p2);
+    const q1 = c.pagePrevious(q2!);
     expect(q1).toStrictEqual(p1);
     const q0 = c.pagePrevious(q1!);
     expect(q0).toStrictEqual(p0);
     const qk0 = c.pagePrevious(q0!);
     expect(qk0).toBeNull();
   }
+});
+
+test('last page is included when document does not divide evenly', () => {
+  const c = SR2PageSet.create();
+  c.recompute(1000.0, 300.0);
+
+  expect(c.pageCount()).toStrictEqual(4);
+
+  const pages = c.pages();
+  expect(pages[0]?.scrollOffsetRaw).toStrictEqual(0);
+  expect(pages[1]?.scrollOffsetRaw).toStrictEqual(300);
+  expect(pages[2]?.scrollOffsetRaw).toStrictEqual(600);
+  expect(pages[3]?.scrollOffsetRaw).toStrictEqual(700);
+
+  expect(pages[0]?.scrollOffset).toStrictEqual(0.0);
+  expect(pages[3]?.scrollOffset).toStrictEqual(1.0);
+});
+
+test('no phantom last page when loop already covers document', () => {
+  const c = SR2PageSet.create();
+  c.recompute(3606, 600.9389348488247);
+
+  expect(c.pageCount()).toStrictEqual(6);
+
+  const pages = c.pages();
+  const last = pages[5]!;
+  const penultimate = pages[4]!;
+
+  expect(last.scrollOffsetRaw - penultimate.scrollOffsetRaw).toBeGreaterThan(1);
+});
+
+test('single page chapter produces one page with offset zero', () => {
+  const c = SR2PageSet.create();
+  c.recompute(1.0, 1.0);
+
+  expect(c.pageCount()).toStrictEqual(1);
+  const p0 = c.pages()[0]!;
+  expect(p0.scrollOffset).toStrictEqual(0.0);
+  expect(p0.scrollOffsetRaw).toStrictEqual(0);
 });

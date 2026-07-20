@@ -119,7 +119,10 @@ export class SR2PageSet implements SR2PageSetType {
       pageOffsetRaw < maxOffset;
       pageOffsetRaw += pageWidth
     ) {
-      const pageOffset = pageOffsetRaw / maxOffset;
+      let pageOffset = 0.0;
+      if (maxOffset > 0) {
+        pageOffset = pageOffsetRaw / maxOffset;
+      }
       const newPage = new SR2Page(index, pageOffset, pageOffsetRaw);
       ++index;
       newPages.push(newPage);
@@ -129,8 +132,26 @@ export class SR2PageSet implements SR2PageSetType {
       });
     }
 
+    /*
+     * If the resulting pagination resulted in no pages at all, then
+     * simply insert a page that represents the entire chapter.
+     *
+     * Otherwise, we need to check if the distance between the offset
+     * of the last inserted page and the end of the document is greater
+     * than one pixel. If the distance is greater than one pixel, then
+     * it means that there's a displayable amount of content still left
+     * over and we need to add another page to show it. Without this
+     * check, the chapter has a chance to end early and miss the last
+     * page.
+     */
+
     if (newPages.length === 0) {
       newPages.push(new SR2Page(0, 0.0, 0.0));
+    } else {
+      const last = newPages[newPages.length - 1]!;
+      if (maxOffset - last.scrollOffsetRaw >= 1) {
+        newPages.push(new SR2Page(index, 1.0, maxOffset));
+      }
     }
 
     console.log(`Recomputed pages: ${newPages.length}`);

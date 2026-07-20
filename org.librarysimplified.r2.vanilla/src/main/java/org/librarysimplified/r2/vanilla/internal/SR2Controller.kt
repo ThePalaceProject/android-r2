@@ -809,7 +809,7 @@ internal class SR2Controller private constructor(
   }
 
   private fun getBookProgress(chapterProgress: Double): Double? {
-    require(chapterProgress < 1 || chapterProgress > 0) {
+    require(chapterProgress >= 0 && chapterProgress <= 1) {
       "Progress must be in [0, 1]; was $chapterProgress"
     }
 

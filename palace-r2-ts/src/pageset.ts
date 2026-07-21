@@ -1,5 +1,5 @@
 import { Attribute } from './attribute';
-import { requireNotNull } from './notnull';
+import { requireDefined } from './notnull';
 
 /**
  * An immutable page value. Pages are numbered starting from zero
@@ -19,7 +19,7 @@ export class SR2Page {
 
     if (this.scrollOffset < 0.0 || this.scrollOffset > 1.0) {
       throw Error(
-        `Scroll offset ${this.scrollOffset} must be in the range [0, 1]`,
+        `Scroll offset ${this.scrollOffset.toString()} must be in the range [0, 1]`,
       );
     }
   }
@@ -89,8 +89,7 @@ export class SR2PageSet implements SR2PageSetType {
   }
 
   findClosestPage(scrollOffset: number): SR2Page {
-    let pageNow = this.pageArray[0]!;
-    requireNotNull(pageNow, 'InitialPageNow');
+    let pageNow: SR2Page = requireDefined(this.pageArray[0], 'InitialPageNow');
 
     for (const pageNew of this.pageArray) {
       if (pageNew.scrollOffset > scrollOffset) {
@@ -99,15 +98,17 @@ export class SR2PageSet implements SR2PageSetType {
       pageNow = pageNew;
     }
 
-    requireNotNull(pageNow, 'ReturnedPageNow');
+    requireDefined(pageNow, 'ReturnedPageNow');
     return pageNow;
   }
 
   recompute(documentWidth: number, pageWidth: number): void {
-    requireNotNull(documentWidth, 'DocumentWidth');
-    requireNotNull(pageWidth, 'PageWidth');
+    requireDefined(documentWidth, 'DocumentWidth');
+    requireDefined(pageWidth, 'PageWidth');
 
-    console.log(`Recomputing pages: ${documentWidth} / ${pageWidth}`);
+    console.log(
+      `Recomputing pages: ${documentWidth.toString()} / ${pageWidth.toString()}`,
+    );
 
     this.status.set({ kind: 'CalculatingPages', progress: 0.0 });
     const newPages: SR2Page[] = [];
@@ -115,7 +116,7 @@ export class SR2PageSet implements SR2PageSetType {
 
     let index = 0;
     for (
-      let pageOffsetRaw: number = 0;
+      let pageOffsetRaw = 0;
       pageOffsetRaw < maxOffset;
       pageOffsetRaw += pageWidth
     ) {
@@ -148,29 +149,32 @@ export class SR2PageSet implements SR2PageSetType {
     if (newPages.length === 0) {
       newPages.push(new SR2Page(0, 0.0, 0.0));
     } else {
-      const last = newPages[newPages.length - 1]!;
+      const last = requireDefined(newPages[newPages.length - 1], 'LastPage');
       if (maxOffset - last.scrollOffsetRaw >= 1) {
         newPages.push(new SR2Page(index, 1.0, maxOffset));
       }
     }
 
-    console.log(`Recomputed pages: ${newPages.length}`);
+    console.log(`Recomputed pages: ${newPages.length.toString()}`);
     this.pageArray = newPages;
     this.status.set({ kind: 'CalculatingPages', progress: 1.0 });
     this.status.set({ kind: 'Ready' });
   }
 
   pagePrevious(pageCurrent: SR2Page): SR2Page | null {
-    if (pageCurrent.index == 0) {
+    if (pageCurrent.index === 0) {
       return null;
     }
-    return this.pageArray[pageCurrent.index - 1]!;
+    return requireDefined(
+      this.pageArray[pageCurrent.index - 1],
+      'PreviousPage',
+    );
   }
 
   pageNext(pageCurrent: SR2Page): SR2Page | null {
-    if (pageCurrent.index == this.pageArray.length - 1) {
+    if (pageCurrent.index === this.pageArray.length - 1) {
       return null;
     }
-    return this.pageArray[pageCurrent.index + 1]!;
+    return requireDefined(this.pageArray[pageCurrent.index + 1], 'NextPage');
   }
 }

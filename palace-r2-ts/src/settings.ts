@@ -1,4 +1,4 @@
-import { requireNotNull } from './notnull';
+import { requireDefined } from './notnull';
 import { unreachable } from './unreachable';
 
 /**
@@ -40,7 +40,7 @@ export interface SR2SettingsType {
  */
 
 export function putSettings(settings: SR2SettingsType) {
-  requireNotNull(settings, 'Settings');
+  requireDefined(settings, 'Settings');
 
   const root = document.documentElement;
 

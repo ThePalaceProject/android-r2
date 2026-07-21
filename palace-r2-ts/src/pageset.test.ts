@@ -1,3 +1,4 @@
+import { requireDefined } from './notnull';
 import { SR2Page, SR2PageSet, SR2PageSetStatus } from './pageset';
 
 test('page constructor asserts range', () => {
@@ -176,7 +177,7 @@ test('computing a single page works', () => {
   }
 
   {
-    const p0 = c.pages()[0]!;
+    const p0 = c.pages()[0];
     expect(p0).toStrictEqual(new SR2Page(0, 0, 0));
   }
 });
@@ -187,24 +188,24 @@ test('next/previous page works', () => {
   expect(c.pageCount()).toStrictEqual(4);
 
   {
-    const p0 = c.pages()[0]!;
-    const p1 = c.pageNext(p0);
-    const p2 = c.pageNext(p1!);
-    const p3 = c.pageNext(p2!);
-    const p4 = c.pageNext(p3!);
-    expect(p0?.index).toStrictEqual(0);
-    expect(p1?.index).toStrictEqual(1);
-    expect(p2?.index).toStrictEqual(2);
-    expect(p3?.index).toStrictEqual(3);
+    const p0 = requireDefined(c.pages()[0], 'p0');
+    const p1 = requireDefined(c.pageNext(p0), 'p1');
+    const p2 = requireDefined(c.pageNext(p1), 'p2');
+    const p3 = requireDefined(c.pageNext(p2), 'p3');
+    const p4 = c.pageNext(p3);
+    expect(p0.index).toStrictEqual(0);
+    expect(p1.index).toStrictEqual(1);
+    expect(p2.index).toStrictEqual(2);
+    expect(p3.index).toStrictEqual(3);
     expect(p4).toBeNull();
 
-    const q2 = c.pagePrevious(p3!);
+    const q2 = requireDefined(c.pagePrevious(p3), 'q2');
     expect(q2).toStrictEqual(p2);
-    const q1 = c.pagePrevious(q2!);
+    const q1 = requireDefined(c.pagePrevious(q2), 'q1');
     expect(q1).toStrictEqual(p1);
-    const q0 = c.pagePrevious(q1!);
+    const q0 = requireDefined(c.pagePrevious(q1), 'q0');
     expect(q0).toStrictEqual(p0);
-    const qk0 = c.pagePrevious(q0!);
+    const qk0 = c.pagePrevious(q0);
     expect(qk0).toBeNull();
   }
 });
@@ -232,8 +233,8 @@ test('no phantom last page when loop already covers document', () => {
   expect(c.pageCount()).toStrictEqual(6);
 
   const pages = c.pages();
-  const last = pages[5]!;
-  const penultimate = pages[4]!;
+  const last = requireDefined(pages[5], 'last');
+  const penultimate = requireDefined(pages[4], 'penultimate');
 
   expect(last.scrollOffsetRaw - penultimate.scrollOffsetRaw).toBeGreaterThan(1);
 });
@@ -243,7 +244,7 @@ test('single page chapter produces one page with offset zero', () => {
   c.recompute(1.0, 1.0);
 
   expect(c.pageCount()).toStrictEqual(1);
-  const p0 = c.pages()[0]!;
+  const p0 = requireDefined(c.pages()[0], 'p0');
   expect(p0.scrollOffset).toStrictEqual(0.0);
   expect(p0.scrollOffsetRaw).toStrictEqual(0);
 });

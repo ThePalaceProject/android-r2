@@ -1,18 +1,18 @@
 import { SR2APIType } from './api';
 import { SR2Gestures } from './gestures';
-import { requireNotNull } from './notnull';
+import { requireDefined } from './notnull';
 import { SR2Page, SR2PageSet } from './pageset';
 import { highlightSearchingTerms } from './search_highlight';
 import { putSettings, SR2SettingsType } from './settings';
 import { unreachable } from './unreachable';
 
 const pageSet = SR2PageSet.create();
-let pageCurrent: SR2Page = pageSet.pages()[0]!;
+let pageCurrent: SR2Page = requireDefined(pageSet.pages()[0], 'InitialPage');
 
 /** Set the current page. */
 
 function setPage(page: SR2Page) {
-  requireNotNull(page, 'Page');
+  requireDefined(page, 'Page');
   console.log(`Setting current page to: ${JSON.stringify(page)}`);
   pageCurrent = page;
 }
@@ -44,7 +44,7 @@ pageSet.status.subscribe((_, statusNew) => {
 });
 
 function isRTL() {
-  return document.body.dir.toLowerCase() == 'rtl';
+  return document.body.dir.toLowerCase() === 'rtl';
 }
 
 /**
@@ -54,10 +54,10 @@ function isRTL() {
  */
 
 function onScrollToPosition(page: SR2Page) {
-  requireNotNull(page, 'Page');
+  requireDefined(page, 'Page');
 
   const scrollElement = document.scrollingElement;
-  if (scrollElement == null) {
+  if (scrollElement === null) {
     console.warn('Document scroll element is null');
     return;
   }
@@ -75,7 +75,7 @@ function onScrollToPosition(page: SR2Page) {
 
 function onWantPagePrevious() {
   const page: SR2Page | null = pageSet.pagePrevious(pageCurrent);
-  if (page == null) {
+  if (page === null) {
     Android.onWantChapterPrevious();
   } else {
     onScrollToPosition(page);
@@ -84,7 +84,7 @@ function onWantPagePrevious() {
 
 function onWantPageNext() {
   const page: SR2Page | null = pageSet.pageNext(pageCurrent);
-  if (page == null) {
+  if (page === null) {
     Android.onWantChapterNext();
   } else {
     onScrollToPosition(page);
@@ -93,10 +93,18 @@ function onWantPageNext() {
 
 const gestures = SR2Gestures.create({
   window: window,
-  onSwipeLeft: () => onWantPageNext(),
-  onSwipeRight: () => onWantPagePrevious(),
-  onTapLeft: () => onWantPagePrevious(),
-  onTapRight: () => onWantPageNext(),
+  onSwipeLeft: () => {
+    onWantPageNext();
+  },
+  onSwipeRight: () => {
+    onWantPagePrevious();
+  },
+  onTapLeft: () => {
+    onWantPagePrevious();
+  },
+  onTapRight: () => {
+    onWantPageNext();
+  },
 });
 
 let onViewportWidthChangedExecuting = false;
@@ -108,14 +116,10 @@ function onViewportWidthChanged(): void {
 
   try {
     onViewportWidthChangedExecuting = true;
-
     console.log('onViewportWidthChanged');
 
-    if (document == null) {
-      throw Error('Document is null!');
-    }
     const scrollingElement = document.scrollingElement;
-    if (scrollingElement == null) {
+    if (scrollingElement === null) {
       throw Error('Document scrolling element is null!');
     }
 
@@ -131,7 +135,7 @@ function onViewportWidthChanged(): void {
     const root = document.documentElement;
     root.style.setProperty(
       '--RS__viewportWidth',
-      'calc(' + width + 'px / ' + window.devicePixelRatio + ')',
+      `calc(${width.toString()}px / ${window.devicePixelRatio.toString()})`,
     );
 
     pageSet.recompute(documentWidth, pageWidth);

@@ -1,4 +1,4 @@
-import { requireNotNull } from './notnull';
+import { requireDefined } from './notnull';
 
 /**
  * The API exposed by the gesture handler.
@@ -29,10 +29,10 @@ export interface SR2GestureParametersType {
 export class SR2Gestures implements SR2GesturesType {
   private readonly availWidth: number;
   private readonly availHeight: number;
-  private startX: number = 0;
-  private startY: number = 0;
+  private startX = 0;
+  private startY = 0;
   private timeStart: number = Date.now();
-  private singleTouch: boolean = false;
+  private singleTouch = false;
   private readonly onTapLeft: () => void;
   private readonly onTapRight: () => void;
   private readonly onSwipeLeft: () => void;
@@ -43,12 +43,12 @@ export class SR2Gestures implements SR2GesturesType {
     availHeight: number,
     parameters: SR2GestureParametersType,
   ) {
-    this.availWidth = requireNotNull(availWidth, 'AvailWidth');
-    this.availHeight = requireNotNull(availHeight, 'AvailHeight');
-    this.onTapLeft = requireNotNull(parameters.onTapLeft, 'OnTapLeft');
-    this.onTapRight = requireNotNull(parameters.onTapRight, 'OnTapRight');
-    this.onSwipeLeft = requireNotNull(parameters.onSwipeLeft, 'OnSwipeLeft');
-    this.onSwipeRight = requireNotNull(parameters.onSwipeRight, 'OnSwipeRight');
+    this.availWidth = requireDefined(availWidth, 'AvailWidth');
+    this.availHeight = requireDefined(availHeight, 'AvailHeight');
+    this.onTapLeft = requireDefined(parameters.onTapLeft, 'OnTapLeft');
+    this.onTapRight = requireDefined(parameters.onTapRight, 'OnTapRight');
+    this.onSwipeLeft = requireDefined(parameters.onSwipeLeft, 'OnSwipeLeft');
+    this.onSwipeRight = requireDefined(parameters.onSwipeRight, 'OnSwipeRight');
   }
 
   onTouchStart(event: TouchEvent): void {
@@ -62,7 +62,7 @@ export class SR2Gestures implements SR2GesturesType {
       }
     }
 
-    this.singleTouch = event.touches.length == 1;
+    this.singleTouch = event.touches.length === 1;
     const touch: Touch | undefined = event.changedTouches[0];
     if (!touch) {
       return;

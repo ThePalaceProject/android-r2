@@ -1,4 +1,4 @@
-import { requireNotNull } from './notnull';
+import { requireDefined } from './notnull';
 
 /**
  * The type of value receivers. Each evaluation will receive the
@@ -28,7 +28,7 @@ export class Attribute<T> {
   private subscriberNext = 0;
 
   private constructor(initial: T) {
-    this.value = requireNotNull(initial, 'initial');
+    this.value = requireDefined(initial, 'initial');
     this.subscribers = new Map();
   }
 

@@ -7,7 +7,7 @@ export function highlightSearchingTerms(
   searchingTerms: string,
   clearHighlight: boolean,
 ): boolean {
-  if (!document.body || typeof document.body.innerHTML === 'undefined') {
+  if (typeof document.body.innerHTML === 'undefined') {
     return false;
   }
 
@@ -61,7 +61,7 @@ function doHighlight(
         if (indexHighlightStartTag !== -1 && indexHighlightEndTag !== -1) {
           newText +=
             bodyText.substring(0, indexHighlightStartTag) +
-            bodyText.substr(i, searchingTerms.length);
+            bodyText.substring(i, searchingTerms.length);
           bodyText = bodyText.substring(
             indexHighlightEndTag + highlightEndTag.length,
           );
@@ -69,7 +69,7 @@ function doHighlight(
           newText +=
             bodyText.substring(0, i) +
             highlightStartTag +
-            bodyText.substr(i, searchingTerms.length) +
+            bodyText.substring(i, searchingTerms.length) +
             highlightEndTag;
           bodyText = bodyText.substring(i + searchingTerms.length);
         }

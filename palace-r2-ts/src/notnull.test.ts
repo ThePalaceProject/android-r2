@@ -1,10 +1,10 @@
-import { requireNotNull } from './notnull';
+import { requireDefined } from './notnull';
 
 describe('requireNotNull', () => {
   it('disallows null', () => {
-    expect(() => requireNotNull(null, 'x')).toThrow();
+    expect(() => requireDefined(null, 'x')).toThrow();
   });
   it('returns the first argument', () => {
-    expect(requireNotNull('z', 'x')).toBe('z');
+    expect(requireDefined('z', 'x')).toBe('z');
   });
 });

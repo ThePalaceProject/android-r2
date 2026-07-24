@@ -30,13 +30,11 @@ import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandExecution
 import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandExecutionStarted
 import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandSearchResults
 import org.librarysimplified.r2.api.SR2Event.SR2ExternalLinkSelected
-import org.librarysimplified.r2.api.SR2Event.SR2OnCenterTapped
 import org.librarysimplified.r2.api.SR2Event.SR2ReadingPositionChanged
 import org.librarysimplified.r2.api.SR2Locator
 import org.librarysimplified.r2.api.SR2Locator.SR2LocatorChapterEnd
 import org.librarysimplified.r2.api.SR2Locator.SR2LocatorPercent
 import org.librarysimplified.r2.api.SR2Theme
-import org.librarysimplified.r2.api.SR2UISettings
 import org.librarysimplified.r2.ui_thread.SR2UIThread
 import org.librarysimplified.r2.vanilla.BuildConfig
 import org.readium.r2.shared.ExperimentalReadiumApi
@@ -44,7 +42,6 @@ import org.readium.r2.shared.publication.Href
 import org.readium.r2.shared.publication.Layout
 import org.readium.r2.shared.publication.Publication
 import org.readium.r2.shared.publication.services.isRestricted
-import org.readium.r2.shared.publication.services.positionsByReadingOrder
 import org.readium.r2.shared.publication.services.protectionError
 import org.readium.r2.shared.publication.services.search.SearchIterator
 import org.readium.r2.shared.publication.services.search.search
@@ -285,10 +282,6 @@ internal class SR2Controller private constructor(
   @Volatile
   private var uiVisible: Boolean = true
 
-  @Volatile
-  private var uiSettings: SR2UISettings =
-    SR2UISettings.defaultSettings
-
   private var lastQuery = ""
 
   init {
@@ -404,18 +397,7 @@ internal class SR2Controller private constructor(
       SR2Command.HighlightCurrentTerms -> {
         this.executeCommandHighlightCurrentTerms()
       }
-
-      is SR2Command.UISettingsSet -> {
-        this.executeCommandUISettingsSet(apiCommand.settings)
-      }
     }
-
-  private fun executeCommandUISettingsSet(settings: SR2UISettings): CompletableFuture<*> {
-    val oldSettings = this.uiSettings
-    this.uiSettings = settings
-    this.publishEvent(SR2Event.SR2UISettingsUpdated(oldSettings, settings))
-    return CompletableFuture.completedFuture(Unit)
-  }
 
   private fun executeCommandBookmarkDelete(apiCommand: SR2Command.BookmarkDelete): CompletableFuture<*> {
     val target = apiCommand.bookmark
@@ -1042,8 +1024,6 @@ internal class SR2Controller private constructor(
   override fun bookmarksNow(): List<SR2Bookmark> = this.bookmarks
 
   override fun positionNow(): SR2Locator = this.currentNavigationIntent
-
-  override fun uiSettingsNow(): SR2UISettings = this.uiSettings
 
   override fun themeNow(): SR2Theme = this.themeMostRecent
 

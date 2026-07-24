@@ -119,14 +119,6 @@ sealed class SR2Command {
   ) : SR2Command()
 
   /**
-   * Set the UI settings for the reader.
-   */
-
-  data class UISettingsSet(
-    val settings: SR2UISettings
-  ) : SR2Command()
-
-  /**
    * Highlight or clear the highlight for the given terms.
    */
 

@@ -43,7 +43,6 @@ import org.librarysimplified.r2.api.SR2Event.SR2PageSetRecalculating
 import org.librarysimplified.r2.api.SR2Event.SR2PageSetRecalculationFinished
 import org.librarysimplified.r2.api.SR2Event.SR2ThemeChanged
 import org.librarysimplified.r2.api.SR2Theme
-import org.librarysimplified.r2.api.SR2UISettings
 import org.librarysimplified.r2.ui_thread.SR2UIThread
 import org.librarysimplified.r2.views.SR2ReaderViewCommand.SR2ReaderViewNavigationReaderClose
 import org.librarysimplified.r2.views.SR2ReaderViewCommand.SR2ReaderViewNavigationSearchOpen
@@ -59,16 +58,11 @@ import org.librarysimplified.r2.views.internal.SR2SettingsDialog
 import org.slf4j.LoggerFactory
 
 class SR2ReaderFragment : SR2Fragment() {
-  private lateinit var root: View
-  private lateinit var centerTouch: View
-  private lateinit var pageNext: View
-  private lateinit var pagePrevious: View
-  private lateinit var pageNextIcon: ImageView
-  private lateinit var pagePreviousIcon: ImageView
-
   private val logger =
     LoggerFactory.getLogger(SR2ReaderFragment::class.java)
 
+  private lateinit var root: View
+  private lateinit var centerTouch: View
   private lateinit var uiShow: View
   private lateinit var uiShowIcon: ImageView
   private lateinit var buttonHideUIIcon: ImageView
@@ -197,21 +191,6 @@ class SR2ReaderFragment : SR2Fragment() {
 
     this.centerTouch =
       view.findViewById(R.id.readerCenterTouch)
-    this.pagePrevious =
-      view.findViewById(R.id.readerPagePreviousTouch)
-    this.pageNext =
-      view.findViewById(R.id.readerPageNextTouch)
-    this.pagePreviousIcon =
-      view.findViewById(R.id.readerPagePrevious)
-    this.pageNextIcon =
-      view.findViewById(R.id.readerPageNext)
-
-    this.pagePrevious.setOnClickListener {
-      SR2ReaderModel.submitCommand(SR2Command.OpenPagePrevious)
-    }
-    this.pageNext.setOnClickListener {
-      SR2ReaderModel.submitCommand(SR2Command.OpenPageNext)
-    }
 
     this.centerTouch.setOnClickListener {
       this.centerTouch.postDelayed({ SR2ReaderModel.uiToggle() }, 250L)
@@ -345,10 +324,6 @@ class SR2ReaderFragment : SR2Fragment() {
 
         this.titleTouch.foreground = SR2Ripples.createRippleDrawableForLightBackground()
         this.titleTouchIcon.colorFilter = null
-        this.pageNext.foreground = SR2Ripples.createRippleDrawableForLightBackground()
-        this.pageNextIcon.colorFilter = null
-        this.pagePrevious.foreground = SR2Ripples.createRippleDrawableForLightBackground()
-        this.pagePreviousIcon.colorFilter = null
         this.uiShow.foreground = SR2Ripples.createRippleDrawableForLightBackground()
         this.uiShowIcon.colorFilter = null
       }
@@ -363,10 +338,6 @@ class SR2ReaderFragment : SR2Fragment() {
 
         this.titleTouch.foreground = SR2Ripples.createRippleDrawableForDarkBackground()
         this.titleTouchIcon.colorFilter = SR2ColorFilters.inversionFilter
-        this.pageNext.foreground = SR2Ripples.createRippleDrawableForDarkBackground()
-        this.pageNextIcon.colorFilter = SR2ColorFilters.inversionFilter
-        this.pagePrevious.foreground = SR2Ripples.createRippleDrawableForDarkBackground()
-        this.pagePreviousIcon.colorFilter = SR2ColorFilters.inversionFilter
         this.uiShow.foreground = SR2Ripples.createRippleDrawableForDarkBackground()
         this.uiShowIcon.colorFilter = SR2ColorFilters.inversionFilter
       }
@@ -379,10 +350,6 @@ class SR2ReaderFragment : SR2Fragment() {
 
         this.titleTouch.foreground = SR2Ripples.createRippleDrawableForLightBackground()
         this.titleTouchIcon.colorFilter = null
-        this.pageNext.foreground = SR2Ripples.createRippleDrawableForLightBackground()
-        this.pageNextIcon.colorFilter = null
-        this.pagePrevious.foreground = SR2Ripples.createRippleDrawableForLightBackground()
-        this.pagePreviousIcon.colorFilter = null
         this.uiShow.foreground = SR2Ripples.createRippleDrawableForLightBackground()
         this.uiShowIcon.colorFilter = null
       }
@@ -451,10 +418,6 @@ class SR2ReaderFragment : SR2Fragment() {
 
     this.eventSubscriptions.add(Disposables.fromAction { uiVisibleSubscription.close() })
     SR2ReaderModel.wakeLockAcquire(this.requireActivity())
-    this.configureForUISettings(
-      SR2ReaderModel.uiSettings(),
-      SR2ReaderModel.uiSettings()
-    )
   }
 
   private fun onViewEvent(event: SR2ReaderViewEvent) {
@@ -630,13 +593,6 @@ class SR2ReaderFragment : SR2Fragment() {
         this.reconfigureBookmarkMenuItem()
       }
 
-      is SR2Event.SR2UISettingsUpdated -> {
-        this.configureForUISettings(
-          event.oldSettings,
-          event.newSettings
-        )
-      }
-
       is SR2PageSetRecalculating -> {
         this.loadingView.isIndeterminate = false
         this.loadingView.progress = (event.progress * 100).toInt()
@@ -651,36 +607,6 @@ class SR2ReaderFragment : SR2Fragment() {
         }, 200L)
       }
     }
-  }
-
-  private fun configureForUISettings(
-    oldSettings: SR2UISettings,
-    newSettings: SR2UISettings
-  ) {
-    val pageButtonWidth = newSettings.pageButtonWidth
-    if (pageButtonWidth != null) {
-      this.pageNext.visibility = VISIBLE
-      this.pagePrevious.visibility = VISIBLE
-      this.setViewWidth(this.pageNext, pageButtonWidth)
-      this.setViewWidth(this.pagePrevious, pageButtonWidth)
-      this.setWebViewMargins(pageButtonWidth)
-    } else {
-      this.pageNext.visibility = View.GONE
-      this.pagePrevious.visibility = View.GONE
-      this.setWebViewMargins(0.0)
-    }
-
-    SR2ReaderModel.submitCommand(SR2Command.Refresh)
-  }
-
-  private fun setViewWidth(
-    view: View,
-    @Dimension(unit = Dimension.DP) width: Double
-  ) {
-    val widthPx = this.dpToPixels(width)
-    val params = view.layoutParams
-    params.width = widthPx
-    view.layoutParams = params
   }
 
   private fun dpToPixels(
@@ -699,8 +625,6 @@ class SR2ReaderFragment : SR2Fragment() {
 
   private fun disableReadingUI() {
     this.toolbar.visibility = INVISIBLE
-    this.pageNextIcon.visibility = INVISIBLE
-    this.pagePreviousIcon.visibility = INVISIBLE
     this.centerTouch.contentDescription = this.getString(R.string.accessibilityShowUIButton)
 
     /*
@@ -708,10 +632,6 @@ class SR2ReaderFragment : SR2Fragment() {
      * that the keyboard essentially controls everything.
      */
 
-    this.pagePrevious.isFocusable = false
-    this.pagePrevious.isClickable = true
-    this.pageNext.isFocusable = false
-    this.pageNext.isClickable = true
     this.uiShow.visibility = VISIBLE
     this.uiShow.isFocusable = false
     this.uiShow.isClickable = true
@@ -746,8 +666,6 @@ class SR2ReaderFragment : SR2Fragment() {
 
   private fun enableReadingUI() {
     this.toolbar.visibility = VISIBLE
-    this.pageNextIcon.visibility = VISIBLE
-    this.pagePreviousIcon.visibility = VISIBLE
     this.centerTouch.contentDescription = this.getString(R.string.accessibilityHideUIButton)
 
     /*
@@ -755,10 +673,6 @@ class SR2ReaderFragment : SR2Fragment() {
      * keyboard handling (arrow keys switch between views, pressing return selects a view).
      */
 
-    this.pagePrevious.isFocusable = true
-    this.pagePrevious.isClickable = true
-    this.pageNext.isFocusable = true
-    this.pageNext.isClickable = true
     this.buttonHideUI.visibility = VISIBLE
 
     this.uiShow.visibility = INVISIBLE

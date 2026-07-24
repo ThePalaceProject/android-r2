@@ -29,7 +29,6 @@ import org.librarysimplified.r2.api.SR2Event.SR2PageSetRecalculating
 import org.librarysimplified.r2.api.SR2Event.SR2PageSetRecalculationFinished
 import org.librarysimplified.r2.api.SR2Event.SR2ReadingPositionChanged
 import org.librarysimplified.r2.api.SR2Event.SR2ThemeChanged
-import org.librarysimplified.r2.api.SR2Event.SR2UISettingsUpdated
 import org.librarysimplified.r2.ui_thread.SR2UIThread
 import org.librarysimplified.r2.vanilla.SR2Controllers
 import org.librarysimplified.r2.views.SR2Fragment
@@ -317,7 +316,6 @@ class DemoActivity : AppCompatActivity(R.layout.demo_activity_host) {
       is SR2PageSetRecalculationFinished,
       is SR2ReadingPositionChanged,
       is SR2WebViewInaccessible,
-      is SR2UISettingsUpdated,
       -> {
         // Nothing
       }

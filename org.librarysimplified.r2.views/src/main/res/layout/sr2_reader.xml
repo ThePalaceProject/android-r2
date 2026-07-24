@@ -201,58 +201,6 @@
             android:src="@drawable/sr2_angle_up" />
     </FrameLayout>
 
-    <FrameLayout
-        android:id="@+id/readerPageNextTouch"
-        android:layout_width="@dimen/palaceR2PageButtonSize"
-        android:layout_height="0dp"
-        android:layout_marginTop="128dp"
-        android:layout_marginBottom="128dp"
-        android:clickable="true"
-        android:contentDescription="@string/accessibilityGoToNextPage"
-        android:focusable="true"
-        android:foreground="?attr/selectableItemBackground"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <ImageView
-            android:id="@+id/readerPageNext"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_gravity="center"
-            android:alpha="0.75"
-            android:clickable="false"
-            android:focusable="false"
-            android:importantForAccessibility="no"
-            android:src="@drawable/sr2_angle_right" />
-    </FrameLayout>
-
-    <FrameLayout
-        android:id="@+id/readerPagePreviousTouch"
-        android:layout_width="@dimen/palaceR2PageButtonSize"
-        android:layout_height="0dp"
-        android:layout_marginTop="128dp"
-        android:layout_marginBottom="128dp"
-        android:clickable="true"
-        android:contentDescription="@string/accessibilityGoToPreviousPage"
-        android:focusable="true"
-        android:foreground="?attr/selectableItemBackground"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <ImageView
-            android:id="@+id/readerPagePrevious"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_gravity="center"
-            android:alpha="0.75"
-            android:clickable="false"
-            android:focusable="false"
-            android:importantForAccessibility="no"
-            android:src="@drawable/sr2_angle_left" />
-    </FrameLayout>
-
     <View
         android:id="@+id/readerCenterTouch"
         android:layout_width="128dp"

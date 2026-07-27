@@ -88,7 +88,7 @@ internal class SR2JavascriptAPI(
   @UiThread
   override fun setProgression(progress: Double): CompletableFuture<String> {
     this.logger.debug("SetProgression: {}", progress)
-     return this.executeJavascript("api.goToPosition($progress);")
+    return this.executeJavascript("api.goToPosition($progress);")
   }
 
   @UiThread

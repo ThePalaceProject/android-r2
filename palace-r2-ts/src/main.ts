@@ -123,25 +123,42 @@ function onViewportWidthChanged(): void {
       throw Error('Document scrolling element is null!');
     }
 
-    const documentWidth = scrollingElement.scrollWidth;
-    // We can't rely on window.innerWidth for the pageWidth on Android, because if the
-    // device pixel ratio is not an integer, we get rounding issues offsetting the pages.
-    //
-    // See https://github.com/readium/readium-css/issues/97
-    // and https://github.com/readium/r2-navigator-kotlin/issues/146
-    const width = Android.onGetViewportWidth();
-    const pageWidth = width / window.devicePixelRatio;
+    /*
+     * Wait for document fonts to be ready before computing page offsets.
+     * If fonts are still loading, scrollWidth will be based on fallback
+     * fonts and will be incorrect. The fontschange listener above will
+     * trigger a recompute if fonts swap after this computation.
+     *
+     * @see https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSets/ready
+     */
 
-    const root = document.documentElement;
-    root.style.setProperty(
-      '--RS__viewportWidth',
-      `calc(${width.toString()}px / ${window.devicePixelRatio.toString()})`,
-    );
-
-    pageSet.recompute(documentWidth, pageWidth);
+    void document.fonts.ready.then(() => {
+      computePageWidth(scrollingElement);
+    });
   } finally {
     onViewportWidthChangedExecuting = false;
   }
+}
+
+function computePageWidth(scrollingElement: Element): void {
+  console.log('computePageWidth');
+
+  const documentWidth = scrollingElement.scrollWidth;
+  // We can't rely on window.innerWidth for the pageWidth on Android, because if the
+  // device pixel ratio is not an integer, we get rounding issues offsetting the pages.
+  //
+  // See https://github.com/readium/readium-css/issues/97
+  // and https://github.com/readium/r2-navigator-kotlin/issues/146
+  const width = Android.onGetViewportWidth();
+  const pageWidth = width / window.devicePixelRatio;
+
+  const root = document.documentElement;
+  root.style.setProperty(
+    '--RS__viewportWidth',
+    `calc(${width.toString()}px / ${window.devicePixelRatio.toString()})`,
+  );
+
+  pageSet.recompute(documentWidth, pageWidth);
 }
 
 function onPutSettings(settings: SR2SettingsType) {
@@ -228,6 +245,21 @@ window.addEventListener(
   'load',
   function () {
     window.addEventListener('orientationchange', function () {
+      onViewportWidthChanged();
+    });
+
+    /*
+     * Listen for font changes that can cause layout shifts after pages
+     * have been computed. This catches font load swaps (when the browser
+     * initially renders with a fallback font, then swaps to the actual
+     * font once it loads) which change scrollWidth and invalidate the
+     * precomputed page offsets.
+     *
+     * @see https://developer.mozilla.org/en-US/docs/Web/API/Element/fontschange_event
+     */
+
+    window.document.addEventListener('fontschange', function () {
+      console.log('fontschange: recomputing pages');
       onViewportWidthChanged();
     });
 

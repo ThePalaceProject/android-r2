@@ -44,16 +44,16 @@ a.scrollOffsetRaw>=1&&i.push(new g(l,1,r))}console.log(`Recomputed pages\
 latingPages",progress:1}),this.status.set({kind:"Ready"})}pagePrevious(e){
 return e.index===0?null:o(this.pageArray[e.index-1],"PreviousPage")}pageNext(e){
 return e.index===this.pageArray.length-1?null:o(this.pageArray[e.index+1],
-"NextPage")}};function y(t,e){if(typeof document.body.innerHTML=="undefined")return!1;
+"NextPage")}};function b(t,e){if(typeof document.body.innerHTML=="undefined")return!1;
 let n=document.body.innerHTML;return document.body.innerHTML=O(n,t,e),!0}
 function O(t,e,n){let i="",r=-1,l=e.toLowerCase(),a=t.toLowerCase(),c='<\
 font style="background-color:yellow;">',u="</font>";for(;t.length>0;){if(r=
 a.indexOf(l,r+1),r<0){i+=t;break}if(t.lastIndexOf(">",r)>=t.lastIndexOf(
-"<",r)&&a.lastIndexOf("/script>",r)>=a.lastIndexOf("<script",r)){let h,d;
-n?(h=t.indexOf(c),d=t.indexOf(u)):(h=-1,d=-1),h!==-1&&d!==-1?(i+=t.substring(
-0,h)+t.substring(r,e.length),t=t.substring(d+u.length)):(i+=t.substring(
+"<",r)&&a.lastIndexOf("/script>",r)>=a.lastIndexOf("<script",r)){let d,h;
+n?(d=t.indexOf(c),h=t.indexOf(u)):(d=-1,h=-1),d!==-1&&h!==-1?(i+=t.substring(
+0,d)+t.substring(r,e.length),t=t.substring(h+u.length)):(i+=t.substring(
 0,r)+c+t.substring(r,e.length)+u,t=t.substring(r+e.length)),a=t.toLowerCase(),
-r=-1}}return i}function p(t){throw new Error("Unreachable: "+String(t))}function b(t){o(t,"Settings");let e=document.documentElement,n=t.colorScheme;
+r=-1}}return i}function p(t){throw new Error("Unreachable: "+String(t))}function _(t){o(t,"Settings");let e=document.documentElement,n=t.colorScheme;
 switch(n){case"SR2_WHITE_ON_BLACK":{e.style.setProperty("--USER__appeara\
 nce","readium-night-on");break}case"SR2_BLACK_ON_WHITE":{e.style.setProperty(
 "--USER__appearance","readium-default-on");break}case"SR2_BLACK_ON_SEPIA":{
@@ -70,33 +70,36 @@ mily","sans-serif");break}case"SR2_FONT_OPENDYSLEXIC":{e.style.setProperty(
 tFamily","OpenDyslexic");break}case"SR2_FONT_PUBLISHER":{e.style.setProperty(
 "--USER__advancedSettings",""),e.style.setProperty("--USER__fontOverride",
 ""),e.style.removeProperty("--USER__fontFamily");break}default:p(i)}let r=String(
-t.fontSizePercent)+"%";e.style.setProperty("--USER__fontSize",r)}var s=R.create(),T=o(s.pages()[0],"InitialPage");function N(t){o(t,"Page"),
-console.log(`Setting current page to: ${JSON.stringify(t)}`),T=t}s.status.
+t.fontSizePercent)+"%";e.style.setProperty("--USER__fontSize",r)}var s=R.create(),y=o(s.pages()[0],"InitialPage");function L(t){o(t,"Page"),
+console.log(`Setting current page to: ${JSON.stringify(t)}`),y=t}s.status.
 subscribe((t,e)=>{let n=e.kind;switch(n){case"Initial":{Android.onPageSetInitial();
 break}case"Ready":{Android.onPageSetReady(s.pageCount());break}case"Calc\
 ulatingPages":{Android.onPageSetCalculating(e.progress);break}default:p(
-n)}});function x(){return document.body.dir.toLowerCase()==="rtl"}function m(t){
+n)}});function N(){return document.body.dir.toLowerCase()==="rtl"}function m(t){
 o(t,"Page");let e=document.scrollingElement;if(e===null){console.warn("D\
-ocument scroll element is null");return}let n=x()?-1:1;e.scrollLeft=t.scrollOffsetRaw*
-n,N(t),Android.onReadingPositionChanged(t.scrollOffset,t.index+1,s.pageCount())}
-function v(){let t=s.pagePrevious(T);t===null?Android.onWantChapterPrevious():
-m(t)}function w(){let t=s.pageNext(T);t===null?Android.onWantChapterNext():
-m(t)}var _=S.create({window,onSwipeLeft:()=>{w()},onSwipeRight:()=>{v()},
-onTapLeft:()=>{v()},onTapRight:()=>{w()}}),P=!1;function E(){if(!P)try{P=
+ocument scroll element is null");return}let n=N()?-1:1;e.scrollLeft=t.scrollOffsetRaw*
+n,L(t),Android.onReadingPositionChanged(t.scrollOffset,t.index+1,s.pageCount())}
+function v(){let t=s.pagePrevious(y);t===null?Android.onWantChapterPrevious():
+m(t)}function w(){let t=s.pageNext(y);t===null?Android.onWantChapterNext():
+m(t)}var E=S.create({window,onSwipeLeft:()=>{w()},onSwipeRight:()=>{v()},
+onTapLeft:()=>{v()},onTapRight:()=>{w()}}),P=!1;function T(){if(!P)try{P=
 !0,console.log("onViewportWidthChanged");let t=document.scrollingElement;
-if(t===null)throw Error("Document scrolling element is null!");let e=t.scrollWidth,
-n=Android.onGetViewportWidth(),i=n/window.devicePixelRatio;document.documentElement.
-style.setProperty("--RS__viewportWidth",`calc(${n.toString()}px / ${window.
-devicePixelRatio.toString()})`),s.recompute(e,i)}finally{P=!1}}function L(t){
-b(t),E()}function A(t,e){y(t,e)}function C(t){let e=document.getElementById(
-t);if(!e){console.warn(`No element with id ${t}`);return}console.log(`Sc\
-rolling to element ${e.localName} with ID ${t}`);let n=e.getBoundingClientRect(),
-i=s.findClosestPage(n.left);m(i)}var I={highlightSearchingTerms:function(t,e){
-A(t,e)},turnPageLeft:function(){v()},turnPageRight:function(){w()},goToPosition:function(t){
-m(s.findClosestPage(t))},goToId:function(t){C(t)},putSettings:function(t){
-L(t)}};window.api=I;window.addEventListener("error",function(t){Android.
-onLogError(t.message,t.filename,t.lineno)},!1);window.addEventListener("\
-load",function(){window.addEventListener("orientationchange",function(){
-E()}),window.document.addEventListener("touchstart",t=>{_.onTouchStart(t)}),
-window.document.addEventListener("touchend",t=>{_.onTouchEnd(t)})},!1);})();
+if(t===null)throw Error("Document scrolling element is null!");document.
+fonts.ready.then(()=>{x(t)})}finally{P=!1}}function x(t){console.log("co\
+mputePageWidth");let e=t.scrollWidth,n=Android.onGetViewportWidth(),i=n/
+window.devicePixelRatio;document.documentElement.style.setProperty("--RS\
+__viewportWidth",`calc(${n.toString()}px / ${window.devicePixelRatio.toString()}\
+)`),s.recompute(e,i)}function A(t){_(t),T()}function C(t,e){b(t,e)}function I(t){
+let e=document.getElementById(t);if(!e){console.warn(`No element with id\
+ ${t}`);return}console.log(`Scrolling to element ${e.localName} with ID ${t}`);
+let n=e.getBoundingClientRect(),i=s.findClosestPage(n.left);m(i)}var W={
+highlightSearchingTerms:function(t,e){C(t,e)},turnPageLeft:function(){v()},
+turnPageRight:function(){w()},goToPosition:function(t){m(s.findClosestPage(
+t))},goToId:function(t){I(t)},putSettings:function(t){A(t)}};window.api=
+W;window.addEventListener("error",function(t){Android.onLogError(t.message,
+t.filename,t.lineno)},!1);window.addEventListener("load",function(){window.
+addEventListener("orientationchange",function(){T()}),window.document.addEventListener(
+"fontschange",function(){console.log("fontschange: recomputing pages"),T()}),
+window.document.addEventListener("touchstart",t=>{E.onTouchStart(t)}),window.
+document.addEventListener("touchend",t=>{E.onTouchEnd(t)})},!1);})();
 //# sourceMappingURL=sr2.js.map

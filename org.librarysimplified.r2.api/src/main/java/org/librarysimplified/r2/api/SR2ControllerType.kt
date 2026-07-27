@@ -70,12 +70,6 @@ interface SR2ControllerType :
   fun positionNow(): SR2Locator
 
   /**
-   * The most recently configured UI settings.
-   */
-
-  fun uiSettingsNow(): SR2UISettings
-
-  /**
    * The most recently configured reader theme.
    */
 

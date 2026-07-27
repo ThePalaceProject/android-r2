@@ -146,7 +146,10 @@ function onViewportWidthChanged(): void {
 
 function onPutSettings(settings: SR2SettingsType) {
   putSettings(settings);
-  onViewportWidthChanged();
+  // Defer recomputation to the next animation frame so that the browser has
+  // reflowed with the new CSS properties (font-size, font-family, etc.) before
+  // we read scrollingElement.scrollWidth.
+  requestAnimationFrame(onViewportWidthChanged);
 }
 
 function onHighlightSearchingTerms(
@@ -227,9 +230,13 @@ window.addEventListener(
 window.addEventListener(
   'load',
   function () {
-    window.addEventListener('orientationchange', function () {
+    // Observe changes to the root element's dimensions. This catches orientation
+    // changes, font loading, and any other layout-shift that alters the viewport,
+    // without needing separate handlers for each cause.
+    const resizeObserver = new ResizeObserver(() => {
       onViewportWidthChanged();
     });
+    resizeObserver.observe(document.documentElement);
 
     window.document.addEventListener('touchstart', (event) => {
       gestures.onTouchStart(event);

@@ -312,13 +312,14 @@
         </c:change>
       </c:changes>
     </c:release>
-    <c:release date="2026-07-20T14:50:34+00:00" is-open="true" ticket-system="org.lyrasis.jira" version="6.17.0">
+    <c:release date="2026-07-24T15:46:52+00:00" is-open="true" ticket-system="org.lyrasis.jira" version="6.17.0">
       <c:changes>
-        <c:change date="2026-07-20T14:50:34+00:00" summary="Completely reimplement the JS with a small Typescript implementation.">
+        <c:change date="2026-07-20T00:00:00+00:00" summary="Completely reimplement the JS with a small Typescript implementation.">
           <c:tickets>
             <c:ticket id="PP-4737"/>
           </c:tickets>
         </c:change>
+        <c:change date="2026-07-24T15:46:52+00:00" summary="Remove EPUB reader page buttons."/>
       </c:changes>
     </c:release>
   </c:releases>

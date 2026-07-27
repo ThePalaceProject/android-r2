@@ -44,7 +44,7 @@ a.scrollOffsetRaw>=1&&i.push(new g(l,1,r))}console.log(`Recomputed pages\
 latingPages",progress:1}),this.status.set({kind:"Ready"})}pagePrevious(e){
 return e.index===0?null:o(this.pageArray[e.index-1],"PreviousPage")}pageNext(e){
 return e.index===this.pageArray.length-1?null:o(this.pageArray[e.index+1],
-"NextPage")}};function y(t,e){if(typeof document.body.innerHTML=="undefined")return!1;
+"NextPage")}};function b(t,e){if(typeof document.body.innerHTML=="undefined")return!1;
 let n=document.body.innerHTML;return document.body.innerHTML=O(n,t,e),!0}
 function O(t,e,n){let i="",r=-1,l=e.toLowerCase(),a=t.toLowerCase(),c='<\
 font style="background-color:yellow;">',u="</font>";for(;t.length>0;){if(r=
@@ -53,7 +53,7 @@ a.indexOf(l,r+1),r<0){i+=t;break}if(t.lastIndexOf(">",r)>=t.lastIndexOf(
 n?(h=t.indexOf(c),d=t.indexOf(u)):(h=-1,d=-1),h!==-1&&d!==-1?(i+=t.substring(
 0,h)+t.substring(r,e.length),t=t.substring(d+u.length)):(i+=t.substring(
 0,r)+c+t.substring(r,e.length)+u,t=t.substring(r+e.length)),a=t.toLowerCase(),
-r=-1}}return i}function p(t){throw new Error("Unreachable: "+String(t))}function b(t){o(t,"Settings");let e=document.documentElement,n=t.colorScheme;
+r=-1}}return i}function p(t){throw new Error("Unreachable: "+String(t))}function y(t){o(t,"Settings");let e=document.documentElement,n=t.colorScheme;
 switch(n){case"SR2_WHITE_ON_BLACK":{e.style.setProperty("--USER__appeara\
 nce","readium-night-on");break}case"SR2_BLACK_ON_WHITE":{e.style.setProperty(
 "--USER__appearance","readium-default-on");break}case"SR2_BLACK_ON_SEPIA":{
@@ -88,15 +88,15 @@ if(t===null)throw Error("Document scrolling element is null!");let e=t.scrollWid
 n=Android.onGetViewportWidth(),i=n/window.devicePixelRatio;document.documentElement.
 style.setProperty("--RS__viewportWidth",`calc(${n.toString()}px / ${window.
 devicePixelRatio.toString()})`),s.recompute(e,i)}finally{P=!1}}function L(t){
-b(t),E()}function A(t,e){y(t,e)}function C(t){let e=document.getElementById(
-t);if(!e){console.warn(`No element with id ${t}`);return}console.log(`Sc\
-rolling to element ${e.localName} with ID ${t}`);let n=e.getBoundingClientRect(),
-i=s.findClosestPage(n.left);m(i)}var I={highlightSearchingTerms:function(t,e){
+y(t),requestAnimationFrame(E)}function A(t,e){b(t,e)}function C(t){let e=document.
+getElementById(t);if(!e){console.warn(`No element with id ${t}`);return}
+console.log(`Scrolling to element ${e.localName} with ID ${t}`);let n=e.
+getBoundingClientRect(),i=s.findClosestPage(n.left);m(i)}var I={highlightSearchingTerms:function(t,e){
 A(t,e)},turnPageLeft:function(){v()},turnPageRight:function(){w()},goToPosition:function(t){
 m(s.findClosestPage(t))},goToId:function(t){C(t)},putSettings:function(t){
 L(t)}};window.api=I;window.addEventListener("error",function(t){Android.
 onLogError(t.message,t.filename,t.lineno)},!1);window.addEventListener("\
-load",function(){window.addEventListener("orientationchange",function(){
-E()}),window.document.addEventListener("touchstart",t=>{_.onTouchStart(t)}),
-window.document.addEventListener("touchend",t=>{_.onTouchEnd(t)})},!1);})();
+load",function(){new ResizeObserver(()=>{E()}).observe(document.documentElement),
+window.document.addEventListener("touchstart",e=>{_.onTouchStart(e)}),window.
+document.addEventListener("touchend",e=>{_.onTouchEnd(e)})},!1);})();
 //# sourceMappingURL=sr2.js.map

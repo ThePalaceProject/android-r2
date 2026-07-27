@@ -86,7 +86,10 @@ internal class SR2JavascriptAPI(
   }
 
   @UiThread
-  override fun setProgression(progress: Double): CompletableFuture<String> = this.executeJavascript("api.goToPosition($progress);")
+  override fun setProgression(progress: Double): CompletableFuture<String> {
+    this.logger.debug("SetProgression: {}", progress)
+     return this.executeJavascript("api.goToPosition($progress);")
+  }
 
   @UiThread
   override fun scrollToId(id: String): CompletableFuture<*> = this.executeJavascript("api.goToId(\"$id\");")

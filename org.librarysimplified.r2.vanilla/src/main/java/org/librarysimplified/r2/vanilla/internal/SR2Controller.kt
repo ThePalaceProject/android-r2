@@ -1045,6 +1045,14 @@ internal class SR2Controller private constructor(
     }
   }
 
+  override fun isFixedLayout(): Boolean =
+    when (this.publication.metadata.layout) {
+      Layout.FIXED -> true
+      Layout.REFLOWABLE -> false
+      Layout.SCROLLED -> false
+      null -> false
+    }
+
   override fun viewConnect(webView: WebView) {
     this.logger.debug("{} viewConnect", this.name())
 

@@ -11,7 +11,6 @@ import android.view.View
 import android.view.View.INVISIBLE
 import android.view.View.VISIBLE
 import android.view.ViewGroup
-import android.view.ViewGroup.MarginLayoutParams
 import android.view.ViewTreeObserver.OnGlobalFocusChangeListener
 import android.widget.ImageView
 import android.widget.ProgressBar
@@ -38,9 +37,9 @@ import org.librarysimplified.r2.api.SR2Event.SR2CommandEvent.SR2CommandSearchRes
 import org.librarysimplified.r2.api.SR2Event.SR2Error.SR2ChapterNonexistent
 import org.librarysimplified.r2.api.SR2Event.SR2Error.SR2WebViewInaccessible
 import org.librarysimplified.r2.api.SR2Event.SR2OnCenterTapped
-import org.librarysimplified.r2.api.SR2Event.SR2ReadingPositionChanged
 import org.librarysimplified.r2.api.SR2Event.SR2PageSetRecalculating
 import org.librarysimplified.r2.api.SR2Event.SR2PageSetRecalculationFinished
+import org.librarysimplified.r2.api.SR2Event.SR2ReadingPositionChanged
 import org.librarysimplified.r2.api.SR2Event.SR2ThemeChanged
 import org.librarysimplified.r2.api.SR2Theme
 import org.librarysimplified.r2.ui_thread.SR2UIThread
@@ -271,8 +270,26 @@ class SR2ReaderFragment : SR2Fragment() {
       KeyEvent.KEYCODE_DPAD_LEFT -> {
         SR2ReaderModel.submitCommand(SR2Command.OpenPagePrevious)
       }
+
+      KeyEvent.KEYCODE_DPAD_UP -> {
+        if (this.isFixedLayout()) {
+          this.webView.scrollBy(0, -dpToPixels(32.0))
+        }
+      }
+
+      KeyEvent.KEYCODE_DPAD_DOWN -> {
+        if (this.isFixedLayout()) {
+          this.webView.scrollBy(0, dpToPixels(32.0))
+        }
+      }
     }
   }
+
+  private fun isFixedLayout(): Boolean = SR2ReaderModel.controllerNow()?.isFixedLayout() ?: false
+
+  private fun dpToPixels(
+    @Dimension(unit = Dimension.DP) d: Double
+  ): Int = (d * this.resources.displayMetrics.density).toInt()
 
   private fun onReaderMenuAddBookmarkSelected(): Boolean {
     SR2UIThread.checkIsUIThread()
@@ -607,20 +624,6 @@ class SR2ReaderFragment : SR2Fragment() {
         }, 200L)
       }
     }
-  }
-
-  private fun dpToPixels(
-    @Dimension(unit = Dimension.DP) d: Double
-  ): Int = (d * this.resources.displayMetrics.density).toInt()
-
-  private fun setWebViewMargins(
-    @Dimension(unit = Dimension.DP) marginDp: Double
-  ) {
-    val marginPx = this.dpToPixels(marginDp)
-    val params = this.webView.layoutParams as MarginLayoutParams
-    params.leftMargin = marginPx
-    params.rightMargin = marginPx
-    this.webView.layoutParams = params
   }
 
   private fun disableReadingUI() {

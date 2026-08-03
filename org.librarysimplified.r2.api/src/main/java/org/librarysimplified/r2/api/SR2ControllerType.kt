@@ -93,4 +93,10 @@ interface SR2ControllerType :
    */
 
   fun bookmarkToggle()
+
+  /**
+   * @return `true` if the current book is fixed layout
+   */
+
+  fun isFixedLayout(): Boolean
 }

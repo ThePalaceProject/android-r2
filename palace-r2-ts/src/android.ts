@@ -1,3 +1,5 @@
+import { SR2EPUBLayout } from './layout';
+
 /**
  * The interface exposed by the Android application. This
  * allows the reader script to call back into the application.
@@ -59,4 +61,10 @@ export interface SR2AndroidType {
 
 declare global {
   const Android: SR2AndroidType;
+
+  /**
+   * Set by the native application before the sr2.js bundle loads.
+   */
+
+  const epubLayout: SR2EPUBLayout;
 }

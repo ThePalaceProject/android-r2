@@ -1,3 +1,4 @@
+import { SR2EPUBLayout } from './layout';
 import { requireDefined } from './notnull';
 import { SR2Page, SR2PageSet, SR2PageSetStatus } from './pageset';
 
@@ -14,13 +15,13 @@ test('page constructor asserts range', () => {
 });
 
 test('empty controller has one page', () => {
-  const c = SR2PageSet.create();
+  const c = SR2PageSet.create(SR2EPUBLayout.SR2_REFLOWABLE);
   expect(c.pageCount()).toStrictEqual(1);
   expect(c.statusNow()).toStrictEqual({ kind: 'Initial' });
 });
 
 test('recomputing the controller publishes status values', () => {
-  const c = SR2PageSet.create();
+  const c = SR2PageSet.create(SR2EPUBLayout.SR2_REFLOWABLE);
   const r: [SR2PageSetStatus, SR2PageSetStatus][] = [];
   const s = c.status.subscribe((oldV, newV) => {
     r.push([oldV, newV]);
@@ -128,8 +129,36 @@ test('recomputing the controller publishes status values', () => {
   s.unsubscribe();
 });
 
+test('recomputing a fixed layout publishes status values', () => {
+  const c = SR2PageSet.create(SR2EPUBLayout.SR2_FIXED);
+  const r: [SR2PageSetStatus, SR2PageSetStatus][] = [];
+  const s = c.status.subscribe((oldV, newV) => {
+    r.push([oldV, newV]);
+  });
+
+  expect(c.pageCount()).toStrictEqual(1);
+  expect(c.statusNow()).toStrictEqual({ kind: 'Initial' });
+  c.recompute(1000.0, 100.0);
+
+  expect(r[0]?.[0]).toStrictEqual({ kind: 'Initial' });
+  expect(r[0]?.[1]).toStrictEqual({ kind: 'Initial' });
+
+  expect(r[1]?.[0]).toStrictEqual({ kind: 'Initial' });
+  expect(r[1]?.[1]).toStrictEqual({ kind: 'CalculatingPages', progress: 0.0 });
+
+  expect(r[2]?.[0]).toStrictEqual({ kind: 'CalculatingPages', progress: 0.0 });
+  expect(r[2]?.[1]).toStrictEqual({ kind: 'CalculatingPages', progress: 1.0 });
+
+  expect(r[3]?.[0]).toStrictEqual({ kind: 'CalculatingPages', progress: 1.0 });
+  expect(r[3]?.[1]).toStrictEqual({ kind: 'Ready' });
+
+  expect(r.length).toStrictEqual(4);
+
+  s.unsubscribe();
+});
+
 test('finding pages works', () => {
-  const c = SR2PageSet.create();
+  const c = SR2PageSet.create(SR2EPUBLayout.SR2_REFLOWABLE);
 
   {
     const p = c.findClosestPage(0.0);
@@ -168,7 +197,7 @@ test('finding pages works', () => {
 });
 
 test('computing a single page works', () => {
-  const c = SR2PageSet.create();
+  const c = SR2PageSet.create(SR2EPUBLayout.SR2_REFLOWABLE);
   c.recompute(1.0, 1.0);
   expect(c.pageCount()).toStrictEqual(1);
 
@@ -183,7 +212,7 @@ test('computing a single page works', () => {
 });
 
 test('next/previous page works', () => {
-  const c = SR2PageSet.create();
+  const c = SR2PageSet.create(SR2EPUBLayout.SR2_REFLOWABLE);
   c.recompute(10.0, 3.0);
   expect(c.pageCount()).toStrictEqual(4);
 
@@ -211,7 +240,7 @@ test('next/previous page works', () => {
 });
 
 test('last page is included when document does not divide evenly', () => {
-  const c = SR2PageSet.create();
+  const c = SR2PageSet.create(SR2EPUBLayout.SR2_REFLOWABLE);
   c.recompute(1000.0, 300.0);
 
   expect(c.pageCount()).toStrictEqual(4);
@@ -227,7 +256,7 @@ test('last page is included when document does not divide evenly', () => {
 });
 
 test('no phantom last page when loop already covers document', () => {
-  const c = SR2PageSet.create();
+  const c = SR2PageSet.create(SR2EPUBLayout.SR2_REFLOWABLE);
   c.recompute(3606, 600.9389348488247);
 
   expect(c.pageCount()).toStrictEqual(6);
@@ -240,7 +269,7 @@ test('no phantom last page when loop already covers document', () => {
 });
 
 test('single page chapter produces one page with offset zero', () => {
-  const c = SR2PageSet.create();
+  const c = SR2PageSet.create(SR2EPUBLayout.SR2_REFLOWABLE);
   c.recompute(1.0, 1.0);
 
   expect(c.pageCount()).toStrictEqual(1);

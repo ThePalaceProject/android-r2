@@ -4,8 +4,6 @@ import org.librarysimplified.r2.vanilla.internal.SR2Controller.Companion.PREFIX_
 import org.readium.r2.shared.publication.Layout
 import org.readium.r2.shared.publication.Manifest
 import org.readium.r2.shared.publication.Publication
-import org.readium.r2.shared.publication.epub.EpubLayout
-import org.readium.r2.shared.publication.presentation.presentation
 import org.readium.r2.shared.util.Try
 import org.readium.r2.shared.util.data.ReadError
 import org.readium.r2.shared.util.flatMap
@@ -33,61 +31,71 @@ class SR2HtmlInjectingResource(
     val trimmedText =
       bytes.toString(charset).trim()
 
-    val outputBytes =
+    val outputText =
       if (isReflowable()) {
         injectReflowableHtml(trimmedText)
       } else {
         injectFixedLayoutHtml(trimmedText)
       }
-    return Try.success(outputBytes.toByteArray(charset))
+    return Try.success(outputText.toByteArray(charset))
   }
 
   private fun isReflowable(): Boolean = this.publication.metadata.layout == Layout.REFLOWABLE
 
   private fun injectReflowableHtml(content: String): String {
-    var resourceHtml = content
-    // Inject links to css and js files
-    val head = regexForOpeningHTMLTag("head").find(resourceHtml, 0)
-    var beginHeadIndex = resourceHtml.indexOf("<head>", 0, false) + 6
-    var endHeadIndex = resourceHtml.indexOf("</head>", 0, true)
-    if (endHeadIndex == -1) {
+    val headEndIndex = content.indexOf("</head>", 0, true)
+    if (headEndIndex == -1) {
       return content
     }
+    val layout =
+      SR2ReadiumCssLayout(this.publication.metadata)
+    val headStartIndex =
+      content.indexOf("<head>", 0, false) + 6
+    val beforeHeadContent =
+      content.substring(0, headStartIndex)
+    val headContent =
+      content.substring(headStartIndex, headEndIndex)
+    val afterHeadContent =
+      content.substring(headEndIndex)
 
-    val layout = SR2ReadiumCssLayout(this.publication.metadata)
-    val endIncludes = mutableListOf<String>()
-    val beginIncludes = mutableListOf<String>()
-    beginIncludes.add(
-      "<meta name=\"viewport\" content=\"width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0, user-scalable=0\" />",
+    val metaViewport =
+      buildString {
+        append("<meta ")
+        append("name=\"viewport\" ")
+        append("content=\"")
+        append("width=device-width, ")
+        append("height=device-height, ")
+        append("initial-scale=1.0, ")
+        append("maximum-scale=1.0, ")
+        append("user-scalable=0")
+        append("\"")
+        append("/>")
+      }
+
+    val injectedHeadContent =
+      buildString {
+        append(headContent)
+        append(metaViewport)
+        append(linkToCSS("readium-css/${layout.readiumCSSPath}ReadiumCSS-before.css"))
+        append(linkToCSS("readium-css/${layout.readiumCSSPath}ReadiumCSS-after.css"))
+        append("<script>epubLayout=\"SR2_REFLOWABLE\";</script>")
+        append(linkToScript("scripts/sr2.js"))
+        append(getHtmlFont(fontFamily = "OpenDyslexic", href = "fonts/OpenDyslexic-Regular.otf"))
+        append("<style>@import url('https://fonts.googleapis.com/css?family=PT+Serif|Roboto|Source+Sans+Pro|Vollkorn');</style>")
+        append("\n")
+      }
+
+    val resourceHtml =
+      buildString {
+        append(beforeHeadContent)
+        append(injectedHeadContent)
+        append(afterHeadContent)
+      }
+
+    return applyDirectionAttribute(
+      resourceHtml,
+      this.publication.manifest,
     )
-
-    beginIncludes.add(linkToCSS("readium-css/${layout.readiumCSSPath}ReadiumCSS-before.css"))
-    endIncludes.add(linkToCSS("readium-css/${layout.readiumCSSPath}ReadiumCSS-after.css"))
-    endIncludes.add("<script>epubLayout=\"SR2_REFLOWABLE\";</script>")
-    endIncludes.add(linkToScript("scripts/sr2.js"))
-
-    for (element in beginIncludes) {
-      resourceHtml = StringBuilder(resourceHtml).insert(beginHeadIndex, element).toString()
-      beginHeadIndex += element.length
-      endHeadIndex += element.length
-    }
-    for (element in endIncludes) {
-      resourceHtml = StringBuilder(resourceHtml).insert(endHeadIndex, element).toString()
-      endHeadIndex += element.length
-    }
-    resourceHtml =
-      StringBuilder(
-        resourceHtml,
-      ).insert(endHeadIndex, getHtmlFont(fontFamily = "OpenDyslexic", href = "fonts/OpenDyslexic-Regular.otf")).toString()
-    resourceHtml =
-      StringBuilder(
-        resourceHtml,
-      ).insert(
-        endHeadIndex,
-        "<style>@import url('https://fonts.googleapis.com/css?family=PT+Serif|Roboto|Source+Sans+Pro|Vollkorn');</style>\n",
-      ).toString()
-    resourceHtml = applyDirectionAttribute(resourceHtml, this.publication.manifest)
-    return resourceHtml
   }
 
   private fun applyDirectionAttribute(
@@ -125,18 +133,22 @@ class SR2HtmlInjectingResource(
     Regex("""<$name.*?>""", setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL))
 
   private fun injectFixedLayoutHtml(content: String): String {
-    var resourceHtml = content
-    val endHeadIndex = resourceHtml.indexOf("</head>", 0, true)
-    if (endHeadIndex == -1) {
+    val headEndIndex = content.indexOf("</head>", 0, true)
+    if (headEndIndex == -1) {
       return content
     }
-    val includes = mutableListOf<String>()
-    includes.add("<script>epubLayout=\"SR2_FIXED\";</script>")
-    includes.add(linkToScript("scripts/sr2.js"))
-    for (element in includes) {
-      resourceHtml = StringBuilder(resourceHtml).insert(endHeadIndex, element).toString()
+
+    val beforeHeadContent =
+      content.substring(0, headEndIndex)
+    val afterHeadContent =
+      content.substring(headEndIndex)
+
+    return buildString {
+      append(beforeHeadContent)
+      append("<script>epubLayout=\"SR2_FIXED\";</script>")
+      append(linkToScript("scripts/sr2.js"))
+      append(afterHeadContent)
     }
-    return resourceHtml
   }
 
   private fun getHtmlFont(
@@ -145,18 +157,33 @@ class SR2HtmlInjectingResource(
   ): String {
     val prefix = "<style type=\"text/css\"> @font-face{font-family: \"$fontFamily\"; src:url(\""
     val suffix = "\") format('truetype');}</style>\n"
-    return prefix + PREFIX_ASSETS + href + suffix
+    return buildString {
+      append(prefix)
+      append(PREFIX_ASSETS)
+      append(href)
+      append(suffix)
+    }
   }
 
   private fun linkToCSS(resourceName: String): String {
     val prefix = "<link rel=\"stylesheet\" type=\"text/css\" href=\""
     val suffix = "\"/>\n"
-    return prefix + PREFIX_ASSETS + resourceName + suffix
+    return buildString {
+      append(prefix)
+      append(PREFIX_ASSETS)
+      append(resourceName)
+      append(suffix)
+    }
   }
 
   private fun linkToScript(resourceName: String): String {
     val prefix = "<script type=\"text/javascript\" src=\""
     val suffix = "\"></script>\n"
-    return prefix + PREFIX_ASSETS + resourceName + suffix
+    return buildString {
+      append(prefix)
+      append(PREFIX_ASSETS)
+      append(resourceName)
+      append(suffix)
+    }
   }
 }

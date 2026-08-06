@@ -118,7 +118,7 @@ internal class SR2Controller private constructor(
           DefaultResourceFactory(context.contentResolver, httpClient),
           DefaultArchiveOpener(),
           DefaultFormatSniffer(
-            listOf(SVGSniffer()),
+            listOf(SVGSniffer(), OTFSniffer()),
           ),
         )
 

@@ -1,5 +1,7 @@
 import { Attribute } from './attribute';
+import { SR2EPUBLayout } from './layout';
 import { requireDefined } from './notnull';
+import { unreachable } from './unreachable';
 
 /**
  * An immutable page value. Pages are numbered starting from zero
@@ -61,9 +63,11 @@ export type SR2PageSetStatus =
 export class SR2PageSet implements SR2PageSetType {
   private pageArray: SR2Page[];
   readonly status: Attribute<SR2PageSetStatus>;
+  readonly layout: SR2EPUBLayout;
 
-  private constructor() {
+  private constructor(layout: SR2EPUBLayout) {
     this.pageArray = [new SR2Page(0, 0.0, 0.0)];
+    this.layout = requireDefined(layout, 'Layout');
 
     const initial: SR2PageSetStatus = {
       kind: 'Initial',
@@ -72,8 +76,8 @@ export class SR2PageSet implements SR2PageSetType {
     this.status = Attribute.create<SR2PageSetStatus>(initial);
   }
 
-  public static create(): SR2PageSetType {
-    return new SR2PageSet();
+  public static create(layout: SR2EPUBLayout): SR2PageSetType {
+    return new SR2PageSet(layout);
   }
 
   statusNow(): SR2PageSetStatus {
@@ -106,8 +110,32 @@ export class SR2PageSet implements SR2PageSetType {
     requireDefined(documentWidth, 'DocumentWidth');
     requireDefined(pageWidth, 'PageWidth');
 
+    switch (this.layout) {
+      case SR2EPUBLayout.SR2_FIXED:
+        this.recomputeFixed();
+        break;
+      case SR2EPUBLayout.SR2_REFLOWABLE:
+        this.recomputeReflowable(documentWidth, pageWidth);
+        break;
+      default:
+        unreachable(this.layout);
+    }
+  }
+
+  private recomputeFixed(): void {
+    console.log(`Recomputing pages (SR2_FIXED)`);
+
+    this.status.set({ kind: 'CalculatingPages', progress: 0.0 });
+    const newPages: SR2Page[] = [new SR2Page(0, 0.0, 0.0)];
+    console.log(`Recomputed pages: ${newPages.length.toString()}`);
+    this.pageArray = newPages;
+    this.status.set({ kind: 'CalculatingPages', progress: 1.0 });
+    this.status.set({ kind: 'Ready' });
+  }
+
+  private recomputeReflowable(documentWidth: number, pageWidth: number): void {
     console.log(
-      `Recomputing pages: ${documentWidth.toString()} / ${pageWidth.toString()}`,
+      `Recomputing pages (SR2_REFLOWABLE): ${documentWidth.toString()} / ${pageWidth.toString()}`,
     );
 
     this.status.set({ kind: 'CalculatingPages', progress: 0.0 });

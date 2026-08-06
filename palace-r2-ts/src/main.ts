@@ -1,3 +1,5 @@
+console.log('SR2 initializing.');
+
 import { SR2APIType } from './api';
 import { SR2Gestures } from './gestures';
 import { requireDefined } from './notnull';
@@ -6,7 +8,7 @@ import { highlightSearchingTerms } from './search_highlight';
 import { putSettings, SR2SettingsType } from './settings';
 import { unreachable } from './unreachable';
 
-const pageSet = SR2PageSet.create();
+const pageSet = SR2PageSet.create(epubLayout);
 let pageCurrent: SR2Page = requireDefined(pageSet.pages()[0], 'InitialPage');
 
 /** Set the current page. */
@@ -248,3 +250,5 @@ window.addEventListener(
   },
   false,
 );
+
+console.log('SR2 initialized.');

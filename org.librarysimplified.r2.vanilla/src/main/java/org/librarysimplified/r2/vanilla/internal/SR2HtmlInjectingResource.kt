@@ -63,6 +63,7 @@ class SR2HtmlInjectingResource(
 
     beginIncludes.add(linkToCSS("readium-css/${layout.readiumCSSPath}ReadiumCSS-before.css"))
     endIncludes.add(linkToCSS("readium-css/${layout.readiumCSSPath}ReadiumCSS-after.css"))
+    endIncludes.add("<script>epubLayout=\"SR2_REFLOWABLE\";</script>")
     endIncludes.add(linkToScript("scripts/sr2.js"))
 
     for (element in beginIncludes) {
@@ -130,6 +131,7 @@ class SR2HtmlInjectingResource(
       return content
     }
     val includes = mutableListOf<String>()
+    includes.add("<script>epubLayout=\"SR2_FIXED\";</script>")
     includes.add(linkToScript("scripts/sr2.js"))
     for (element in includes) {
       resourceHtml = StringBuilder(resourceHtml).insert(endHeadIndex, element).toString()

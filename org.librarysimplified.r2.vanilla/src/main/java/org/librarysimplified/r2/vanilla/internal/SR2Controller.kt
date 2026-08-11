@@ -42,6 +42,7 @@ import org.readium.r2.shared.publication.Href
 import org.readium.r2.shared.publication.Layout
 import org.readium.r2.shared.publication.Publication
 import org.readium.r2.shared.publication.services.isRestricted
+import org.readium.r2.shared.publication.services.positionsByReadingOrder
 import org.readium.r2.shared.publication.services.protectionError
 import org.readium.r2.shared.publication.services.search.SearchIterator
 import org.readium.r2.shared.publication.services.search.search
@@ -811,6 +812,60 @@ internal class SR2Controller private constructor(
   }
 
   /**
+   * Compute an abstract, book-wide page estimate using Readium 2's pre-computed
+   * positions. Unlike the WebView-rendered chapter page numbers, this metric ignores dynamic
+   * factors like font size, CSS, and viewport dimensions. It is useful for providing a stable
+   * "Page X of Y" estimate across the entire book.
+   *
+   * For fixed-layout publications, this returns the actual position-based page number
+   * from the EPUB metadata. For reflowable publications, it returns the cumulative
+   * position index across all chapters.
+   */
+
+  private suspend fun getAbstractBookPage(chapterProgress: Double): Pair<Int, Int>? {
+    val currentNode =
+      this.navigationGraph.findNavigationNode(this.currentNavigationIntent)
+        ?: return null
+
+    if (currentNode.node !is SR2NavigationNode.SR2NavigationReadingOrderNode) {
+      return null
+    }
+
+    val indexInReadingOrder =
+      currentNode.node.index
+    val positionsByChapter =
+      this.publication.positionsByReadingOrder()
+    val currentChapterPositions =
+      positionsByChapter[indexInReadingOrder]
+
+    val positionIndex =
+      (chapterProgress * currentChapterPositions.size)
+        .toInt()
+        .coerceIn(0, currentChapterPositions.size - 1)
+
+    val pageCount =
+      positionsByChapter.fold(0) { current, list -> current + list.size }
+
+    return when (this@SR2Controller.publication.metadata.layout) {
+      Layout.FIXED -> {
+        val pageNumber = currentChapterPositions[positionIndex].locations.position!!
+        Pair(pageNumber, pageCount)
+      }
+
+      else -> {
+        val cumulativeOffset =
+          positionsByChapter.subList(0, indexInReadingOrder).fold(0) { acc, list ->
+            acc + list.size
+          }
+        val pageNumber =
+          cumulativeOffset + positionIndex + 1
+
+        Pair(pageNumber, pageCount)
+      }
+    }
+  }
+
+  /**
    * A receiver that accepts calls from the Javascript code running inside the current
    * WebView.
    */
@@ -864,6 +919,8 @@ internal class SR2Controller private constructor(
         controller.currentBookProgress =
           controller.getBookProgress(chapterProgress)
 
+        val estimate =
+          controller.getAbstractBookPage(chapterProgress)
         val currentTarget =
           controller.navigationGraph.findNavigationNode(controller.currentNavigationIntent)
 
@@ -880,6 +937,8 @@ internal class SR2Controller private constructor(
               currentPage = currentPage,
               pageCount = pageCount,
               bookProgress = controller.currentBookProgress,
+              estimatedBookPageCurrent = estimate?.first,
+              estimatedBookPageTotal = estimate?.second,
             ),
           )
         } else {

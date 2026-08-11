@@ -499,6 +499,12 @@ class SR2ReaderFragment : SR2Fragment() {
   private fun onReadingPositionChanged(event: SR2ReadingPositionChanged) {
     val context = this.context ?: return
     this.logger.debug("chapterTitle=${event.chapterTitle}")
+
+    val currentPage =
+      event.estimatedBookPageCurrent ?: event.currentPage ?: 1
+    val currentPages =
+      event.estimatedBookPageTotal ?: event.pageCount ?: 1
+
     if (event.chapterTitle == null) {
       this.positionTitleView.visibility = View.GONE
     } else {
@@ -507,13 +513,9 @@ class SR2ReaderFragment : SR2Fragment() {
       this.titleTouchIcon.visibility = VISIBLE
     }
 
-    if (event.currentPage == null || event.pageCount == null) {
-      this.positionPageView.visibility = View.GONE
-    } else {
-      this.positionPageView.text =
-        context.getString(R.string.progress_page, event.currentPage, event.pageCount)
-      this.positionPageView.visibility = VISIBLE
-    }
+    this.positionPageView.text =
+      context.getString(R.string.progress_page, currentPage, currentPages)
+    this.positionPageView.visibility = VISIBLE
 
     val bookProgressPercent = event.bookProgressPercent
     if (bookProgressPercent == null) {

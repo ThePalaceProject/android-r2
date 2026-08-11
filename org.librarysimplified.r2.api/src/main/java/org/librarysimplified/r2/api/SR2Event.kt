@@ -56,6 +56,8 @@ sealed class SR2Event {
     val currentPage: Int?,
     val pageCount: Int?,
     val bookProgress: Double?,
+    val estimatedBookPageCurrent: Int? = null,
+    val estimatedBookPageTotal: Int? = null,
   ) : SR2Event() {
     init {
       require(this.chapterProgress in 0.0..1.0) {

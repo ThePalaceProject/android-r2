@@ -16,6 +16,18 @@ export interface SR2GesturesType {
    */
 
   onTouchEnd(event: TouchEvent): void;
+
+  /**
+   * A starting mouse event was received.
+   */
+
+  onMouseDown(event: MouseEvent): void;
+
+  /**
+   * An ending mouse event was received.
+   */
+
+  onMouseUp(event: MouseEvent): void;
 }
 
 export interface SR2GestureParametersType {
@@ -107,6 +119,37 @@ export class SR2Gestures implements SR2GesturesType {
     }
   }
 
+  onMouseDown(event: MouseEvent): void {
+    this.timeStart = Date.now();
+
+    const target: EventTarget | null = event.target;
+    if (target instanceof Element) {
+      if (target.nodeName.toUpperCase() === 'A') {
+        return;
+      }
+    }
+
+    this.startX = event.screenX % this.availWidth;
+    this.startY = event.screenY % this.availHeight;
+  }
+
+  onMouseUp(event: MouseEvent): void {
+    const relativeDistanceX = Math.abs(
+      ((event.screenX % this.availWidth) - this.startX) / this.availWidth,
+    );
+    const relativeDistanceY = Math.abs(
+      ((event.screenY % this.availHeight) - this.startY) / this.availHeight,
+    );
+    const mouseDistance = Math.max(relativeDistanceX, relativeDistanceY);
+
+    const tapAreaSize = 0.01;
+    if (mouseDistance < tapAreaSize) {
+      this.onMousePageMovementTap(event);
+    }
+    // If the mouse moved (drag), do nothing — let the WebView handle
+    // text selection, copy/paste, etc. normally.
+  }
+
   private onPageMovementTap(event: TouchEvent, touch: Touch) {
     const position = (touch.screenX % this.availWidth) / this.availWidth;
 
@@ -134,6 +177,19 @@ export class SR2Gestures implements SR2GesturesType {
       this.onSwipeRight();
     } else {
       this.onSwipeLeft();
+    }
+
+    event.stopPropagation();
+    event.preventDefault();
+  }
+
+  private onMousePageMovementTap(event: MouseEvent) {
+    const position = (event.screenX % this.availWidth) / this.availWidth;
+
+    if (position <= 0.2) {
+      this.onTapLeft();
+    } else if (position >= 0.8) {
+      this.onTapRight();
     }
 
     event.stopPropagation();

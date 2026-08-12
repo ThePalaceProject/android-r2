@@ -247,6 +247,14 @@ window.addEventListener(
     window.document.addEventListener('touchend', (event) => {
       gestures.onTouchEnd(event);
     });
+
+    window.document.addEventListener('mousedown', (event) => {
+      gestures.onMouseDown(event);
+    });
+
+    window.document.addEventListener('mouseup', (event) => {
+      gestures.onMouseUp(event);
+    });
   },
   false,
 );

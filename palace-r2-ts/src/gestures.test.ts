@@ -202,47 +202,134 @@ test('screen coordinates wrap using availWidth', () => {
   expect(onTapLeft).not.toHaveBeenCalled();
 });
 
-test('onMouseDown and onMouseUp do not exist (current limitation)', () => {
-  setupMockWindow();
-  const { gestures } = makeParams();
-
-  // SR2Gestures has no mouse-handling methods.
-  // On Chromebooks, clicks and trackpad swipes fire mouse events,
-  // not touch events, so this gap causes the reader to be unresponsive.
-  expect(
-    (gestures as unknown as Record<string, unknown>)['onMouseDown'],
-  ).toBeUndefined();
-  expect(
-    (gestures as unknown as Record<string, unknown>)['onMouseUp'],
-  ).toBeUndefined();
-});
-
-test('passing a MouseEvent-like object to onTouchStart produces no callbacks', () => {
-  setupMockWindow();
-  const { gestures, onTapLeft, onTapRight, onSwipeLeft, onSwipeRight } =
-    makeParams();
-
-  // A MouseEvent-like object: has screenX/screenY but no changedTouches.
-  // onTouchStart reads changedTouches[0] which is undefined, so early-returns.
-  const mouseEvent = {
-    screenX: 100,
-    screenY: 500,
-    // No changedTouches array
-    touches: [],
-    changedTouches: [],
+function makeMouseEvent(
+  mouseX: number,
+  mouseY: number,
+  options?: { target?: EventTarget },
+): MouseEvent {
+  return {
+    screenX: mouseX,
+    screenY: mouseY,
+    target: options?.target ?? null,
     stopPropagation: () => {
       // Nothing required.
     },
     preventDefault: () => {
       // Nothing required.
     },
-  } as unknown as TouchEvent;
+  } as unknown as MouseEvent;
+}
 
-  gestures.onTouchStart(mouseEvent);
-  gestures.onTouchEnd(mouseEvent);
+test('mouse click on left third triggers onTapLeft', () => {
+  setupMockWindow();
+  const { gestures, onTapLeft, onTapRight, onSwipeLeft, onSwipeRight } =
+    makeParams();
+
+  gestures.onMouseDown(makeMouseEvent(100, 500));
+  gestures.onMouseUp(makeMouseEvent(100, 500));
+
+  expect(onTapLeft).toHaveBeenCalledTimes(1);
+  expect(onTapRight).not.toHaveBeenCalled();
+  expect(onSwipeLeft).not.toHaveBeenCalled();
+  expect(onSwipeRight).not.toHaveBeenCalled();
+});
+
+test('mouse click on right third triggers onTapRight', () => {
+  setupMockWindow();
+  const { gestures, onTapLeft, onTapRight, onSwipeLeft, onSwipeRight } =
+    makeParams();
+
+  gestures.onMouseDown(makeMouseEvent(900, 500));
+  gestures.onMouseUp(makeMouseEvent(900, 500));
+
+  expect(onTapRight).toHaveBeenCalledTimes(1);
+  expect(onTapLeft).not.toHaveBeenCalled();
+  expect(onSwipeLeft).not.toHaveBeenCalled();
+  expect(onSwipeRight).not.toHaveBeenCalled();
+});
+
+test('mouse click in middle third triggers no callback', () => {
+  setupMockWindow();
+  const { gestures, onTapLeft, onTapRight, onSwipeLeft, onSwipeRight } =
+    makeParams();
+
+  gestures.onMouseDown(makeMouseEvent(500, 500));
+  gestures.onMouseUp(makeMouseEvent(500, 500));
 
   expect(onTapLeft).not.toHaveBeenCalled();
   expect(onTapRight).not.toHaveBeenCalled();
+  expect(onSwipeLeft).not.toHaveBeenCalled();
+  expect(onSwipeRight).not.toHaveBeenCalled();
+});
+
+test('mouse drag does not trigger any callbacks (lets WebView handle text selection)', () => {
+  setupMockWindow();
+  const { gestures, onTapLeft, onTapRight, onSwipeLeft, onSwipeRight } =
+    makeParams();
+
+  gestures.onMouseDown(makeMouseEvent(100, 500));
+  gestures.onMouseUp(makeMouseEvent(900, 500));
+
+  expect(onTapLeft).not.toHaveBeenCalled();
+  expect(onTapRight).not.toHaveBeenCalled();
+  expect(onSwipeLeft).not.toHaveBeenCalled();
+  expect(onSwipeRight).not.toHaveBeenCalled();
+});
+
+test('mouse click on <a> element is ignored', () => {
+  setupMockWindow();
+  const { gestures, onTapLeft, onTapRight, onSwipeLeft, onSwipeRight } =
+    makeParams();
+
+  const link = new MockElement('A') as unknown as Element;
+  gestures.onMouseDown(makeMouseEvent(100, 500, { target: link }));
+  gestures.onMouseUp(makeMouseEvent(100, 500, { target: link }));
+
+  expect(onTapLeft).not.toHaveBeenCalled();
+  expect(onTapRight).not.toHaveBeenCalled();
+  expect(onSwipeLeft).not.toHaveBeenCalled();
+  expect(onSwipeRight).not.toHaveBeenCalled();
+});
+
+test('mouse screen coordinates wrap using availWidth', () => {
+  // Simulate a 1000px-wide display on a multi-monitor setup
+  // where the physical screen X starts at 1920
+  setupMockWindow(1000, 1000);
+  const { gestures, onTapLeft, onTapRight } = makeParams();
+
+  // screenX = 1950 -> 1950 % 1000 = 950 (right third -> onTapRight)
+  gestures.onMouseDown(makeMouseEvent(1950, 500));
+  gestures.onMouseUp(makeMouseEvent(1950, 500));
+
+  expect(onTapRight).toHaveBeenCalledTimes(1);
+  expect(onTapLeft).not.toHaveBeenCalled();
+});
+
+test('vertical mouse drag alone does not trigger horizontal callbacks', () => {
+  setupMockWindow();
+  const { gestures, onTapLeft, onTapRight, onSwipeLeft, onSwipeRight } =
+    makeParams();
+
+  // Large vertical movement, zero horizontal movement.
+  gestures.onMouseDown(makeMouseEvent(500, 100));
+  gestures.onMouseUp(makeMouseEvent(500, 800));
+
+  expect(onTapLeft).not.toHaveBeenCalled();
+  expect(onTapRight).not.toHaveBeenCalled();
+  expect(onSwipeLeft).not.toHaveBeenCalled();
+  expect(onSwipeRight).not.toHaveBeenCalled();
+});
+
+test('mouse click with slight movement (within tap tolerance) still triggers tap', () => {
+  setupMockWindow();
+  const { gestures, onTapLeft, onSwipeLeft, onSwipeRight } = makeParams();
+
+  // 5px on 1000px width = 0.005, below tapAreaSize (0.01) so it's a tap
+  gestures.onMouseDown(makeMouseEvent(100, 500));
+  gestures.onMouseUp(makeMouseEvent(105, 500));
+
+  // End position (105/1000 = 0.105) is in left tap zone
+  expect(onTapLeft).toHaveBeenCalledTimes(1);
   expect(onSwipeLeft).not.toHaveBeenCalled();
   expect(onSwipeRight).not.toHaveBeenCalled();
 });

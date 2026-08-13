@@ -336,9 +336,9 @@
         </c:change>
       </c:changes>
     </c:release>
-    <c:release date="2026-08-12T13:51:35+00:00" is-open="true" ticket-system="org.lyrasis.jira" version="6.19.0">
+    <c:release date="2026-08-13T12:30:45+00:00" is-open="false" ticket-system="org.lyrasis.jira" version="6.19.0">
       <c:changes>
-        <c:change date="2026-08-12T13:51:35+00:00" summary="Fix tapping on Chromebooks.">
+        <c:change date="2026-08-12T00:00:00+00:00" summary="Fix tapping on Chromebooks.">
           <c:tickets>
             <c:ticket id="PP-4907"/>
           </c:tickets>

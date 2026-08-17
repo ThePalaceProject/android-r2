@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:app="http://schemas.android.com/apk/res-auto"
   android:id="@+id/tocLayout"
@@ -56,21 +55,7 @@
     app:layout_constraintTop_toBottomOf="@id/tocToolbar2"
     app:tabGravity="fill"
     app:tabMaxWidth="0dp"
-    app:tabMode="fixed">
-
-    <com.google.android.material.tabs.TabItem
-      android:id="@+id/tocTabChapters"
-      android:layout_width="match_parent"
-      android:layout_height="match_parent"
-      android:text="@string/tocTitle" />
-
-    <com.google.android.material.tabs.TabItem
-      android:id="@+id/tocTabBookmarks"
-      android:layout_width="match_parent"
-      android:layout_height="match_parent"
-      android:text="@string/tocBookmarks" />
-
-  </com.google.android.material.tabs.TabLayout>
+    app:tabMode="fixed" />
 
   <androidx.viewpager2.widget.ViewPager2
     android:id="@+id/tocViewPager"
@@ -82,3 +67,4 @@
     app:layout_constraintTop_toBottomOf="@id/tocTabs" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
+

@@ -33,6 +33,13 @@
     <string name="tocTitle">Contents</string>
     <string name="tocError">No entries available.</string>
     <string name="tocAccessChapter">Open Chapter %1$d: %2$s</string>
+    <string name="tocPages">Pages</string>
+    <string name="tocAccessPage">Go to print page %1$s</string>
+    <string name="tocPagesEmpty">No print page list available for this book.</string>
+    <string name="tocGoToPage">Go to page</string>
+    <string name="tocGoToPageHint">Enter page number or label</string>
+    <string name="tocGoToPageError">Page not found</string>
+    <string name="accessibilityPrintPage">Print page</string>
     <string name="publisherDefaults">Publisher Defaults</string>
     <string name="emptyBookmarksMessage">There are no bookmarks for this book</string>
     <string name="dismiss">Dismiss</string>

@@ -2,6 +2,7 @@ package org.librarysimplified.r2.vanilla.internal
 
 import org.librarysimplified.r2.api.SR2BookMetadata
 import org.librarysimplified.r2.api.SR2Locator
+import org.librarysimplified.r2.api.SR2PrintPageEntry
 import org.librarysimplified.r2.api.SR2TOCEntry
 import org.readium.r2.shared.publication.Link
 import org.readium.r2.shared.publication.Publication
@@ -21,6 +22,7 @@ object SR2Books {
       id = bookId,
       title = publication.metadata.title ?: "",
       tableOfContents = this.makeTableOfContents(publication),
+      printPages = this.makePrintPageList(publication),
       start = startLocator,
     )
   }
@@ -61,4 +63,25 @@ object SR2Books {
       val title = link.title?.takeUnless(String::isBlank) ?: "Chapter ${index + 1}"
       SR2TOCEntry(title, link.href, 0)
     }
+
+  /**
+   * Generates a list of SR2PrintPageEntry from the publication's page-list navigation.
+   *
+   * The EPUB page-list is stored in the publication's subcollections under the key "pageList".
+   * Each link's title is the print page label, and the href points to the content fragment.
+   */
+
+  private fun makePrintPageList(publication: Publication): List<SR2PrintPageEntry> {
+    val pageListLinks =
+      publication.subcollections["pageList"]
+        ?.firstOrNull()
+        ?.links
+        ?: emptyList()
+    return pageListLinks.map { link ->
+      SR2PrintPageEntry(
+        label = link.title?.takeUnless(String::isBlank) ?: link.href.toString(),
+        href = link.href,
+      )
+    }
+  }
 }

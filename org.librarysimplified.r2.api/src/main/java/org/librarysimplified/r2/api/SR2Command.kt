@@ -71,6 +71,22 @@ sealed class SR2Command {
   ) : SR2Command()
 
   /**
+   * Navigate to a specific print page from the EPUB's page-list.
+   *
+   * The ``pageLabel` is the human-readable page label (e.g., "42", "iii").
+   * If an exact match is found in the page-list, the reader navigates to that page break.
+   * If no exact match exists, the reader navigates to the nearest preceding page.
+   *
+   * @see SR2PrintPageEntry
+   */
+
+  data class OpenPrintPage(
+    val pageLabel: String,
+  ) : SR2Command() {
+    override fun toString(): String = "[OpenPrintPage $pageLabel]"
+  }
+
+  /**
    * Open an arbitrary link. This will either result a translation to the [OpenChapter]
    * command, or it will result in the controller publishing events indicating either
    * an error, or that the link needs to be opened in an external web view.

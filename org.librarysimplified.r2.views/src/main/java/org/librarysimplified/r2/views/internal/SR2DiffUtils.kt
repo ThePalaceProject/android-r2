@@ -2,6 +2,7 @@ package org.librarysimplified.r2.views.internal
 
 import androidx.recyclerview.widget.DiffUtil
 import org.librarysimplified.r2.api.SR2Bookmark
+import org.librarysimplified.r2.api.SR2PrintPageEntry
 import org.librarysimplified.r2.api.SR2TOCEntry
 
 internal object SR2DiffUtils {
@@ -28,6 +29,19 @@ internal object SR2DiffUtils {
       override fun areContentsTheSame(
         oldItem: SR2TOCEntry,
         newItem: SR2TOCEntry,
+      ): Boolean = oldItem == newItem
+    }
+
+  val printPageEntryCallback: DiffUtil.ItemCallback<SR2PrintPageEntry> =
+    object : DiffUtil.ItemCallback<SR2PrintPageEntry>() {
+      override fun areItemsTheSame(
+        oldItem: SR2PrintPageEntry,
+        newItem: SR2PrintPageEntry,
+      ): Boolean = oldItem == newItem
+
+      override fun areContentsTheSame(
+        oldItem: SR2PrintPageEntry,
+        newItem: SR2PrintPageEntry,
       ): Boolean = oldItem == newItem
     }
 }

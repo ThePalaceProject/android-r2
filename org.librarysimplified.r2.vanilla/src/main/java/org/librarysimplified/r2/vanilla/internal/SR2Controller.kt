@@ -1,6 +1,7 @@
 package org.librarysimplified.r2.vanilla.internal
 
 import android.app.Application
+import android.content.res.Resources
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import io.reactivex.Observable
@@ -38,6 +39,7 @@ import org.librarysimplified.r2.api.SR2PrintPageEntry
 import org.librarysimplified.r2.api.SR2Theme
 import org.librarysimplified.r2.ui_thread.SR2UIThread
 import org.librarysimplified.r2.vanilla.BuildConfig
+import org.librarysimplified.r2.vanilla.R
 import org.readium.r2.shared.ExperimentalReadiumApi
 import org.readium.r2.shared.publication.Href
 import org.readium.r2.shared.publication.Layout
@@ -211,6 +213,8 @@ internal class SR2Controller private constructor(
     }
   }
 
+  @Volatile
+  private var latestPositionEvent: SR2ReadingPositionChanged? = null
   private val errorAttributes =
     ConcurrentHashMap<String, String>()
   private val subscriptions =
@@ -1005,7 +1009,7 @@ internal class SR2Controller private constructor(
             currentTarget.node.navigationPoint.locator.chapterHref
           val targetTitle =
             currentTarget.node.title
-          controller.publishEvent(
+          val newEvent =
             SR2ReadingPositionChanged(
               chapterHref = targetHref,
               chapterTitle = targetTitle,
@@ -1015,8 +1019,9 @@ internal class SR2Controller private constructor(
               bookProgress = controller.currentBookProgress,
               estimatedBookPageCurrent = estimate?.first,
               estimatedBookPageTotal = estimate?.second,
-            ),
-          )
+            )
+          controller.latestPositionEvent = newEvent
+          controller.publishEvent(newEvent)
         } else {
           controller.logger.warn(
             "{} onReadingPositionChanged: currentTarget -> null",
@@ -1187,6 +1192,28 @@ internal class SR2Controller private constructor(
       Layout.SCROLLED -> false
       null -> false
     }
+
+  override fun whereAmI(resources: Resources): String {
+    val mostRecent = this.latestPositionEvent
+    if (mostRecent != null) {
+      val bookPage =
+        mostRecent.estimatedBookPageCurrent ?: mostRecent.currentPage ?: 0
+
+      val builder = StringBuilder()
+      builder.append(resources.getString(R.string.whereAmI_bookPage, bookPage))
+
+      val title = mostRecent.chapterTitle
+      if (title != null) {
+        builder.append(resources.getString(R.string.whereAmI_chapter, title))
+      }
+      val bookProgress = mostRecent.bookProgressPercent
+      if (bookProgress != null) {
+        builder.append(resources.getString(R.string.whereAmI_bookProgress, bookProgress))
+      }
+      return builder.toString()
+    }
+    return ""
+  }
 
   override fun viewConnect(webView: WebView) {
     this.logger.debug("{} viewConnect", this.name())

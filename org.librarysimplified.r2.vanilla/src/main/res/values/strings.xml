@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+    <string name="whereAmI_bookPage">You are currently at book page %1$d.</string>
+    <string name="whereAmI_chapter">Chapter %1$s.</string>
+    <string name="whereAmI_bookProgress">Your current progress in the book is %1$d percent.</string>
+</resources>

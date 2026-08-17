@@ -34,6 +34,7 @@ import org.librarysimplified.r2.api.SR2Event.SR2ReadingPositionChanged
 import org.librarysimplified.r2.api.SR2Locator
 import org.librarysimplified.r2.api.SR2Locator.SR2LocatorChapterEnd
 import org.librarysimplified.r2.api.SR2Locator.SR2LocatorPercent
+import org.librarysimplified.r2.api.SR2PrintPageEntry
 import org.librarysimplified.r2.api.SR2Theme
 import org.librarysimplified.r2.ui_thread.SR2UIThread
 import org.librarysimplified.r2.vanilla.BuildConfig
@@ -379,6 +380,10 @@ internal class SR2Controller private constructor(
         this.executeCommandThemeSet(command, apiCommand)
       }
 
+      is SR2Command.OpenPrintPage -> {
+        this.executeCommandOpenPrintPage(command, apiCommand)
+      }
+
       is SR2Command.OpenLink -> {
         this.executeCommandOpenLink(apiCommand)
       }
@@ -588,6 +593,77 @@ internal class SR2Controller private constructor(
 
     this.setCurrentNavigationIntent(apiCommand.locator)
     return this.moveToSatisfyNavigationIntent(command)
+  }
+
+  /**
+   * Execute the [SR2Command.OpenPrintPage] command.
+   *
+   * Resolves the page label to a print page entry from the publication's page-list.
+   * If an exact match is found, navigates to that page break.
+   * If no exact match exists, navigates to the nearest preceding page.
+   */
+
+  private fun executeCommandOpenPrintPage(
+    command: SR2CommandSubmission,
+    apiCommand: SR2Command.OpenPrintPage,
+  ): CompletableFuture<*> {
+    val printPages = this.bookMetadata.printPages
+    if (printPages.isEmpty()) {
+      this.logger.debug("{} No print page list available", this.name())
+      return CompletableFuture.completedFuture(Unit)
+    }
+
+    val targetPage =
+      findPrintPageEntry(printPages, apiCommand.pageLabel)
+        ?: return CompletableFuture.completedFuture(Unit)
+
+    val locator =
+      SR2Locator.SR2LocatorPercent.create(
+        chapterHref = targetPage.href,
+        chapterProgress = 0.0,
+      )
+
+    this.setCurrentNavigationIntent(locator)
+    return this.moveToSatisfyNavigationIntent(command)
+  }
+
+  /**
+   * Find a print page entry by label.
+   *
+   * First attempts an exact match. If no exact match is found, returns the
+   * nearest preceding page (the last page whose label sorts before the requested label).
+   *
+   * For numeric labels, sorting is by numeric value. For non-numeric labels (roman numerals,
+   * letters), sorting is lexicographic.
+   */
+
+  private fun findPrintPageEntry(
+    printPages: List<SR2PrintPageEntry>,
+    pageLabel: String,
+  ): SR2PrintPageEntry? {
+    // Exact match
+    val exact = printPages.find { it.label == pageLabel }
+    if (exact != null) {
+      return exact
+    }
+
+    // Determine if the labels are numeric for proper ordering
+    val isNumeric = pageLabel.toIntOrNull() != null
+
+    val nearestPreceding =
+      if (isNumeric) {
+        val wantValue = pageLabel.toInt()
+        printPages
+          .filter { it.label.toIntOrNull() != null }
+          .filter { it.label.toInt() < wantValue }
+          .maxByOrNull { it.label.toInt() }
+      } else {
+        printPages
+          .filter { it.label < pageLabel }
+          .maxByOrNull { it.label }
+      }
+
+    return nearestPreceding ?: printPages.first()
   }
 
   /**

@@ -67,6 +67,8 @@
     <string name="accessibilitySetSizeSmaller">Decrease text size.</string>
     <string name="accessibilityBrightnessSlider">Brightness adjustment slider</string>
 
+    <string name="accessibilityWhereAmI">Where am I?</string>
+
     <string name="accessibilitySetPageButtonsOff">Turn off page buttons.</string>
     <string name="accessibilitySetPageButtonsSmall">Set page buttons to small.</string>
     <string name="accessibilitySetPageButtonsMedium">Set page buttons to medium size.</string>

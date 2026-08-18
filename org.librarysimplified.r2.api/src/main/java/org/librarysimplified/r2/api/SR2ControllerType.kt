@@ -1,5 +1,6 @@
 package org.librarysimplified.r2.api
 
+import android.content.res.Resources
 import android.webkit.WebView
 import io.reactivex.Observable
 import java.io.Closeable
@@ -99,4 +100,13 @@ interface SR2ControllerType :
    */
 
   fun isFixedLayout(): Boolean
+
+  /**
+   * Get a human-readable string that describes where the user currently is in the book. For
+   * example, "Chapter 1: A Chapter, Page 3".
+   *
+   * @return A human-readable string representing the current position in the book
+   */
+
+  fun whereAmI(resources: Resources): String
 }

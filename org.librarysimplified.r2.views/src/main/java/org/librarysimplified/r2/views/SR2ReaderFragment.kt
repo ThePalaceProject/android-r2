@@ -17,8 +17,10 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.Dimension
-import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.accessibility.AccessibilityViewCommand
+import androidx.core.view.updatePadding
 import androidx.core.view.updatePadding
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposables
@@ -26,6 +28,7 @@ import org.librarysimplified.r2.api.SR2ColorScheme.DARK_TEXT_LIGHT_BACKGROUND
 import org.librarysimplified.r2.api.SR2ColorScheme.DARK_TEXT_ON_SEPIA
 import org.librarysimplified.r2.api.SR2ColorScheme.LIGHT_TEXT_DARK_BACKGROUND
 import org.librarysimplified.r2.api.SR2Command
+import org.librarysimplified.r2.api.SR2ControllerType
 import org.librarysimplified.r2.api.SR2Event
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkCreated
 import org.librarysimplified.r2.api.SR2Event.SR2BookmarkEvent.SR2BookmarkDeleted
@@ -460,10 +463,12 @@ class SR2ReaderFragment : SR2Fragment() {
             true
           }
         }
+
+        this.setupWhereAmIAccessibilityAction(event.controller)
       }
 
       is SR2ControllerBecameUnavailable -> {
-        // Nothing to do here.
+        this.removeWhereAmIAccessibilityAction()
       }
     }
   }
@@ -705,6 +710,92 @@ class SR2ReaderFragment : SR2Fragment() {
     }
     if (this.loadingView.visibility != loadingVisibility) {
       this.loadingView.visibility = loadingVisibility
+    }
+  }
+
+  /**
+   * Set up the "Where am I?" TalkBack custom accessibility action on all non-WebView views.
+   * The action appears in the TalkBack context menu when any of these views have focus.
+   */
+
+  private fun setupWhereAmIAccessibilityAction(controller: SR2ControllerType,) {
+    val label = this.getString(R.string.accessibilityWhereAmI)
+    val command =
+      AccessibilityViewCommand { _, _ ->
+        val positionDescription = controller.whereAmI(this.resources)
+        this.webView.announceForAccessibility(positionDescription)
+        true
+      }
+
+    // Add the action to all non-WebView views that TalkBack can focus
+    val views =
+      listOf(
+        this.root,
+        this.container,
+        this.toolbar,
+        this.titleText,
+        this.titleTouch,
+        this.titleTouchIcon,
+        this.uiShow,
+        this.uiShowIcon,
+        this.loadingView,
+        this.progressContainer,
+        this.progressViewContainer,
+        this.progressViewBorder,
+        this.progressViewFill,
+        this.positionPageView,
+        this.positionTitleView,
+        this.positionPercentView,
+        this.buttonBack,
+        this.buttonBackIcon,
+        this.buttonBookmark,
+        this.buttonBookmarkIcon,
+        this.buttonSearch,
+        this.buttonSearchIcon,
+        this.buttonSettings,
+        this.buttonSettingsIcon,
+        this.centerTouch,
+      )
+    for (view in views) {
+      ViewCompat.addAccessibilityAction(view, label, command)
+    }
+  }
+
+  /**
+   * Remove the "Where am I?" TalkBack custom accessibility action from all non-WebView views.
+   */
+
+  private fun removeWhereAmIAccessibilityAction() {
+    val views =
+      listOf(
+        this.root,
+        this.container,
+        this.toolbar,
+        this.titleText,
+        this.titleTouch,
+        this.titleTouchIcon,
+        this.uiShow,
+        this.uiShowIcon,
+        this.loadingView,
+        this.progressContainer,
+        this.progressViewContainer,
+        this.progressViewBorder,
+        this.progressViewFill,
+        this.positionPageView,
+        this.positionTitleView,
+        this.positionPercentView,
+        this.buttonBack,
+        this.buttonBackIcon,
+        this.buttonBookmark,
+        this.buttonBookmarkIcon,
+        this.buttonSearch,
+        this.buttonSearchIcon,
+        this.buttonSettings,
+        this.buttonSettingsIcon,
+        this.centerTouch,
+      )
+    for (view in views) {
+      ViewCompat.setAccessibilityDelegate(view, null)
     }
   }
 }

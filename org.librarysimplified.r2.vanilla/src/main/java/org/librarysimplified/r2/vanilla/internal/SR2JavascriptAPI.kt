@@ -45,7 +45,7 @@ internal class SR2JavascriptAPI(
   override fun highlightSearchingTerms(
     searchingTerms: String,
     clearHighlight: Boolean,
-  ): CompletableFuture<String> = this.executeJavascript("readium.highlightSearchingTerms(\"$searchingTerms\", $clearHighlight);")
+  ): CompletableFuture<String> = this.executeJavascript("api.highlightSearchingTerms(\"$searchingTerms\", $clearHighlight);")
 
   @UiThread
   override fun openPageNext(): CompletableFuture<*> = this.executeJavascript("api.turnPageRight();")

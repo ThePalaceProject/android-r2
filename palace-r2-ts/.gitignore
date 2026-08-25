@@ -1,3 +1,5 @@
-node_modules
 dist
-
+mathjax-dist
+mathjax-newcm-font-*.tgz
+mathjax-unpack
+node_modules

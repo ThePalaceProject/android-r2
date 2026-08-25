@@ -8,3 +8,6 @@
 [submodule "palace-build-conventions"]
 	path = palace-build-conventions
 	url = https://github.com/ThePalaceProject/android-build-conventions
+[submodule "palace-r2-ts/MathJax-src"]
+	path = palace-r2-ts/MathJax-src
+	url = https://github.com/mathjax/MathJax-src

@@ -2,6 +2,7 @@ console.log('SR2 initializing.');
 
 import { SR2APIType } from './api';
 import { SR2Gestures } from './gestures';
+import { mathMakeAccessible } from './math';
 import { requireDefined } from './notnull';
 import { SR2Page, SR2PageSet } from './pageset';
 import { highlightSearchingTerms } from './search_highlight';
@@ -232,6 +233,10 @@ window.addEventListener(
 window.addEventListener(
   'load',
   function () {
+    mathMakeAccessible().catch((error: unknown) => {
+      console.warn(`SR2 math: ${String(error)}`);
+    });
+
     // Observe changes to the root element's dimensions. This catches orientation
     // changes, font loading, and any other layout-shift that alters the viewport,
     // without needing separate handlers for each cause.

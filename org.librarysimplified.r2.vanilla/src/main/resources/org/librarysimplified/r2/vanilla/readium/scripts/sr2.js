@@ -10,8 +10,8 @@ length===1;let i=e.changedTouches[0];i&&(this.startX=i.screenX%this.availWidth,
 this.startY=i.screenY%this.availHeight)}onTouchEnd(e){let i=Date.now()-this.
 timeStart;if(!this.singleTouch)return;let o=e.changedTouches[0];if(!o)return;
 let s=Math.abs((o.screenX%this.availWidth-this.startX)/this.availWidth),
-a=Math.abs((o.screenY%this.availHeight-this.startY)/this.availHeight),u=Math.
-max(s,a),c=s>.25;if(i<250&&c){this.onSwipe(e);return}if(u<.01){this.onPageMovementTap(
+a=Math.abs((o.screenY%this.availHeight-this.startY)/this.availHeight),c=Math.
+max(s,a),u=s>.25;if(i<250&&u){this.onSwipe(e);return}if(c<.01){this.onPageMovementTap(
 e,o);return}}onMouseDown(e){this.timeStart=Date.now();let n=e.target;n instanceof
 Element&&n.nodeName.toUpperCase()==="A"||(this.startX=e.screenX%this.availWidth,
 this.startY=e.screenY%this.availHeight)}onMouseUp(e){let n=Math.abs((e.screenX%
@@ -24,7 +24,24 @@ this.availWidth>0?this.onSwipeRight():this.onSwipeLeft(),e.stopPropagation(),
 e.preventDefault()}onMousePageMovementTap(e){let n=e.screenX%this.availWidth/
 this.availWidth;n<=.2?this.onTapLeft():n>=.8&&this.onTapRight(),e.stopPropagation(),
 e.preventDefault()}static create(e){let n=window.screen.availWidth,i=window.
-screen.availHeight;return new t(n,i,e)}};var f=class t{constructor(e){this.subscriberNext=0;this.value=r(e,"initi\
+screen.availHeight;return new t(n,i,e)}};var x="http://www.w3.org/1999/xhtml",N="position:absolute;z-index:-1;lef\
+t:0;top:0;bottom:0;right:0",T="data-sr2-speech";function y(){let t=window.
+SRE;return t===void 0?Promise.resolve():t.engineReady().then(()=>{let e=document.
+querySelectorAll("math"),n=0;for(let i of e)C(t,i)&&(n+=1);console.log(`\
+SR2 math: annotated ${n.toString()} of ${e.length.toString()} math eleme\
+nts`)})}function C(t,e){var s;let n=e.nextElementSibling;if(n!==null&&n.
+hasAttribute(T))return!1;let i;try{i=t.toSpeech(I(e))}catch(a){return console.
+warn(`SR2 math: SRE failed on element: ${String(a)}`),!1}if(i==="")return!1;
+e.setAttribute("aria-hidden","true");let o=document.createElementNS(x,"s\
+pan");return o.setAttribute("role","img"),o.setAttribute("aria-label",`${i}\
+, math`),o.setAttribute("style",N),o.setAttribute(T,""),(s=e.parentNode)==
+null||s.insertBefore(o,e.nextSibling),!0}function I(t){let e=_(t);return new XMLSerializer().
+serializeToString(e)}function _(t){var n;let e=document.createElementNS(
+r(t.namespaceURI,"Element namespace"),t.localName);for(let i of t.attributes)
+e.setAttributeNS(i.namespaceURI,i.name,i.value);for(let i of Array.from(
+t.childNodes))i instanceof Element?e.appendChild(_(i)):i.nodeType===Node.
+TEXT_NODE&&e.appendChild(document.createTextNode((n=i.textContent)!=null?
+n:""));return e}var f=class t{constructor(e){this.subscriberNext=0;this.value=r(e,"initi\
 al"),this.subscribers=new Map}static create(e){return new t(e)}valueNow(){
 return this.value}set(e){let n=this.value;this.value=e,this.subscribers.
 forEach(i=>{try{i(n,e)}catch(o){console.error("Subscriber failed to hand\
@@ -34,7 +51,7 @@ error("Subscriber failed to handle value change:",i)}return{unsubscribe:()=>{
 this.subscribers.delete(n)}}}};function g(t){throw new Error("Unreachable: "+String(t))}var h=class{constructor(e,n,i){if(this.index=e,this.scrollOffset=n,this.
 scrollOffsetRaw=i,this.scrollOffset<0||this.scrollOffset>1)throw Error(`\
 Scroll offset ${this.scrollOffset.toString()} must be in the range [0, 1\
-]`)}},R=class t{constructor(e){this.pageArray=[new h(0,0,0)],this.layout=
+]`)}},m=class t{constructor(e){this.pageArray=[new h(0,0,0)],this.layout=
 r(e,"Layout");let n={kind:"Initial"};this.status=f.create(n)}static create(e){
 return new t(e)}statusNow(){return this.status.valueNow()}pageCount(){return this.
 pageArray.length}pages(){return this.pageArray}findClosestPage(e){let n=r(
@@ -49,23 +66,23 @@ e,this.status.set({kind:"CalculatingPages",progress:1}),this.status.set(
 {kind:"Ready"})}recomputeReflowable(e,n){console.log(`Recomputing pages \
 (SR2_REFLOWABLE): ${e.toString()} / ${n.toString()}`),this.status.set({kind:"\
 CalculatingPages",progress:0});let i=[],o=Math.max(0,e-n),s=0;for(let a=0;a<
-o;a+=n){let u=0;o>0&&(u=a/o);let c=new h(s,u,a);++s,i.push(c),this.status.
-set({kind:"CalculatingPages",progress:u})}if(i.length===0)i.push(new h(0,
+o;a+=n){let c=0;o>0&&(c=a/o);let u=new h(s,c,a);++s,i.push(u),this.status.
+set({kind:"CalculatingPages",progress:c})}if(i.length===0)i.push(new h(0,
 0,0));else{let a=r(i[i.length-1],"LastPage");o-a.scrollOffsetRaw>=1&&i.push(
 new h(s,1,o))}console.log(`Recomputed pages: ${i.length.toString()}`),this.
 pageArray=i,this.status.set({kind:"CalculatingPages",progress:1}),this.status.
 set({kind:"Ready"})}pagePrevious(e){return e.index===0?null:r(this.pageArray[e.
 index-1],"PreviousPage")}pageNext(e){return e.index===this.pageArray.length-
-1?null:r(this.pageArray[e.index+1],"NextPage")}};function T(t,e){if(typeof document.body.innerHTML=="undefined")return!1;
-let n=document.body.innerHTML;return document.body.innerHTML=O(n,t,e),!0}
-function O(t,e,n){let i="",o=-1,s=e.toLowerCase(),a=t.toLowerCase(),u='<\
-font style="background-color:yellow;">',c="</font>";for(;t.length>0;){if(o=
+1?null:r(this.pageArray[e.index+1],"NextPage")}};function A(t,e){if(typeof document.body.innerHTML=="undefined")return!1;
+let n=document.body.innerHTML;return document.body.innerHTML=W(n,t,e),!0}
+function W(t,e,n){let i="",o=-1,s=e.toLowerCase(),a=t.toLowerCase(),c='<\
+font style="background-color:yellow;">',u="</font>";for(;t.length>0;){if(o=
 a.indexOf(s,o+1),o<0){i+=t;break}if(t.lastIndexOf(">",o)>=t.lastIndexOf(
-"<",o)&&a.lastIndexOf("/script>",o)>=a.lastIndexOf("<script",o)){let p,d;
-n?(p=t.indexOf(u),d=t.indexOf(c)):(p=-1,d=-1),p!==-1&&d!==-1?(i+=t.substring(
-0,p)+t.substring(o,e.length),t=t.substring(d+c.length)):(i+=t.substring(
-0,o)+u+t.substring(o,e.length)+c,t=t.substring(o+e.length)),a=t.toLowerCase(),
-o=-1}}return i}function b(t){r(t,"Settings");let e=document.documentElement,n=t.colorScheme;
+"<",o)&&a.lastIndexOf("/script>",o)>=a.lastIndexOf("<script",o)){let d,p;
+n?(d=t.indexOf(c),p=t.indexOf(u)):(d=-1,p=-1),d!==-1&&p!==-1?(i+=t.substring(
+0,d)+t.substring(o,e.length),t=t.substring(p+u.length)):(i+=t.substring(
+0,o)+c+t.substring(o,e.length)+u,t=t.substring(o+e.length)),a=t.toLowerCase(),
+o=-1}}return i}function L(t){r(t,"Settings");let e=document.documentElement,n=t.colorScheme;
 switch(n){case"SR2_WHITE_ON_BLACK":{e.style.setProperty("--USER__appeara\
 nce","readium-night-on");break}case"SR2_BLACK_ON_WHITE":{e.style.setProperty(
 "--USER__appearance","readium-default-on");break}case"SR2_BLACK_ON_SEPIA":{
@@ -82,36 +99,37 @@ mily","sans-serif");break}case"SR2_FONT_OPENDYSLEXIC":{e.style.setProperty(
 tFamily","OpenDyslexic");break}case"SR2_FONT_PUBLISHER":{e.style.setProperty(
 "--USER__advancedSettings",""),e.style.setProperty("--USER__fontOverride",
 ""),e.style.removeProperty("--USER__fontFamily");break}default:g(i)}let o=String(
-t.fontSizePercent)+"%";e.style.setProperty("--USER__fontSize",o)}console.log("SR2 initializing.");var l=R.create(epubLayout),E=r(l.pages()[0],
-"InitialPage");function L(t){r(t,"Page"),console.log(`Setting current pa\
-ge to: ${JSON.stringify(t)}`),E=t}l.status.subscribe((t,e)=>{let n=e.kind;
+t.fontSizePercent)+"%";e.style.setProperty("--USER__fontSize",o)}console.log("SR2 initializing.");var l=m.create(epubLayout),b=r(l.pages()[0],
+"InitialPage");function D(t){r(t,"Page"),console.log(`Setting current pa\
+ge to: ${JSON.stringify(t)}`),b=t}l.status.subscribe((t,e)=>{let n=e.kind;
 switch(n){case"Initial":{Android.onPageSetInitial();break}case"Ready":{Android.
 onPageSetReady(l.pageCount());break}case"CalculatingPages":{Android.onPageSetCalculating(
-e.progress);break}default:g(n)}});function A(){return document.body.dir.
+e.progress);break}default:g(n)}});function F(){return document.body.dir.
 toLowerCase()==="rtl"}function v(t){r(t,"Page");let e=document.scrollingElement;
-if(e===null){console.warn("Document scroll element is null");return}let n=A()?
--1:1;e.scrollLeft=t.scrollOffsetRaw*n,L(t),Android.onReadingPositionChanged(
-t.scrollOffset,t.index+1,l.pageCount())}function w(){let t=l.pagePrevious(
-E);t===null?Android.onWantChapterPrevious():v(t)}function y(){let t=l.pageNext(
-E);t===null?Android.onWantChapterNext():v(t)}var m=S.create({window,onSwipeLeft:()=>{
-y()},onSwipeRight:()=>{w()},onTapLeft:()=>{w()},onTapRight:()=>{y()}}),P=!1;
-function _(){if(!P)try{P=!0,console.log("onViewportWidthChanged");let t=document.
+if(e===null){console.warn("Document scroll element is null");return}let n=F()?
+-1:1;e.scrollLeft=t.scrollOffsetRaw*n,D(t),Android.onReadingPositionChanged(
+t.scrollOffset,t.index+1,l.pageCount())}function E(){let t=l.pagePrevious(
+b);t===null?Android.onWantChapterPrevious():v(t)}function w(){let t=l.pageNext(
+b);t===null?Android.onWantChapterNext():v(t)}var R=S.create({window,onSwipeLeft:()=>{
+w()},onSwipeRight:()=>{E()},onTapLeft:()=>{E()},onTapRight:()=>{w()}}),P=!1;
+function O(){if(!P)try{P=!0,console.log("onViewportWidthChanged");let t=document.
 scrollingElement;if(t===null)throw Error("Document scrolling element is \
 null!");let e=t.scrollWidth,n=Android.onGetViewportWidth(),i=n/window.devicePixelRatio;
 document.documentElement.style.setProperty("--RS__viewportWidth",`calc(${n.
 toString()}px / ${window.devicePixelRatio.toString()})`),l.recompute(e,i)}finally{
-P=!1}}function x(t){b(t),requestAnimationFrame(_)}function N(t,e){T(t,e)}
-function C(t){let e=document.getElementById(t);if(!e){console.warn(`No e\
+P=!1}}function M(t){L(t),requestAnimationFrame(O)}function k(t,e){A(t,e)}
+function H(t){let e=document.getElementById(t);if(!e){console.warn(`No e\
 lement with id ${t}`);return}console.log(`Scrolling to element ${e.localName}\
  with ID ${t}`);let n=e.getBoundingClientRect(),i=l.findClosestPage(n.left);
-v(i)}var I={highlightSearchingTerms:function(t,e){N(t,e)},turnPageLeft:function(){
-w()},turnPageRight:function(){y()},goToPosition:function(t){v(l.findClosestPage(
-t))},goToId:function(t){C(t)},putSettings:function(t){x(t)}};window.api=
-I;window.addEventListener("error",function(t){Android.onLogError(t.message,
-t.filename,t.lineno)},!1);window.addEventListener("load",function(){new ResizeObserver(
-()=>{_()}).observe(document.documentElement),window.document.addEventListener(
-"touchstart",e=>{m.onTouchStart(e)}),window.document.addEventListener("t\
-ouchend",e=>{m.onTouchEnd(e)}),window.document.addEventListener("mousedo\
-wn",e=>{m.onMouseDown(e)}),window.document.addEventListener("mouseup",e=>{
-m.onMouseUp(e)})},!1);console.log("SR2 initialized.");})();
+v(i)}var U={highlightSearchingTerms:function(t,e){k(t,e)},turnPageLeft:function(){
+E()},turnPageRight:function(){w()},goToPosition:function(t){v(l.findClosestPage(
+t))},goToId:function(t){H(t)},putSettings:function(t){M(t)}};window.api=
+U;window.addEventListener("error",function(t){Android.onLogError(t.message,
+t.filename,t.lineno)},!1);window.addEventListener("load",function(){y().
+catch(e=>{console.warn(`SR2 math: ${String(e)}`)}),new ResizeObserver(()=>{
+O()}).observe(document.documentElement),window.document.addEventListener(
+"touchstart",e=>{R.onTouchStart(e)}),window.document.addEventListener("t\
+ouchend",e=>{R.onTouchEnd(e)}),window.document.addEventListener("mousedo\
+wn",e=>{R.onMouseDown(e)}),window.document.addEventListener("mouseup",e=>{
+R.onMouseUp(e)})},!1);console.log("SR2 initialized.");})();
 //# sourceMappingURL=sr2.js.map

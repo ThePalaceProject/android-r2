@@ -1340,6 +1340,9 @@ internal class SR2Controller private constructor(
     if (upper.endsWith(".JS")) {
       return MediaType.JAVASCRIPT.toString()
     }
+    if (upper.endsWith(".JSON")) {
+      return MediaType.JSON.toString()
+    }
     if (upper.endsWith(".TTF")) {
       return MediaType.TTF.toString()
     }

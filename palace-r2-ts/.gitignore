@@ -1,5 +1,5 @@
 dist
-mathjax-dist
-mathjax-newcm-font-*.tgz
-mathjax-unpack
 node_modules
+speech-rule-engine-*.tgz
+sre-dist
+sre-unpack

@@ -18,4 +18,4 @@ cp ./MathJax-src/components/mjs/mml-chtml/mml-chtml.js mathjax-dist/
 cp mathjax-unpack/package/chtml/woff2/*.woff2          mathjax-dist/fonts/mathjax-newcm-font/chtml/woff2/
 cp mathjax-unpack/package/chtml/dynamic/*.js           mathjax-dist/fonts/mathjax-newcm-font/chtml/dynamic/
 
-rsync -avz --delete mathjax-dist/ ../org.librarysimplified.r2.vanilla/src/main/resources/org/librarysimplified/r2/vanilla/mathjax/
+rsync -avz --delete mathjax-dist/ ../org.librarysimplified.r2.vanilla/src/main/resources/org/librarysimplified/r2/vanilla/readium/mathjax/

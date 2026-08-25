@@ -27,12 +27,6 @@ declare global {
 
 const XHTML_NAMESPACE = 'http://www.w3.org/1999/xhtml';
 
-/** The CSS that removes the label span from layout without removing it
- * from the accessibility tree. */
-
-const LABEL_STYLE =
-  'position:absolute;z-index:-1;left:0;top:0;bottom:0;right:0';
-
 /** The attribute marking a label span created by this module. */
 
 const LABEL_MARKER = 'data-sr2-speech';
@@ -68,15 +62,21 @@ export function mathMakeAccessible(): Promise<void> {
 
 /**
  * Annotate a single math element, hiding it from the accessibility tree
- * and inserting a labelled image element after it.
+ * and wrapping it in a labelled image element.
+ *
+ * The wrapper is in normal flow, so its box coincides with the box of the
+ * rendered equation. Screen readers that draw a focus highlight around the
+ * spoken element (TalkBack does) therefore highlight the equation itself.
  */
 
 function annotateMath(sre: SR2SREType, math: Element): boolean {
-  const sibling = math.nextElementSibling;
-  if (sibling !== null) {
-    if (sibling.hasAttribute(LABEL_MARKER)) {
-      return false;
-    }
+  const parent = math.parentNode;
+  if (parent === null) {
+    return false;
+  }
+
+  if (math.parentElement?.hasAttribute(LABEL_MARKER) === true) {
+    return false;
   }
 
   let speech: string;
@@ -96,10 +96,13 @@ function annotateMath(sre: SR2SREType, math: Element): boolean {
   const label = document.createElementNS(XHTML_NAMESPACE, 'span');
   label.setAttribute('role', 'img');
   label.setAttribute('aria-label', `${speech}, math`);
-  label.setAttribute('style', LABEL_STYLE);
   label.setAttribute(LABEL_MARKER, '');
+  if (math.getAttribute('display') === 'block') {
+    label.setAttribute('style', 'display:block');
+  }
 
-  math.parentNode?.insertBefore(label, math.nextSibling);
+  parent.insertBefore(label, math);
+  label.appendChild(math);
 
   return true;
 }

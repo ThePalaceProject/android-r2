@@ -90,17 +90,16 @@ test('math (with SRE) is annotated', async () => {
   expect(math).not.toBeNull();
   expect(math?.getAttribute('aria-hidden')).toBe('true');
 
-  // The label span is the next sibling of the math element.
-  const label = math?.nextElementSibling;
+  // The label span wraps the math element.
+  const label = math?.parentElement;
   expect(label).not.toBeNull();
   expect(label?.localName).toBe('span');
   expect(label?.getAttribute('role')).toBe('img');
   expect(label?.getAttribute('aria-label')).toBe(
     'x squared equals y plus 2, math',
   );
-  expect(label?.getAttribute('style')).toBe(
-    'position:absolute;z-index:-1;left:0;top:0;bottom:0;right:0',
-  );
+  // Inline math: the wrapper is an unstyled inline span.
+  expect(label?.getAttribute('style')).toBeNull();
 
   // The fragment handed to SRE is standalone.
   expect(fragments).toHaveLength(1);
@@ -109,7 +108,24 @@ test('math (with SRE) is annotated', async () => {
   // A second pass is a no-op.
   await mathMakeAccessible();
   expect(fragments).toHaveLength(1);
-  expect(math?.nextElementSibling?.localName).toBe('span');
+  expect(math?.parentElement?.localName).toBe('span');
+});
+
+test('math (display=block) gets a block wrapper', async () => {
+  const math = createMath(false);
+  math.setAttribute('display', 'block');
+  document.body.appendChild(math);
+
+  const sre: SR2SREType = {
+    engineReady: () => Promise.resolve(),
+    toSpeech: () => 'x squared',
+  };
+  window.SRE = sre;
+
+  await mathMakeAccessible();
+
+  expect(math.parentElement?.localName).toBe('span');
+  expect(math.parentElement?.getAttribute('style')).toBe('display:block');
 });
 
 test('math (SRE failure) is left untouched', async () => {

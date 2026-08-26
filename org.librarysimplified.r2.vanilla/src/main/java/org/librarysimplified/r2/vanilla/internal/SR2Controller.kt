@@ -1340,6 +1340,9 @@ internal class SR2Controller private constructor(
     if (upper.endsWith(".JS")) {
       return MediaType.JAVASCRIPT.toString()
     }
+    if (upper.endsWith(".JSON")) {
+      return MediaType.JSON.toString()
+    }
     if (upper.endsWith(".TTF")) {
       return MediaType.TTF.toString()
     }
@@ -1351,6 +1354,12 @@ internal class SR2Controller private constructor(
     }
     if (upper.endsWith(".XHTML")) {
       return MediaType.XHTML.toString()
+    }
+    if (upper.endsWith(".WOFF")) {
+      return MediaType.WOFF.toString()
+    }
+    if (upper.endsWith(".WOFF2")) {
+      return MediaType.WOFF2.toString()
     }
     return "application/octet-stream"
   }

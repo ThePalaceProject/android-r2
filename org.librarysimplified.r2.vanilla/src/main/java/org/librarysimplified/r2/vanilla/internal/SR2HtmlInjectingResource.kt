@@ -72,6 +72,9 @@ class SR2HtmlInjectingResource(
         append("/>")
       }
 
+    val injectSre =
+      containsMath(content)
+
     val injectedHeadContent =
       buildString {
         append(headContent)
@@ -80,6 +83,10 @@ class SR2HtmlInjectingResource(
         append(linkToCSS("readium-css/${layout.readiumCSSPath}ReadiumCSS-after.css"))
         append("<script>epubLayout=\"SR2_REFLOWABLE\";</script>")
         append(linkToScript("scripts/sr2.js"))
+        if (injectSre) {
+          append(sreConfigScript())
+          append(linkToScript("sre/sre.js"))
+        }
         append(getHtmlFont(fontFamily = "OpenDyslexic", href = "fonts/OpenDyslexic-Regular.otf"))
         append("<style>@import url('https://fonts.googleapis.com/css?family=PT+Serif|Roboto|Source+Sans+Pro|Vollkorn');</style>")
         append("\n")
@@ -143,13 +150,35 @@ class SR2HtmlInjectingResource(
     val afterHeadContent =
       content.substring(headEndIndex)
 
+    val injectSre =
+      containsMath(content)
+
     return buildString {
       append(beforeHeadContent)
       append("<script>epubLayout=\"SR2_FIXED\";</script>")
       append(linkToScript("scripts/sr2.js"))
+      if (injectSre) {
+        append(sreConfigScript())
+        append(linkToScript("sre/sre.js"))
+      }
       append(afterHeadContent)
     }
   }
+
+  private fun containsMath(content: String): Boolean =
+    content.contains("<math", ignoreCase = true) ||
+      content.contains("<m:math", ignoreCase = true)
+
+  private fun sreConfigScript(): String =
+    buildString {
+      append("<script type=\"text/x-sre-config\">\n")
+      append("{\"json\": \"")
+      append(PREFIX_ASSETS)
+      append("sre/mathmaps/\", ")
+      append("\"domain\": \"clearspeak\", ")
+      append("\"locale\": \"en\"}")
+      append("\n</script>\n")
+    }
 
   private fun getHtmlFont(
     fontFamily: String,

@@ -12,6 +12,16 @@ import { unreachable } from './unreachable';
 const pageSet = SR2PageSet.create(epubLayout);
 let pageCurrent: SR2Page = requireDefined(pageSet.pages()[0], 'InitialPage');
 
+/*
+ * A position requested via `goToPosition` before the page set has finished
+ * computing pages. `findClosestPage` is only meaningful once the page set is
+ * `Ready`; before that it would resolve against the initial placeholder page
+ * (a single page at offset 0) and scroll to the top of the chapter. The most
+ * recent pending position is applied when the page set transitions to `Ready`.
+ */
+
+let pendingPositionOffset: number | null = null;
+
 /** Set the current page. */
 
 function setPage(page: SR2Page) {
@@ -34,6 +44,13 @@ pageSet.status.subscribe((_, statusNew) => {
     }
     case 'Ready': {
       Android.onPageSetReady(pageSet.pageCount());
+
+      if (pendingPositionOffset !== null) {
+        const offset = pendingPositionOffset;
+        pendingPositionOffset = null;
+        onScrollToPosition(pageSet.findClosestPage(offset));
+      }
+
       break;
     }
     case 'CalculatingPages': {
@@ -192,7 +209,11 @@ export const api: SR2APIType = {
     onWantPageNext();
   },
   goToPosition: function (offset: number): void {
-    onScrollToPosition(pageSet.findClosestPage(offset));
+    if (pageSet.statusNow().kind === 'Ready') {
+      onScrollToPosition(pageSet.findClosestPage(offset));
+    } else {
+      pendingPositionOffset = offset;
+    }
   },
   goToId: function (id: string): void {
     onScrollToID(id);

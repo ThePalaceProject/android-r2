@@ -238,21 +238,6 @@ internal class SR2Controller private constructor(
 
   private val closed = AtomicBoolean(false)
 
-  /*
-   * Should the navigation intent be updated on the next chapter progress update?
-   *
-   * The web view will provide us with an endless stream of chapter progress updates, and not all
-   * of them should be used to update the [currentNavigationIntent], because often the published
-   * updates will be intermediate events while the web view loads and scrolls to locations.
-   * Typically we only want to be told about a reading position update after we've explicitly turned
-   * to the next (or previous) page. For all of the other explicit movements such as opening
-   * chapters, we don't trust the WebView to safely update the navigation intent, and we already
-   * know where we should be anyway!
-   */
-
-  private val updateNavigationIntentOnNextChapterProgressUpdate =
-    AtomicBoolean(false)
-
   @OptIn(ExperimentalReadiumApi::class)
   private var searchIterator: SearchIterator? = null
 
@@ -522,7 +507,6 @@ internal class SR2Controller private constructor(
    */
 
   private fun executeCommandOpenPagePrevious(): CompletableFuture<*> {
-    this.updateNavigationIntentOnNextChapterProgressUpdate.set(true)
     this.logger.debug("{} Navigation: Page Previous", this.name())
     return this.waitForWebViewAvailability().executeJS(SR2JavascriptAPIType::openPagePrevious)
   }
@@ -579,7 +563,6 @@ internal class SR2Controller private constructor(
    */
 
   private fun executeCommandOpenPageNext(): CompletableFuture<*> {
-    this.updateNavigationIntentOnNextChapterProgressUpdate.set(true)
     this.logger.debug("{} Navigation: Page Next", this.name())
     return this.waitForWebViewAvailability().executeJS(SR2JavascriptAPIType::openPageNext)
   }
@@ -968,32 +951,20 @@ internal class SR2Controller private constructor(
         pageCount,
       )
 
-      /*
-       * If the controller is indicating that the user explicitly performed some kind of
-       * navigation action, then this reading position update should be used to update the
-       * navigation intent. Typically, this _only_ applies for page turns.
-       */
+      controller.setCurrentNavigationIntent(
+        when (val i = controller.currentNavigationIntent) {
+          is SR2LocatorChapterEnd -> {
+            i
+          }
 
-      if (controller.updateNavigationIntentOnNextChapterProgressUpdate.compareAndSet(true, false)) {
-        controller.logger.debug(
-          "{} Navigation: Updating intent from reading position change.",
-          controller.name(),
-        )
-        controller.setCurrentNavigationIntent(
-          when (val i = controller.currentNavigationIntent) {
-            is SR2LocatorChapterEnd -> {
-              i
-            }
-
-            is SR2LocatorPercent -> {
-              SR2LocatorPercent.create(
-                i.chapterHref,
-                chapterProgress,
-              )
-            }
-          },
-        )
-      }
+          is SR2LocatorPercent -> {
+            SR2LocatorPercent.create(
+              i.chapterHref,
+              chapterProgress,
+            )
+          }
+        },
+      )
 
       controller.coroutineScope.launch {
         controller.currentBookProgress =

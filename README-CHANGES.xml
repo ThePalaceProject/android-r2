@@ -359,9 +359,9 @@
         </c:change>
       </c:changes>
     </c:release>
-    <c:release date="2026-09-21T07:57:10+00:00" is-open="true" ticket-system="org.lyrasis.jira" version="6.21.0">
+    <c:release date="2026-09-21T08:17:52+00:00" is-open="false" ticket-system="org.lyrasis.jira" version="6.21.0">
       <c:changes>
-        <c:change date="2026-09-21T07:57:10+00:00" summary="Fix broken position restoration on device rotation introduced by SRE/MathJax."/>
+        <c:change date="2026-09-21T00:00:00+00:00" summary="Fix broken position restoration on device rotation introduced by SRE/MathJax."/>
       </c:changes>
     </c:release>
   </c:releases>

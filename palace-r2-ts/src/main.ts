@@ -8,6 +8,7 @@ import { SR2Page, SR2PageSet } from './pageset';
 import { highlightSearchingTerms } from './search_highlight';
 import { putSettings, SR2SettingsType } from './settings';
 import { unreachable } from './unreachable';
+import { smoothScrollTo } from './smooth';
 
 const pageSet = SR2PageSet.create(epubLayout);
 let pageCurrent: SR2Page = requireDefined(pageSet.pages()[0], 'InitialPage');
@@ -48,7 +49,7 @@ pageSet.status.subscribe((_, statusNew) => {
       if (pendingPositionOffset !== null) {
         const offset = pendingPositionOffset;
         pendingPositionOffset = null;
-        onScrollToPosition(pageSet.findClosestPage(offset));
+        onScrollToPosition(pageSet.findClosestPage(offset), false);
       }
 
       break;
@@ -73,7 +74,7 @@ function isRTL() {
  * maintainability.
  */
 
-function onScrollToPosition(page: SR2Page) {
+function onScrollToPosition(page: SR2Page, animate: boolean) {
   requireDefined(page, 'Page');
 
   const scrollElement = document.scrollingElement;
@@ -83,7 +84,13 @@ function onScrollToPosition(page: SR2Page) {
   }
 
   const factor = isRTL() ? -1 : 1;
-  scrollElement.scrollLeft = page.scrollOffsetRaw * factor;
+  const target = page.scrollOffsetRaw * factor;
+  if (animate) {
+    smoothScrollTo(scrollElement, target, 100);
+  } else {
+    scrollElement.scrollLeft = target;
+  }
+
   setPage(page);
 
   Android.onReadingPositionChanged(
@@ -98,7 +105,7 @@ function onWantPagePrevious() {
   if (page === null) {
     Android.onWantChapterPrevious();
   } else {
-    onScrollToPosition(page);
+    onScrollToPosition(page, true);
   }
 }
 
@@ -107,7 +114,7 @@ function onWantPageNext() {
   if (page === null) {
     Android.onWantChapterNext();
   } else {
-    onScrollToPosition(page);
+    onScrollToPosition(page, true);
   }
 }
 
@@ -188,7 +195,7 @@ function onScrollToID(id: string) {
   console.log(`Scrolling to element ${element.localName} with ID ${id}`);
   const rect = element.getBoundingClientRect();
   const page = pageSet.findClosestPage(rect.left);
-  onScrollToPosition(page);
+  onScrollToPosition(page, false);
 }
 
 /**
@@ -210,7 +217,7 @@ export const api: SR2APIType = {
   },
   goToPosition: function (offset: number): void {
     if (pageSet.statusNow().kind === 'Ready') {
-      onScrollToPosition(pageSet.findClosestPage(offset));
+      onScrollToPosition(pageSet.findClosestPage(offset), false);
     } else {
       pendingPositionOffset = offset;
     }

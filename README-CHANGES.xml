@@ -364,8 +364,14 @@
         <c:change date="2026-09-21T00:00:00+00:00" summary="Fix broken position restoration on device rotation introduced by SRE/MathJax."/>
       </c:changes>
     </c:release>
-    <c:release date="2026-09-21T08:58:57+00:00" is-open="true" ticket-system="org.lyrasis.jira" version="6.22.0">
-      <c:changes/>
+    <c:release date="2026-09-22T10:22:32+00:00" is-open="true" ticket-system="org.lyrasis.jira" version="6.22.0">
+      <c:changes>
+        <c:change date="2026-09-22T10:22:32+00:00" summary="Add smooth page flips.">
+          <c:tickets>
+            <c:ticket id="PP-4898"/>
+          </c:tickets>
+        </c:change>
+      </c:changes>
     </c:release>
   </c:releases>
   <c:ticket-systems>

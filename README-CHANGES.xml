@@ -371,6 +371,11 @@
             <c:ticket id="PP-4898"/>
           </c:tickets>
         </c:change>
+        <c:change date="2026-10-07T14:57:48+00:00" summary="Limit the reader top-bar book title to two lines (truncating with an ellipsis) so it is not clipped at larger device text sizes.">
+          <c:tickets>
+            <c:ticket id="PP-5305"/>
+          </c:tickets>
+        </c:change>
       </c:changes>
     </c:release>
   </c:releases>
